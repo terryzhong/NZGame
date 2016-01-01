@@ -1,0 +1,16 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{E9CD10BC-7B4C-691D-9E7B-90B63E5F3756}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "NZGame",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	]
+}
