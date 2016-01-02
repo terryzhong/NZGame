@@ -108,7 +108,7 @@
 /* Begin PBXLegacyTarget section */
 		1C4FC141A659D82B4C1E682C /* NZGame_Build */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION) $(UE_BUILD_TARGET_NAME) $(PLATFORM_NAME) $(UE_BUILD_TARGET_CONFIG) \"/Users/apple/Documents/Unreal Projects/NZGame/NZGame.uproject\"";
+			buildArgumentsString = "$(ACTION) $(UE_BUILD_TARGET_NAME) $(PLATFORM_NAME) $(UE_BUILD_TARGET_CONFIG) \"/Users/apple/Documents/GitHub/NZGame/NZGame.uproject\"";
 			buildConfigurationList = E49053C80E0446EA334E8D77 /* Build configuration list for PBXLegacyTarget "NZGame_Build" */;
 			buildPhases = (
 			);
@@ -261,14 +261,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-Debug-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-Debug-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -411,14 +411,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-DebugGame-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-DebugGame-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -444,14 +444,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-Test-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-Test-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -487,14 +487,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -540,14 +540,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-Shipping-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-Shipping-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -690,14 +690,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-Debug-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-Debug-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -929,14 +929,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-DebugGame-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-DebugGame-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -1213,14 +1213,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-Test-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-Test-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -1349,14 +1349,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Mac-Shipping-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Mac-Shipping-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
@@ -1382,14 +1382,14 @@
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
-				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/TVOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/IOS/Payload";
-				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Binaries/Mac";
+				"CONFIGURATION_BUILD_DIR[sdk=appletvos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/TVOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=iphoneos*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/IOS/Payload;
+				"CONFIGURATION_BUILD_DIR[sdk=macosx*]" = /Users/apple/Documents/GitHub/NZGame/Binaries/Mac;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = /Users/apple/Documents/GitHub/UnrealEngine/Engine/Source/Editor/UnrealEd/Public/UnrealEd.h;
-				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/TVOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/IOS/NZGame-Info.plist";
-				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/Unreal Projects/NZGame/Intermediate/Mac/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=appletvos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/TVOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/IOS/NZGame-Info.plist";
+				"INFOPLIST_FILE[sdk=macosx*]" = "/Users/apple/Documents/GitHub/NZGame/Intermediate/Mac/NZGame-Info.plist";
 				INFOPLIST_OUTPUT_FORMAT = xml;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.1;
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
