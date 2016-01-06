@@ -9,7 +9,7 @@
  * Ammo counter
  */
 USTRUCT(BlueprintType)
-struct FStoreAmmo
+struct FStoredAmmo
 {
     GENERATED_USTRUCT_BODY()
     
@@ -130,7 +130,7 @@ public:
     virtual bool AddInventory(ANZInventory* InvToAdd, bool bAutoActivate);
     
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Pawn)
-    virtual bool RemoveInventory(ANZInventory* InvToRemove);
+    virtual void RemoveInventory(ANZInventory* InvToRemove);
     
     /** Find an inventory item of a specified type */
     UFUNCTION(BlueprintCallable, Category = Pawn)
@@ -151,11 +151,95 @@ public:
     UFUNCTION(BlueprintCallable, Category = Pawn)
     virtual void DiscardAllInventory();
     
+    /** Call to propagate a named character event (jumping, firing, etc) to all inventory items with bCallOwnerEvent = true */
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual void InventoryEvent(FName EventName);
+    
+    bool IsInInventory(const ANZInventory* TestInv) const;
     
     
-    UPROPERTY(BlueprintReadOnly, Replicated, Category = Pawn)
+    /** Switches weapons; handles client/server sync, safe to call on either side. 
+     Uses classic groups, temporary until we have full weapon switching configurability menu. FIXMESTEVE */
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual void SwitchWeapon(ANZWeapon* NewWeapon);
+    
+protected:
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    TArray<uint8> PendingFire;
+public:
+    inline bool IsPendingFire(uint8 InFireMode) const { return !IsFiringDisabled() && (InFireMode < PendingFire.Num() && PendingFire[InFireMode] != 0); }
+    
+    /** Set the pending fire flag; generally should be called by whatever weapon processes the firing command, unless it's an explicit single shot */
+    inline void SetPendingFire(uint8 InFireMode, bool bNowFiring)
+    {
+        if (PendingFire.Num() < InFireMode + 1)
+        {
+            PendingFire.SetNumZeroed(InFireMode + 1);
+        }
+        PendingFire[InFireMode] = bNowFiring ? 1 : 0;
+    }
+    
+    inline void ClearPendingFire()
+    {
+        for (int32 i = 0; i < PendingFire.Num(); i++)
+        {
+            PendingFire[i] = 0;
+        }
+    }
+    
+    inline ANZWeapon* GetWeapon() const
+    {
+        return Weapon;
+    }
+    
+    inline TSubclassOf<ANZWeapon> GetWeaponClass() const
+    {
+        // Debug check to make sure this matches as expected
+        checkSlow(GetNetMode() == NM_Client || (Weapon == NULL ? WeaponClass == NULL : ((UObject*)Weapon)->GetClass() == WeaponClass));
+        return WeaponClass;
+    }
+    
+    inline ANZWeapon* GetPendingWeapon() const
+    {
+        return PendingWeapon;
+    }
+    
+    /**
+     * Called by weapon being put down when it has finished being unequipped. Transition PendingWeapon to Weapon and bring it up
+     * @param OverflowTime - Amount of time past end of timer that previous weapon PutDown() used (due to frame delta) - pass onto BringUp() to keep things in sync
+     */
+    virtual void WeaponChanged(float OverflowTime = 0.0f);
+    
+    /** Utility to redirect to SwitchToBestWeapon() to the character's Controller (human or AI) */
+    void SwitchToBestWeapon();
+    
+    UFUNCTION()
+    virtual void UpdateWeaponAttachment();
+    
+
+    
+    
+    
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
     class ANZWeapon* PendingWeapon;
     
+    UPROPERTY(BlueprintReadOnly, Replicated, Category = Pawn)
+    class ANZWeapon* Weapon;
+    
+    UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = UpdateWeaponAttachment, Category = Pawn)
+    TSubclassOf<ANZWeapon> WeaponClass;
+    
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    class ANZWeaponAttachment* WeaponAttachment;
+
+    UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = UpdateWeaponAttachment, Category = Pawn)
+    TSubclassOf<ANZWeaponAttachment> WeaponAttachmentClass;
+    
+    
+    
+    
+    UPROPERTY()
+    TArray<FStoredAmmo> SavedAmmo;
     
     
     /** */

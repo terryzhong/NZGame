@@ -4,6 +4,7 @@
 #include "NZCharacter.h"
 #include "NZBot.h"
 #include "NZInventory.h"
+#include "NZWeapon.h"
 
 
 // Sets default values
@@ -157,12 +158,106 @@ ANZInventory* ANZCharacter::K2_CreateInventory(TSubclassOf<ANZInventory> NewInvC
 
 bool ANZCharacter::AddInventory(ANZInventory* InvToAdd, bool bAutoActivate)
 {
+    if (InvToAdd != NULL && !InvToAdd->IsPendingKillPending())
+    {
+        if (InvToAdd->GetNZOwner() != NULL && InvToAdd->GetNZOwner() != this && InvToAdd->GetNZOwner()->IsInInventory(InvToAdd))
+        {
+            //UE_LOG(NZ, Warning, TEXT("AddInventory (%s): Item %s is already in %s's inventory!"), *GetName(), *InvToAdd->GetName(), *InvToAdd->GetNZOwner()->GetName());
+        }
+        else
+        {
+            if (InventoryList == NULL)
+            {
+                InventoryList = InvToAdd;
+            }
+            else
+            {
+                ANZInventory* Last = InventoryList;
+                for (ANZInventory* Item = InventoryList; Item != NULL; Item = Item->NextInventory)
+                {
+                    if (Item == InvToAdd)
+                    {
+                        //UE_LOG(UT, Warning, TEXT("AddInventory: %s already in %s's inventory!"), *InvToAdd->GetName(), *GetName());
+                        return false;
+                    }
+                    Last = Item;
+                }
+                Last->NextInventory = InvToAdd;
+            }
+            InvToAdd->GivenTo(this, bAutoActivate);
+            
+            if (InvToAdd->GetNZOwner() == this)
+            {
+/*                ANZGameMode* Game = GetWorld()->GetAuthGameMode<ANZGameMode>();
+                if (Game != NULL && Game->BaseMutator != NULL)
+                {
+                    Game->BaseMutator->ModifyInventory(InvToAdd, this);
+                }*/
+            }
+            
+            return true;
+        }
+    }
+    
     return false;
 }
 
-bool ANZCharacter::RemoveInventory(ANZInventory* InvToRemove)
+void ANZCharacter::RemoveInventory(ANZInventory* InvToRemove)
 {
-    return false;
+    if (InvToRemove != NULL && InventoryList != NULL)
+    {
+        bool bFound = false;
+        if (InvToRemove == InventoryList)
+        {
+            bFound = true;
+            InventoryList = InventoryList->NextInventory;
+        }
+        else
+        {
+            for (ANZInventory* TestInv = InventoryList; TestInv->NextInventory != NULL; TestInv = TestInv->NextInventory)
+            {
+                if (TestInv->NextInventory == InvToRemove)
+                {
+                    bFound = true;
+                    TestInv->NextInventory = InvToRemove->NextInventory;
+                    break;
+                }
+            }
+        }
+        if (!bFound)
+        {
+            //UE_LOG(NZ, Warning, TEXT("RemoveInventory (%s): Item %s was not in this character's inventory!"), *GetName(), *InvToRemove->GetName());
+        }
+        else
+        {
+            if (InvToRemove == PendingWeapon)
+            {
+                PendingWeapon = NULL;
+            }
+            else if (InvToRemove == Weapon)
+            {
+                Weapon = NULL;
+                if (PendingWeapon != NULL)
+                {
+                    WeaponChanged();
+                }
+                else
+                {
+                    WeaponClass = NULL;
+                    WeaponAttachmentClass = NULL;
+                    UpdateWeaponAttachment();
+                }
+                if (!bTearOff)
+                {
+                    if (IsLocallyControlled())
+                    {
+                        SwitchToBestWeapon();
+                    }
+                }
+            }
+            InvToRemove->Removed();
+        }
+    }
 }
 
 ANZInventory* ANZCharacter::K2_FindInventoryType(TSubclassOf<ANZInventory> Type, bool bExactClass) const
@@ -178,14 +273,73 @@ ANZInventory* ANZCharacter::K2_FindInventoryType(TSubclassOf<ANZInventory> Type,
     return NULL;
 }
 
-void ANZCharacter::TossInventory(ANZInventory* InvToToss, FVector ExactVelocity)
+void ANZCharacter::TossInventory(ANZInventory* InvToToss, FVector ExtraVelocity)
 {
-    
+    if (Role == ROLE_Authority)
+    {
+        if (InvToToss == NULL)
+        {
+            //UE_LOG(NZ, Warning, TEXT("TossInventory(): InvToToss == NULL"));
+        }
+        else if (!IsInInventory(InvToToss))
+        {
+            //UE_LOG(NZ, Warning, TEXT("Attempt to remove %s which is not in %s's inventory!"), *InvToToss->GetName(), *GetName());
+        }
+        else
+        {
+            InvToToss->DropFrom(GetActorLocation() + GetActorRotation().Vector() * GetSimpleCollisionCylinderExtent().X,
+                                GetVelocity() + GetActorRotation().RotateVector(ExtraVelocity + FVector(300.0f, 0.0f, 150.0f)));
+        }
+    }
 }
-
 
 void ANZCharacter::DiscardAllInventory()
 {
+    // If we're dumping inventory on the server, make sure pending fire doesn't get stuck
+    ClearPendingFire();
     
+    // Manually iterate here so any items in a bad state still get destroyed and aren't left around
+    ANZInventory* Inv = InventoryList;
+    while (Inv != NULL)
+    {
+        ANZInventory* NextInv = Inv->GetNext();
+        Inv->Destroy();
+        Inv = NextInv;
+    }
+    Weapon = NULL;
+    SavedAmmo.Empty();
+}
+
+bool ANZCharacter::IsInInventory(const ANZInventory* TestInv) const
+{
+    // We explicitly iterate all inventory items, even those with uninitialized/unreplicated Owner here
+    // to avoid weird inconsistencies where the item is in the list but we think it's free to be reassigned
+    for (ANZInventory* Inv = InventoryList; Inv != NULL; Inv = Inv->GetNext())
+    {
+        if (Inv == TestInv)
+        {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+
+
+void ANZCharacter::SwitchWeapon(ANZWeapon* NewWeapon)
+{
+}
+
+void ANZCharacter::WeaponChanged(float OverflowTime)
+{
+}
+
+void ANZCharacter::SwitchToBestWeapon()
+{
+}
+
+void ANZCharacter::UpdateWeaponAttachment()
+{
 }
 

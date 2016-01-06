@@ -11,6 +11,9 @@ class NZGAME_API ANZInventory : public AActor
 {
 	GENERATED_BODY()
     
+    friend bool ANZCharacter::AddInventory(ANZInventory*, bool);
+    friend void ANZCharacter::RemoveInventory(ANZInventory*);
+    
     template<typename> friend class TInventoryIterator;
 	
 public:	
@@ -30,6 +33,16 @@ protected:
     UPROPERTY(BlueprintReadOnly, Category = Inventory)
     ANZCharacter* NZOwner;
     
+    /** Called when this inventory item has been given to the specified character */
+    UFUNCTION(BlueprintImplementableEvent, BlueprintAuthorityOnly)
+    void eventGivenTo(ANZCharacter* NewOwner, bool bAutoActivate);
+    virtual void GivenTo(ANZCharacter* NewOwner, bool bAutoActivate);
+    
+    /** Called when this inventory item has been removed from its owner */
+    UFUNCTION(BlueprintImplementableEvent)
+    void eventRemoved();
+    virtual void Removed();
+    
 public:
     /** 
      * Returns next inventory item in the chain
@@ -39,11 +52,15 @@ public:
     {
         return NextInventory;
     }
+    
     ANZCharacter* GetNZOwner() const
     {
         checkSlow(NZOwner == GetOwner() || Role < ROLE_Authority); // on client RPC to assign NZOwner could be delayed
         return NZOwner;
     }
+    
+    virtual void DropFrom(const FVector& StartLocation, const FVector& TossVelocity);
+    virtual void Destroyed() override;
 };
 
 

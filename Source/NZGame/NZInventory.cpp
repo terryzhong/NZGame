@@ -26,3 +26,18 @@ void ANZInventory::Tick( float DeltaTime )
 
 }
 
+void ANZInventory::GivenTo(ANZCharacter* NewOwner, bool bAutoActivate)
+{
+}
+
+void ANZInventory::Removed()
+{
+}
+
+void ANZInventory::DropFrom(const FVector& StartLocation, const FVector& TossVelocity)
+{
+}
+
+void ANZInventory::Destroyed()
+{
+}
