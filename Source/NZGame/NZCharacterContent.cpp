@@ -8,8 +8,25 @@
 ANZCharacterContent::ANZCharacterContent()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
+    RootComponent = CreateDefaultSubobject<USceneComponent>(FName(TEXT("DummyRoot")));  // needed so Mesh has RelativeLocation/RelativeRotation in the editor
+    Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(FName(TEXT("Mesh")));
+    Mesh->AttachParent = RootComponent;
+    Mesh->AlwaysLoadOnClient = true;
+    Mesh->AlwaysLoadOnServer = true;
+    Mesh->bCastDynamicShadow = true;
+    Mesh->bAffectDynamicIndirectLighting = true;
+    Mesh->PrimaryComponentTick.TickGroup = TG_PrePhysics;
+    Mesh->SetCollisionProfileName(FName(TEXT("CharacterMesh")));
+    Mesh->bGenerateOverlapEvents = false;
+    Mesh->SetCanEverAffectNavigation(false);
+    Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+    Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    Mesh->bEnablePhysicsOnDedicatedServer = true;   // needed for feign death; death ragdoll shouldn't be invoked on server
+    Mesh->bReceivesDecals = false;
+    
+    DisplayName = NSLOCTEXT("NZ", "UntitledCharacter", "Untitled Character");
 }
 
 // Called when the game starts or when spawned
@@ -18,11 +35,3 @@ void ANZCharacterContent::BeginPlay()
 	Super::BeginPlay();
 	
 }
-
-// Called every frame
-void ANZCharacterContent::Tick( float DeltaTime )
-{
-	Super::Tick( DeltaTime );
-
-}
-

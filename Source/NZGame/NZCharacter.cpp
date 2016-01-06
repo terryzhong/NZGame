@@ -2,6 +2,8 @@
 
 #include "NZGame.h"
 #include "NZCharacter.h"
+#include "NZBot.h"
+#include "NZInventory.h"
 
 
 // Sets default values
@@ -13,10 +15,10 @@ ANZCharacter::ANZCharacter()
     static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT(""));
     CharacterData = DefaultCharacterContentRef.Object;
     
-    // 设置胶囊体大小
+    // Set size for collision capsule
     GetCapsuleComponent()->InitCapsuleSize(40.f, 90.f);
     
-    // 创建摄像机组件
+    // Create a CameraComponent
     CharacterCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
     CharacterCameraComponent->AttachParent = GetCapsuleComponent();
     DefaultBaseEyeHeight = 67.5f;
@@ -25,7 +27,7 @@ ANZCharacter::ANZCharacter()
     CrouchedEyeHeight = DefaultCrouchedEyeHeight;
     CharacterCameraComponent->RelativeLocation = FVector(0, 0, DefaultBaseEyeHeight);
     
-    // 设置第一人称模型
+    // Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
     FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
     FirstPersonMesh->SetOnlyOwnerSee(true);
     FirstPersonMesh->AttachParent = CharacterCameraComponent;
@@ -35,7 +37,6 @@ ANZCharacter::ANZCharacter()
     FirstPersonMesh->bReceivesDecals = false;
     FirstPersonMesh->PrimaryComponentTick.AddPrerequisite(this, PrimaryActorTick);
 
-    // 设置第三人称模型
     GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     GetMesh()->bEnablePhysicsOnDedicatedServer = true;  // needed for feign death; death ragdoll shouldn't be invoked on server
@@ -43,15 +44,46 @@ ANZCharacter::ANZCharacter()
     GetMesh()->bLightAttachmentsAsGroup = true;
     //GetMesh()->SetRelativeScale3D(FVector(1.15f));
     
-    // 重载移动组件
-    NZCharacterMovement = Cast<UNZCharacterMovementComponent>(GetCharacterMovement());
+    //NZCharacterMovement = Cast<UNZCharacterMovementComponent>(GetCharacterMovement());
     
 }
 
 // Called when the game starts or when spawned
 void ANZCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+    GetMesh()->SetOwnerNoSee(false);
+    
+    if (GetWorld()->GetNetMode() != NM_DedicatedServer)
+    {
+        APlayerController* PC = GEngine->GetFirstLocalPlayerController(GetWorld());
+        if (PC != NULL && PC->MyHUD != NULL)
+        {
+            PC->MyHUD->AddPostRenderedActor(this);
+        }
+    }
+    
+    if (Health == 0 && Role == ROLE_Authority)
+    {
+        Health = HealthMax;
+    }
+    
+    CharacterCameraComponent->SetRelativeLocation(FVector(0.f, 0.f, DefaultBaseEyeHeight), false);
+    if (CharacterCameraComponent->RelativeLocation.Size2D() > 0.0f)
+    {
+        //UE_LOG(NZ, Warning, TEXT("%s: CameraComponent shouldn't have X/Y translation!"), *GetName());
+    }
+    
+    // Adjust MaxSavedPositionAge for bot tracking purposes
+    for (FConstControllerIterator It = GetWorld()->GetControllerIterator(); It; ++It)
+    {
+        ANZBot* B = Cast<ANZBot>(It->Get());
+        if (B != NULL)
+        {
+            MaxSavedPositionAge = FMath::Max<float>(MaxSavedPositionAge, B->TrackingReactionTime);
+        }
+    }
+
+    Super::BeginPlay();
 	
 }
 
@@ -67,5 +99,93 @@ void ANZCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompone
 {
 	Super::SetupPlayerInputComponent(InputComponent);
 
+}
+
+void ANZCharacter::PostInitializeComponents()
+{
+    Super::PostInitializeComponents();
+    
+    if ((GetNetMode() == NM_DedicatedServer) || (GetCachedScalabilityCVars().DetailMode == 0))
+    {
+        if (GetMesh())
+        {
+            GetMesh()->bDisableClothSimulation = true;
+        }
+    }
+    
+    if (GetNetMode() != NM_DedicatedServer)
+    {
+        for (int32 i = 0; i < GetMesh()->GetNumMaterials(); i++)
+        {
+            // FIXME: NULL check is hack for editor reimport bug breaking number of materials
+            if (GetMesh()->GetMaterial(i) != NULL)
+            {
+                BodyMIs.Add(GetMesh()->CreateAndSetMaterialInstanceDynamic(i));
+            }
+        }
+    }
+}
+
+void ANZCharacter::Destroyed()
+{
+    Super::Destroyed();
+    
+    DiscardAllInventory();
+    
+
+}
+
+
+ANZInventory* ANZCharacter::K2_CreateInventory(TSubclassOf<ANZInventory> NewInvClass, bool bAutoActivate)
+{
+    ANZInventory* Inv = NULL;
+    if (NewInvClass != NULL)
+    {
+        Inv = GetWorld()->SpawnActor<ANZInventory>(NewInvClass);
+        if (Inv != NULL)
+        {
+            if (!AddInventory(Inv, bAutoActivate))
+            {
+                Inv->Destroy();
+                Inv = NULL;
+            }
+        }
+    }
+    
+    return Inv;
+}
+
+bool ANZCharacter::AddInventory(ANZInventory* InvToAdd, bool bAutoActivate)
+{
+    return false;
+}
+
+bool ANZCharacter::RemoveInventory(ANZInventory* InvToRemove)
+{
+    return false;
+}
+
+ANZInventory* ANZCharacter::K2_FindInventoryType(TSubclassOf<ANZInventory> Type, bool bExactClass) const
+{
+    for (TInventoryIterator<> It(this); It; ++It)
+    {
+        if (bExactClass ? (It->GetClass() == Type) : It->IsA(Type))
+        {
+            return *It;
+        }
+    }
+    
+    return NULL;
+}
+
+void ANZCharacter::TossInventory(ANZInventory* InvToToss, FVector ExactVelocity)
+{
+    
+}
+
+
+void ANZCharacter::DiscardAllInventory()
+{
+    
 }
 
