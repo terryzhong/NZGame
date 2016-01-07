@@ -5,6 +5,7 @@
 #include "NZBot.h"
 #include "NZInventory.h"
 #include "NZWeapon.h"
+#include "NZCharacterMovementComponent.h"
 
 
 // Sets default values
@@ -45,7 +46,7 @@ ANZCharacter::ANZCharacter()
     GetMesh()->bLightAttachmentsAsGroup = true;
     //GetMesh()->SetRelativeScale3D(FVector(1.15f));
     
-    //NZCharacterMovement = Cast<UNZCharacterMovementComponent>(GetCharacterMovement());
+    NZCharacterMovement = Cast<UNZCharacterMovementComponent>(GetCharacterMovement());
     
 }
 
