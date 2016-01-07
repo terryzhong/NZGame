@@ -344,6 +344,21 @@ bool ANZCharacter::IsInInventory(const ANZInventory* TestInv) const
     return false;
 }
 
+void ANZCharacter::AddDefaultInventory(TArray<TSubclassOf<ANZInventory>> DefaultInventoryToAdd)
+{
+    ANZPlayerState* NZPlayerState = Cast<ANZPlayerState>(PlayerState);
+    if (NZPlayerState && NZPlayerState->Loadout.Num() > 0)
+    {
+        for (int32 i = 0; i < NZPlayerState->Loadout.Num(); i++)
+        {
+            if (NZPlayerState->GetAvailableCurrency() >= NZPlayerState->Loadout[i]->CurrentCost)
+            {
+                AddInventory(GetWorld()->SpawnActor<ANZInventory>(NZPlayerState->Loadout[i]->ItemClass, FVector(0.0f), FRotator(0, 0, 0)), true);
+                NZPlayerState->AdjustCurrency(NZPlayerState->Loadout[i]->CurrentCost * -1);
+            }
+        }
+    }
+}
 
 
 void ANZCharacter::SwitchWeapon(ANZWeapon* NewWeapon)

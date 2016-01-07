@@ -13,7 +13,23 @@ class NZGAME_API ANZPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 	
+protected:
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = NotifyTeamChanged, Category = PlayerState)
+    TSubclassOf<class ANZCharacterContent> SelectedCharacter;
+    
+    UPROPERTY()
+    ANZCharacter* CachedCharacter;
+    
+public:
+    UFUNCTION(BLueprintCallable, Category = Character)
+    virtual void SetCharacter(const FString& CharacterPath);
+    
+    
 	
 	
-	
+public:
+    UPROPERTY(Replicated)
+    TArray<ANZReplicatedLoadoutInfo*> Loadout;
+    
+    
 };

@@ -157,6 +157,9 @@ public:
     
     bool IsInInventory(const ANZInventory* TestInv) const;
     
+    virtual void AddDefaultInventory(TArray<TSubclassOf<ANZInventory>> DefaultInventoryToAdd);
+    
+    
     
     /** Switches weapons; handles client/server sync, safe to call on either side. 
      Uses classic groups, temporary until we have full weapon switching configurability menu. FIXMESTEVE */

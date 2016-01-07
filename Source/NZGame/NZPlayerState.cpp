@@ -4,5 +4,9 @@
 #include "NZPlayerState.h"
 
 
+void ANZPlayerState::SetCharacter(const FString& CharacterPath)
+{
+    
+}
 
 
