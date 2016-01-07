@@ -102,6 +102,13 @@ void ANZCharacter::SetupPlayerInputComponent(class UInputComponent* InputCompone
 
 }
 
+void ANZCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+}
+
+
 void ANZCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
@@ -308,6 +315,17 @@ void ANZCharacter::DiscardAllInventory()
     }
     Weapon = NULL;
     SavedAmmo.Empty();
+}
+
+void ANZCharacter::InventoryEvent(FName EventName)
+{
+	for (TInventoryIterator<> It(this); It; ++It)
+	{
+/*		if (It->bCallOwnerEvent)
+		{
+			It->OwnerEvent(EventName);
+		}*/
+	}
 }
 
 bool ANZCharacter::IsInInventory(const ANZInventory* TestInv) const

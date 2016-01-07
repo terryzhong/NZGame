@@ -26,6 +26,12 @@ void ANZInventory::Tick( float DeltaTime )
 
 }
 
+void ANZInventory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+}
+
 void ANZInventory::GivenTo(ANZCharacter* NewOwner, bool bAutoActivate)
 {
 }

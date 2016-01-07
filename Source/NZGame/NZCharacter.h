@@ -186,6 +186,15 @@ public:
             PendingFire[i] = 0;
         }
     }
+
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = Pawn)
+	bool bDisallowWeaponFiring;
+public:
+	inline bool IsFiringDisabled() const
+	{
+		return bDisallowWeaponFiring;
+	}
     
     inline ANZWeapon* GetWeapon() const
     {
