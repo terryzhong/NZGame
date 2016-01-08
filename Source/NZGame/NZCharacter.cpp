@@ -7,6 +7,7 @@
 #include "NZWeapon.h"
 #include "NZCharacterMovementComponent.h"
 #include "NZPlayerState.h"
+#include "NZPlayerController.h"
 
 
 // Sets default values
@@ -15,7 +16,7 @@ ANZCharacter::ANZCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT(""));
+    static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT("Class'/Game/Character/HumanMaleBase.HumanMaleBase_C'"));
     CharacterData = DefaultCharacterContentRef.Object;
     
     // Set size for collision capsule
@@ -429,14 +430,12 @@ void ANZCharacter::LocalSwitchWeapon(ANZWeapon* NewWeapon)
 	}
 }
 
-void ANZCharacter::ServerSwitchWeapon(ANZWeapon* NewWeapon)
-{
-
-}
-
 void ANZCharacter::ServerSwitchWeapon_Implementation(ANZWeapon* NewWeapon)
 {
-
+	if (NewWeapon != NULL)
+	{
+		LocalSwitchWeapon(NewWeapon);
+	}
 }
 
 bool ANZCharacter::ServerSwitchWeapon_Validate(ANZWeapon* NewWeapon)
@@ -444,14 +443,13 @@ bool ANZCharacter::ServerSwitchWeapon_Validate(ANZWeapon* NewWeapon)
 	return true;
 }
 
-void ANZCharacter::ClientSwitchWeapon(ANZWeapon* NewWeapon)
-{
-
-}
-
 void ANZCharacter::ClientSwitchWeapon_Implementation(ANZWeapon* NewWeapon)
 {
-
+	LocalSwitchWeapon(NewWeapon);
+	if (Role < ROLE_Authority)
+	{
+		ServerSwitchWeapon(NewWeapon);
+	}
 }
 
 void ANZCharacter::WeaponChanged(float OverflowTime)
@@ -460,6 +458,14 @@ void ANZCharacter::WeaponChanged(float OverflowTime)
 
 void ANZCharacter::SwitchToBestWeapon()
 {
+	if (IsLocallyControlled())
+	{
+		ANZPlayerController* PC = Cast<ANZPlayerController>(Controller);
+		if (PC != NULL)
+		{
+			PC->SwitchToBestWeapon();
+		}
+	}
 }
 
 void ANZCharacter::UpdateWeaponAttachment()

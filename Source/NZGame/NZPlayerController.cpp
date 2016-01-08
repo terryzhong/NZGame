@@ -4,5 +4,12 @@
 #include "NZPlayerController.h"
 
 
+ANZCharacter* ANZPlayerController::GetNZCharacter()
+{
+	return NZCharacter;
+}
 
-
+void ANZPlayerController::SwitchToBestWeapon()
+{
+	
+}

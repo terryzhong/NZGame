@@ -13,7 +13,16 @@ class NZGAME_API ANZPlayerController : public ANZBasePlayerController
 {
 	GENERATED_BODY()
 	
+private:
+	UPROPERTY()
+	class ANZCharacter* NZCharacter;
 	
-	
-	
+public:
+	UFUNCTION(BlueprintCallable, Category = PlayerController)
+	virtual ANZCharacter* GetNZCharacter();
+
+	UFUNCTION(exec)
+	virtual void SwitchToBestWeapon();
+
+
 };

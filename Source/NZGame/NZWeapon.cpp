@@ -12,6 +12,3 @@ bool ANZWeapon::PutDown()
 {
 	return false;
 }
-
-
-

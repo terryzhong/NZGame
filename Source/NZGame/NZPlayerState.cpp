@@ -3,6 +3,8 @@
 #include "NZGame.h"
 #include "NZPlayerState.h"
 
+
+
 void ANZPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
