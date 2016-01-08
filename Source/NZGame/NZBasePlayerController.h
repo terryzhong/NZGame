@@ -14,7 +14,7 @@ class NZGAME_API ANZBasePlayerController : public APlayerController
 	GENERATED_BODY()
 	
     UPROPERTY()
-    ANZPlayerState* NZPlayerState;
+    class ANZPlayerState* NZPlayerState;
     
     
 	

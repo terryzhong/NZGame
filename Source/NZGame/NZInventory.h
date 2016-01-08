@@ -31,7 +31,7 @@ protected:
     ANZInventory* NextInventory;
 	
     UPROPERTY(BlueprintReadOnly, Category = Inventory)
-    ANZCharacter* NZOwner;
+    class ANZCharacter* NZOwner;
     
     /** Called when this inventory item has been given to the specified character */
     UFUNCTION(BlueprintImplementableEvent, BlueprintAuthorityOnly)

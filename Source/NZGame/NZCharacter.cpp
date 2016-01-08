@@ -6,6 +6,7 @@
 #include "NZInventory.h"
 #include "NZWeapon.h"
 #include "NZCharacterMovementComponent.h"
+#include "NZPlayerState.h"
 
 
 // Sets default values
@@ -351,11 +352,11 @@ void ANZCharacter::AddDefaultInventory(TArray<TSubclassOf<ANZInventory>> Default
     {
         for (int32 i = 0; i < NZPlayerState->Loadout.Num(); i++)
         {
-            if (NZPlayerState->GetAvailableCurrency() >= NZPlayerState->Loadout[i]->CurrentCost)
+/*            if (NZPlayerState->GetAvailableCurrency() >= NZPlayerState->Loadout[i]->CurrentCost)
             {
                 AddInventory(GetWorld()->SpawnActor<ANZInventory>(NZPlayerState->Loadout[i]->ItemClass, FVector(0.0f), FRotator(0, 0, 0)), true);
                 NZPlayerState->AdjustCurrency(NZPlayerState->Loadout[i]->CurrentCost * -1);
-            }
+            }*/
         }
     }
 }
@@ -363,6 +364,94 @@ void ANZCharacter::AddDefaultInventory(TArray<TSubclassOf<ANZInventory>> Default
 
 void ANZCharacter::SwitchWeapon(ANZWeapon* NewWeapon)
 {
+	if (NewWeapon != NULL && !IsDead())
+	{
+		if (Role == ROLE_Authority)
+		{
+			ClientSwitchWeapon(NewWeapon);
+		}
+		else if (!IsLocallyControlled())
+		{
+			//UE_LOG(NZ, Warning, TEXT("Illegal SwitchWeapon() call on remote client"));
+		}
+		else
+		{
+			LocalSwitchWeapon(NewWeapon);
+			ServerSwitchWeapon(NewWeapon);
+		}
+	}
+}
+
+void ANZCharacter::LocalSwitchWeapon(ANZWeapon* NewWeapon)
+{
+	if (!IsDead())
+	{
+		// Make sure clients don't try to switch to weapons that haven't been fully replicated/initialized or that have been removed and the client doesn't know yet
+		if (NewWeapon != NULL && (NewWeapon->GetNZOwner() == NULL || (Role == ROLE_Authority && !IsInInventory(NewWeapon))))
+		{
+			ClientSwitchWeapon(Weapon);
+		}
+		else
+		{
+			if (Weapon == NULL)
+			{
+				if (NewWeapon != NULL)
+				{
+					// Initial equip
+					PendingWeapon = NewWeapon;
+					WeaponChanged();
+				}
+			}
+			else if (NewWeapon != NULL)
+			{
+				if (NewWeapon != Weapon)
+				{
+					if (Weapon->PutDown())
+					{
+						// Standard weapon switch to some other weapon
+						PendingWeapon = NewWeapon;
+					}
+				}
+				else if (PendingWeapon != NULL)
+				{
+					// Switching back to weapon that was on its way down
+					PendingWeapon = NULL;
+					Weapon->BringUp();
+				}
+			}
+			else if (Weapon != NULL && PendingWeapon != NULL && PendingWeapon->PutDown())
+			{
+				// Stopping weapon switch in progress by passing NULL
+				PendingWeapon = NULL;
+				Weapon->BringUp();
+			}
+		}
+	}
+}
+
+void ANZCharacter::ServerSwitchWeapon(ANZWeapon* NewWeapon)
+{
+
+}
+
+void ANZCharacter::ServerSwitchWeapon_Implementation(ANZWeapon* NewWeapon)
+{
+
+}
+
+bool ANZCharacter::ServerSwitchWeapon_Validate(ANZWeapon* NewWeapon)
+{
+	return true;
+}
+
+void ANZCharacter::ClientSwitchWeapon(ANZWeapon* NewWeapon)
+{
+
+}
+
+void ANZCharacter::ClientSwitchWeapon_Implementation(ANZWeapon* NewWeapon)
+{
+
 }
 
 void ANZCharacter::WeaponChanged(float OverflowTime)
@@ -377,3 +466,7 @@ void ANZCharacter::UpdateWeaponAttachment()
 {
 }
 
+bool ANZCharacter::IsDead()
+{
+	return bTearOff || IsPendingKillPending();
+}

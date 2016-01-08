@@ -18,18 +18,20 @@ protected:
     TSubclassOf<class ANZCharacterContent> SelectedCharacter;
     
     UPROPERTY()
-    ANZCharacter* CachedCharacter;
+    class ANZCharacter* CachedCharacter;
     
 public:
     UFUNCTION(BLueprintCallable, Category = Character)
     virtual void SetCharacter(const FString& CharacterPath);
     
+	UFUNCTION(BlueprintNativeEvent)
+	void NotifyTeamChanged();
     
 	
 	
 public:
     UPROPERTY(Replicated)
-    TArray<ANZReplicatedLoadoutInfo*> Loadout;
+    TArray<class ANZReplicatedLoadoutInfo*> Loadout;
     
     
 };

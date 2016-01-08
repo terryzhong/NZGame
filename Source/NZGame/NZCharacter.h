@@ -165,6 +165,18 @@ public:
      Uses classic groups, temporary until we have full weapon switching configurability menu. FIXMESTEVE */
     UFUNCTION(BlueprintCallable, Category = Pawn)
     virtual void SwitchWeapon(ANZWeapon* NewWeapon);
+
+	/** Switches weapon locally, must execute independently on both server and client */
+	virtual void LocalSwitchWeapon(ANZWeapon* NewWeapon);
+
+	/** RPC to do weapon switch */
+	UFUNCTION(Server, Reliable, WithValidation)
+	virtual void ServerSwitchWeapon(ANZWeapon* NewWeapon);
+	UFUNCTION(Client, Reliable)
+	virtual void ClientSwitchWeapon(ANZWeapon* NewWeapon);
+
+	/** Utility to redirect to SwitchToBestWeapon() to the character's Controller (human or AI) */
+	void SwitchToBestWeapon();
     
 protected:
     UPROPERTY(BlueprintReadOnly, Category = Pawn)
@@ -221,15 +233,20 @@ public:
      * @param OverflowTime - Amount of time past end of timer that previous weapon PutDown() used (due to frame delta) - pass onto BringUp() to keep things in sync
      */
     virtual void WeaponChanged(float OverflowTime = 0.0f);
-    
-    /** Utility to redirect to SwitchToBestWeapon() to the character's Controller (human or AI) */
-    void SwitchToBestWeapon();
-    
+
+
+
     UFUNCTION()
     virtual void UpdateWeaponAttachment();
     
 
     
+
+
+
+	UFUNCTION(BlueprintCallable, Category = Pawn)
+	bool IsDead();
+
     
     
     UPROPERTY(BlueprintReadOnly, Category = Pawn)

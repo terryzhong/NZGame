@@ -13,9 +13,11 @@ class NZGAME_API ANZReplicatedLoadoutInfo : public AInfo
 {
 	GENERATED_BODY()
 	
+	// The weapon
 	UPROPERTY(Replicated)
-    TSubclassOf<ANInventory> ItemClass;
+    TSubclassOf<class ANZInventory> ItemClass;
     
+	// What rounds are this weapon avaliable in
     UPROPERTY(Replicated)
     uint8 RoundMask;
     
@@ -25,7 +27,7 @@ class NZGAME_API ANZReplicatedLoadoutInfo : public AInfo
     UPROPERTY(Replicated)
     uint32 bPurchaseOnly:1;
 	
+	// What is the current cost of this weapon
     UPROPERTY(Replicated)
     float CurrentCost;
-	
 };
