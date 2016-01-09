@@ -2,13 +2,14 @@
 
 #include "NZGame.h"
 #include "NZWeaponAttachment.h"
+#include "NZCharacter.h"
 
 
 // Sets default values
 ANZWeaponAttachment::ANZWeaponAttachment()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 }
 
@@ -19,10 +20,24 @@ void ANZWeaponAttachment::BeginPlay()
 	
 }
 
-// Called every frame
-void ANZWeaponAttachment::Tick( float DeltaTime )
+bool ANZWeaponAttachment::CancelImpactEffect(const FHitResult& ImpactHit)
 {
-	Super::Tick( DeltaTime );
-
+    return ((!ImpactHit.Actor.IsValid() && !ImpactHit.Component.IsValid()) ||
+            Cast<ANZCharacter>(ImpactHit.Actor.Get()) ||
+            Cast<ANZProjectile>(ImpactHit.Actor.Get());
 }
 
+void ANZWeaponAttachment::AttachToOwner_Implementation()
+{
+    AttachToOwnerNative();
+}
+
+void ANZWeaponAttachment::AttachToOwnerNative()
+{
+    
+}
+
+void ANZWeaponAttachment::DetachFromOwner_Implementation()
+{
+    
+}

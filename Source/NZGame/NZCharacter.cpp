@@ -8,6 +8,7 @@
 #include "NZCharacterMovementComponent.h"
 #include "NZPlayerState.h"
 #include "NZPlayerController.h"
+#include "NZWeaponAttachment.h"
 
 
 // Sets default values
@@ -454,6 +455,33 @@ void ANZCharacter::ClientSwitchWeapon_Implementation(ANZWeapon* NewWeapon)
 
 void ANZCharacter::WeaponChanged(float OverflowTime)
 {
+    if (PendingWeapon != NULL && PendingWeapon->GetNZOwner() == this)
+    {
+        checkSlow(IsInInventory(PendingWeapon));
+        Weapon = PendingWeapon;
+        PendingWeapon = NULL;
+        WeaponClass = Weapon->GetClass();
+        WeaponAttachmentClass = Weapon->AttachmentType;
+        Weapon->BringUp(OverflowTime);
+        //UpdateWeaponSkinPrefFromProfile();
+        UpdateWeaponAttachment();
+    }
+    else if (Weapon != NULL && Weapon->GetNZOwner() == this)
+    {
+        Weapon->BringUp(OverflowTime);
+    }
+    else
+    {
+        Weapon = NULL;
+        WeaponClass = NULL;
+        WeaponAttachmentClass = NULL;
+        UpdateWeaponAttachment();
+    }
+    
+/*    if (GhostComponent->bChostRecording && Weapon != nullptr)
+    {
+        GhostComponent->GhostSwitchWeapon(Weapon);
+    }*/
 }
 
 void ANZCharacter::SwitchToBestWeapon()
@@ -470,6 +498,32 @@ void ANZCharacter::SwitchToBestWeapon()
 
 void ANZCharacter::UpdateWeaponAttachment()
 {
+    if (GetNetMode() != NM_DedicatedServer)
+    {
+        TSubclassOf<ANZWeaponAttachment> NewAttachmentClass = WeaponAttachmentClass;
+        if (NewAttachmentClass == NULL)
+        {
+            NewAttachmentClass = (WeaponClass != NULL) ? WeaponClass.GetDefaultObject()->AttachmentType : NULL;
+        }
+        if (WeaponAttachment != NULL && (NewAttachmentClass == NULL || (WeaponAttachment != NULL && WeaponAttachment->GetClass() != NewAttachmentClass)))
+        {
+            WeaponAttachment->Destroy();
+            WeaponAttachment = NULL;
+        }
+        if (WeaponAttachment == NULL && NewAttachmentClass != NULL)
+        {
+            FActorSpawnParameters Params;
+            Params.Instigator = this;
+            Params.Owner = this;
+            WeaponAttachment = GetWorld()->SpawnActor<ANZWeaponAttachment>(NewAttachmentClass, Params);
+            if (WeaponAttachment != NULL)
+            {
+                WeaponAttachment->AttachToOwner();
+            }
+        }
+        
+        //UpdateWeaponSkin();
+    }
 }
 
 bool ANZCharacter::IsDead()
