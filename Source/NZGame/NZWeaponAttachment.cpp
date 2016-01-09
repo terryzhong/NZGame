@@ -3,6 +3,7 @@
 #include "NZGame.h"
 #include "NZWeaponAttachment.h"
 #include "NZCharacter.h"
+#include "NZProjectile.h"
 
 
 // Sets default values
@@ -24,7 +25,7 @@ bool ANZWeaponAttachment::CancelImpactEffect(const FHitResult& ImpactHit)
 {
     return ((!ImpactHit.Actor.IsValid() && !ImpactHit.Component.IsValid()) ||
             Cast<ANZCharacter>(ImpactHit.Actor.Get()) ||
-            Cast<ANZProjectile>(ImpactHit.Actor.Get());
+            Cast<ANZProjectile>(ImpactHit.Actor.Get()));
 }
 
 void ANZWeaponAttachment::AttachToOwner_Implementation()

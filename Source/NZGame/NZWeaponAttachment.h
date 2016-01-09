@@ -68,26 +68,31 @@ public:
     UPROPERTY(EditAnywhere, Category = Weapon)
     TArray<TSubclassOf<class ANZImpactEffect> > ImpactEffects;
     
-    /**  */
+    /** Throttling for impact effects - don't spawn another unless last effect is farther than this away or longer age than MaxImpactEffectSkipTime */
     UPROPERTY(EditAnywhere, Category = Weapon)
     float ImpactEffectSkipDistance;
     
+	/** Throttling for impact effects - don't spawn another unless last effect is farther than ImpactEffectSkipDistance away or longer ago than this */
     UPROPERTY(EditAnywhere, Category = Weapon)
     float MaxImpactEffectSkipTime;
     
+	/** FlashLocation for last played impact effect */
     UPROPERTY(BlueprintReadWrite, Category = Weapon)
     FVector LastImpactEffectLocation;
     
+	/** Last time an impact effect was played */
     UPROPERTY(BlueprintReadWrite, Category = Weapon)
     float LastImpactEffectTime;
     
+	/** If set, get impact effect from weapon class (most weapons use game instant hit impact for 1p and 3p) */
     UPROPERTY(EditDefaultsOnly, Category = Weapon)
     bool bCopyWeaponImpactEffects;
     
-    
+    /** Optional bullet whip sound when instant hit shots pass close by a local player without hitting */
     UPROPERTY(EditDefaultsOnly, Category = Weapon)
     USoundBase* BulletWhip;
     
+	/** Maximum distance from fire line player can be and still get the bullet whip sound */
     UPROPERTY(EditDefaultsOnly, Category = Weapon)
     float MaxBulletWhipDist;
     
