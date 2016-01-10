@@ -32,6 +32,5 @@ public:
 public:
     UPROPERTY(Replicated)
     TArray<class ANZReplicatedLoadoutInfo*> Loadout;
-    
-    
+
 };

@@ -17,7 +17,7 @@ ANZCharacter::ANZCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT("Class'/Game/Character/HumanMaleBase.HumanMaleBase_C'"));
+    static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT("Class'/Game/Characters/Malcolm/Malcolm.Malcolm_C'"));
     CharacterData = DefaultCharacterContentRef.Object;
     
     // Set size for collision capsule

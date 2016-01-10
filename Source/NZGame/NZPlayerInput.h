@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "NZBaseGameMode.h"
-#include "NZGameMode.generated.h"
+#include "GameFramework/PlayerInput.h"
+#include "NZPlayerInput.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class NZGAME_API ANZGameMode : public ANZBaseGameMode
+class NZGAME_API UNZPlayerInput : public UPlayerInput
 {
 	GENERATED_BODY()
 	

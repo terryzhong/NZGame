@@ -5,6 +5,18 @@
 #include "GameFramework/PlayerController.h"
 #include "NZBasePlayerController.generated.h"
 
+UENUM(BlueprintType)
+namespace EInputMode
+{
+    enum Type
+    {
+        EIM_None,
+        EIM_GameOnly,
+        EIM_GameAndUI,
+        EIM_UIOnly,
+    };
+}
+
 /**
  * 
  */
@@ -13,11 +25,22 @@ class NZGAME_API ANZBasePlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	
+public:
+
     UPROPERTY()
     class ANZPlayerState* NZPlayerState;
     
+    void InitPlayerState();
+	
     
-	
-	
-	
+#if !USE_SERVER
+    // Called every frame
+    virtual void Tick( float DeltaSeconds ) override;
+    
+    void UpdateInputMode();
+    
+    UPROPERTY()
+    TEnumAsByte<EInputMode::Type> InputMode;
+#endif
+    
 };
