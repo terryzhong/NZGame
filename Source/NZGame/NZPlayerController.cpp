@@ -195,6 +195,28 @@ void ANZPlayerController::ProcessPlayerInput(const float DeltaTime, const bool b
 
 void ANZPlayerController::PawnPendingDestroy(APawn* InPawn)
 {
+    if (IsInState(NAME_Inactive))
+    {
+        //UE_LOG(LogPath, Log, TEXT("PawnPendingDestroy while inactive %s"), *GetName());
+    }
+    
+    if (InPawn == GetPawn() && InPawn != NULL)
+    {
+        GetPawn()->UnPossessed();
+        SetPawn(NULL);
+        
+        FRotator AdjustedCameraRot = GetControlRotation();
+        AdjustedCameraRot.Pitch = -45.0f;
+        AdjustedCameraRot.Roll = 0.f;
+        SetControlRotation(AdjustedCameraRot);
+        
+        ChangeState(NAME_Inactive);
+        
+        if (PlayerState == NULL)
+        {
+            Destroy();
+        }
+    }
 }
 
 void ANZPlayerController::SpawnPlayerCameraManager()
