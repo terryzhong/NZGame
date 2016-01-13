@@ -39,6 +39,8 @@ public:
     class ANZHUD* MyNZHUD;
     
     
+
+    
     virtual void BeginPlay() override;
     virtual void Destroyed() override;
     virtual void InitInputSystem() override;
@@ -59,6 +61,18 @@ public:
     void ThrowWeapon();
     UFUNCTION(Server, Reliable, WithValidation)
     virtual void ServerThrowWeapon();
+    
+    int32 PreviousWeaponGroup;
+    
+    virtual void SwitchWeaponInSequence(bool bPrev);
+    
+    UFUNCTION(Exec)
+    virtual void SwitchWeapon(int32 Group);
+    
+    UFUNCTION(Exec)
+    virtual void SwitchWeaponGroup(int32 Group);
+    
+    
     
     
 protected:

@@ -7,6 +7,7 @@
 #include "NZHUD.h"
 #include "NZPlayerState.h"
 #include "NZPlayerInput.h"
+#include "NZProfileSettings.h"
 
 
 ANZCharacter* ANZPlayerController::GetNZCharacter()
@@ -272,6 +273,68 @@ bool ANZPlayerController::ServerThrowWeapon_Validate()
 {
     return true;
 }
+
+void ANZPlayerController::SwitchWeaponInSequence(bool bPrev)
+{
+    if (NZCharacter != NULL && IsLocalPlayerController() && /*NZCharacter->EmoteCount == 0 &&*/ !NZCharacter->IsRagdoll())
+    {
+        if (NZCharacter->GetWeapon() == NULL)
+        {
+            SwitchToBestWeapon();
+        }
+        else
+        {
+            UNZProfileSettings* ProfileSettings = NULL;
+            
+            if (Cast<UNZLocalPlayer>(Player))
+            {
+                ProfileSettings = Cast<UNZLocalPlayer>(Player)->GetProfileSettings();
+            }
+            
+            ANZWeapon* Best = NULL;
+            ANZWeapon* WraparoundChoice = NULL;
+            ANZWeapon* CurrentWeapon = (NZCharacter->GetPendingWeapon() != NULL) ? NZCharacter->GetPendingWeapon() : NZCharacter->GetWeapon();
+            
+            for (TInventoryIterator<ANZWeapon> It(NZCharacter); It; ++It)
+            {
+                ANZWeapon* Weap = *It;
+                if (Weap != CurrentWeapon && Weap->HasAnyAmmo())
+                {
+/*                    if (Weap->FollowsInList(CurrentWeapon) == bPrev)
+                    {
+                        if (WraparoundChoice == NULL || (Weap->FollowsInList(WraparoundChoice) == bPrev))
+                        {
+                            WraparoundChoice = Weap;
+                        }
+                    }
+                    else if (Best == NULL || (Weap->FollowsInList(Best) == bPrev))
+                    {
+                        Best = Weap;
+                    }*/
+                }
+            }
+            
+            if (Best == NULL)
+            {
+                Best = WraparoundChoice;
+            }
+            
+            NZCharacter->SwitchWeapon(Best);
+        }
+    }
+}
+
+void ANZPlayerController::SwitchWeapon(int32 Group)
+{
+    
+}
+
+void ANZPlayerController::SwitchWeaponGroup(int32 Group)
+{
+    
+}
+
+
 
 void ANZPlayerController::FOV(float NewFOV)
 {

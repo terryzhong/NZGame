@@ -530,3 +530,9 @@ bool ANZCharacter::IsDead()
 {
 	return bTearOff || IsPendingKillPending();
 }
+
+FVector ANZCharacter::GetLocationCenterOffset() const
+{
+    return (!IsRagdoll() || RootComponent != GetMesh()) ? FVector::ZeroVector : (GetMesh()->Bounds.Origin - GetMesh()->GetComponentLocation());
+}
+

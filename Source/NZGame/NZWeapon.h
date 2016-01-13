@@ -26,6 +26,20 @@ public:
     UFUNCTION()
     virtual void OnRep_Ammo();
     
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Weapon)
+    int32 MaxAmmo;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<int32> AmmoCost;
+    
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    //TArray<TSubclassOf<ANZProjectile> > ProjClass;
+    
+    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    //TArray<class FInstantHitDamageInfo> InstantHitInfo;
+    
+    
+    
     
     
     UFUNCTION(BlueprintCallable, Category = Weapon)

@@ -285,6 +285,21 @@ protected:
 public:
     inline const TArray<UMaterialInstanceDynamic*>& GetBodyMIs() const { return BodyMIs; }
     
+    
+protected:
+    /** Set during ragdoll recovery (still blending out physics, playing recover anim, etc) */
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    bool bInRagdollRecovery;
+    
+public:
+    /** Return true if character is in a ragdoll state */
+    UFUNCTION(BlueprintCallable, Category = "Pawn | Character")
+    virtual bool IsRagdoll() const
+    {
+        return bInRagdollRecovery || (RootComponent == GetMesh() && GetMesh()->IsSimulatingPhysics());
+    }
+    
+    virtual FVector GetLocationCenterOffset() const;
 	
 };
 

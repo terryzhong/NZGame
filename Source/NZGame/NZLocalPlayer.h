@@ -17,5 +17,22 @@ public:
     
     virtual bool AreMenuOpen();
 	
+    
+    
+    virtual void LoadProfileSettings();
+    UFUNCTION()
+    virtual void SaveProfileSettings();
+    virtual void ClearProfileSettings();
+    
+    virtual class UNZProfileSettings* GetProfileSettings() { return CurrentProfileSetttings; }
+    
+    //virtual void SetNickname(FString NewName);
 	
+protected:
+    
+    UPROPERTY()
+    class UNZProfileSettings* CurrentProfileSetttings;
+    
+    
+    
 };

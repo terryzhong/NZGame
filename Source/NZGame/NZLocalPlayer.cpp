@@ -10,3 +10,19 @@ bool UNZLocalPlayer::AreMenuOpen()
 {
     return false;
 }
+
+void UNZLocalPlayer::LoadProfileSettings()
+{
+    
+}
+
+void UNZLocalPlayer::SaveProfileSettings()
+{
+    
+}
+
+void UNZLocalPlayer::ClearProfileSettings()
+{
+    
+}
+
