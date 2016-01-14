@@ -294,14 +294,14 @@ void ANZPlayerController::SwitchWeaponInSequence(bool bPrev)
             ANZWeapon* Best = NULL;
             ANZWeapon* WraparoundChoice = NULL;
             ANZWeapon* CurrentWeapon = (NZCharacter->GetPendingWeapon() != NULL) ? NZCharacter->GetPendingWeapon() : NZCharacter->GetWeapon();
-            
             for (TInventoryIterator<ANZWeapon> It(NZCharacter); It; ++It)
             {
                 ANZWeapon* Weap = *It;
                 if (Weap != CurrentWeapon && Weap->HasAnyAmmo())
                 {
-/*                    if (Weap->FollowsInList(CurrentWeapon) == bPrev)
+                    if (Weap->FollowsInList(CurrentWeapon) == bPrev)
                     {
+                        // Remember last weapon in list as possible wraparound choice
                         if (WraparoundChoice == NULL || (Weap->FollowsInList(WraparoundChoice) == bPrev))
                         {
                             WraparoundChoice = Weap;
@@ -310,7 +310,7 @@ void ANZPlayerController::SwitchWeaponInSequence(bool bPrev)
                     else if (Best == NULL || (Weap->FollowsInList(Best) == bPrev))
                     {
                         Best = Weap;
-                    }*/
+                    }
                 }
             }
             
@@ -322,16 +322,59 @@ void ANZPlayerController::SwitchWeaponInSequence(bool bPrev)
             NZCharacter->SwitchWeapon(Best);
         }
     }
+    else if (PlayerState && PlayerState->bIsSpectator && PlayerCameraManager)
+    {
+        float Offset = 10000.f * GetWorld()->GetDeltaSeconds();
+        if (bPrev)
+        {
+            Offset *= -1.f;
+        }
+        
+        // todo:
+    }
 }
 
 void ANZPlayerController::SwitchWeapon(int32 Group)
 {
-    
+    SwitchWeaponGroup(Group);
 }
 
 void ANZPlayerController::SwitchWeaponGroup(int32 Group)
 {
-    
+    if (NZCharacter != NULL && IsLocalPlayerController() && /*NZCharacter->EmoteCount == 0 &&*/ !NZCharacter->IsRagdoll())
+    {
+        // If Current weapon isn't in the specified group, pick lowest GroupSlot in that group
+        // If it is, then pick next highest slot, or wrap around to lowest if no higher slot
+        ANZWeapon* CurrWeapon = (NZCharacter->GetPendingWeapon() != NULL) ? NZCharacter->GetPendingWeapon() : NZCharacter->GetWeapon();
+        ANZWeapon* LowestSlotWeapon = NULL;
+        ANZWeapon* NextSlotWeapon = NULL;
+        for (TInventoryIterator<ANZWeapon> It(NZCharacter); It; ++It)
+        {
+            ANZWeapon* Weap = *It;
+            if (Weap != NZCharacter->GetWeapon() && Weap->HasAnyAmmo())
+            {
+                if (Weap->Group == Group)
+                {
+                    if (LowestSlotWeapon == NULL || LowestSlotWeapon->GroupSlot > Weap->GroupSlot)
+                    {
+                        LowestSlotWeapon = Weap;
+                    }
+                    if (CurrWeapon != NULL && CurrWeapon->Group == Group && Weap->GroupSlot > CurrWeapon->GroupSlot && (NextSlotWeapon == NULL || NextSlotWeapon->GroupSlot > Weap->GroupSlot))
+                    {
+                        NextSlotWeapon = Weap;
+                    }
+                }
+            }
+        }
+        if (NextSlotWeapon != NULL)
+        {
+            NZCharacter->SwitchWeapon(NextSlotWeapon);
+        }
+        else if (LowestSlotWeapon != NULL)
+        {
+            NZCharacter->SwitchWeapon(LowestSlotWeapon);
+        }
+    }
 }
 
 

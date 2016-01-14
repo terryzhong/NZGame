@@ -36,3 +36,16 @@ bool ANZWeapon::PutDown()
 {
 	return false;
 }
+
+bool ANZWeapon::FollowsInList(ANZWeapon* OtherWeapon)
+{
+    // Return true if this weapon is after OtherWeapon in the weapon list
+    if (!OtherWeapon)
+    {
+        return true;
+    }
+    // If same group, order by slot, else order by group number
+    return (Group == OtherWeapon->Group) ? (GroupSlot > OtherWeapon->GroupSlot) : (Group > OtherWeapon->Group);
+}
+
+
