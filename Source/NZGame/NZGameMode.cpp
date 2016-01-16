@@ -2,7 +2,21 @@
 
 #include "NZGame.h"
 #include "NZGameMode.h"
+#include "NZHUD.h"
+#include "NZGameState.h"
+#include "NZPlayerState.h"
+#include "NZPlayerController.h"
 
 
-
+ANZGameMode::ANZGameMode()
+{
+    HUDClass = ANZHUD::StaticClass();
+    
+    GameStateClass = ANZGameState::StaticClass();
+    PlayerStateClass = ANZPlayerState::StaticClass();
+    
+    
+    PlayerControllerClass = ANZPlayerController::StaticClass();
+    
+}
 

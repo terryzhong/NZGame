@@ -2,20 +2,18 @@
 
 #pragma once
 
-#include "NZBaseGameMode.h"
-#include "NZGameMode.generated.h"
+#include "GameFramework/GameState.h"
+#include "NZGameState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class NZGAME_API ANZGameMode : public ANZBaseGameMode
+class NZGAME_API ANZGameState : public AGameState
 {
 	GENERATED_BODY()
 	
-public:
-    ANZGameMode();
-    
+	
 	
 	
 };

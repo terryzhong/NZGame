@@ -6,6 +6,11 @@
 
 
 
+ANZBaseGameMode::ANZBaseGameMode()
+{
+    ReplaySpectatorPlayerControllerClass = NULL;
+}
+
 void ANZBaseGameMode::PreLogin(const FString& Options, const FString& Address, const TSharedPtr<const FUniqueNetId>& UniqueId, FString& ErrorMessage)
 {
     Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
@@ -45,6 +50,11 @@ void ANZBaseGameMode::PostInitProperties()
 
 void ANZBaseGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
+    if (!PlayerPawnObject.IsNull())
+    {
+        DefaultPawnClass = Cast<UClass>(StaticLoadObject(UClass::StaticClass(), NULL, *PlayerPawnObject.ToStringReference().ToString(), NULL, LOAD_NoWarn));
+    }
+    
     Super::InitGame(MapName, Options, ErrorMessage);
     
 }
