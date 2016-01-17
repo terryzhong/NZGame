@@ -8,6 +8,8 @@
 #include "NZPlayerState.h"
 #include "NZPlayerInput.h"
 #include "NZProfileSettings.h"
+#include "NZGameState.h"
+#include "NZGameMode.h"
 
 
 
@@ -239,6 +241,77 @@ void ANZPlayerController::SpawnPlayerCameraManager()
 }
 
 
+void ANZPlayerController::ServerRestartPlayerAltFire_Implementation()
+{
+    if (NZCharacter != NULL)
+    {
+        NZPlayerState->bChosePrimaryRespawnChoice = false;
+        NZPlayerState->ForceNetUpdate();
+    }
+    
+    ANZGameState* GameState = GetWorld()->GetGameState<ANZGameState>();
+    if (GameState && !GameState->HasMatchStarted())
+    {
+        if (GameState->GetMatchState() != MatchState::CountdownToBegin && GameState->GetMatchState() != MatchState::PlayerIntro)
+        {
+            ServerSwitchTeam();
+        }
+    }
+    else
+    {
+        ANZGameMode* GameMode = GetWorld()->GetAuthGameMode<ANZGameMode>();
+        if (GameMode && !GameMode->PlayerCanAltRestart(this))
+        {
+            return;
+        }
+    }
+    
+    Super::ServerRestartPlayer_Implementation();
+}
+
+bool ANZPlayerController::ServerRestartPlayerAltFire_Validate()
+{
+    return true;
+}
+
+void ANZPlayerController::ServerSwitchTeam_Implementation()
+{
+    
+}
+
+bool ANZPlayerController::ServerSwitchTeam_Validate()
+{
+    return true;
+}
+
+
+void ANZPlayerController::SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
+{
+    Super::SetViewTarget(NewViewTarget, TransitionParams);
+    
+    // todo:
+}
+
+void ANZPlayerController::ServerViewSelf_Implementation(FViewTargetTransitionParams TransitionParams)
+{
+    Super::ServerViewSelf_Implementation(TransitionParams);
+
+    // todo:
+}
+
+void ANZPlayerController::ViewSelf(FViewTargetTransitionParams TransitionParams)
+{
+    ServerViewSelf(TransitionParams);
+}
+
+void ANZPlayerController::FindGoodView(const FVector& Targetloc, bool bIsUpdate)
+{
+    // todo:
+}
+
+
+
+
 void ANZPlayerController::SwitchToBestWeapon()
 {
     if (NZCharacter != NULL && IsLocalPlayerController())
@@ -382,6 +455,74 @@ void ANZPlayerController::SwitchWeaponGroup(int32 Group)
         {
             NZCharacter->SwitchWeapon(LowestSlotWeapon);
         }
+    }
+}
+
+void ANZPlayerController::OnFire()
+{
+    if (GetPawn() != NULL)
+    {
+        new(DeferredFireInputs) FDeferredFireInput(0, true);
+    }
+    else if (IsInState(NAME_Spectating))
+    {
+        // todo:
+        
+        if ((PlayerState == NULL || !PlayerState->bOnlySpectator) && bPlayerIsWaiting)
+        {
+            ServerRestartPlayer();
+        }
+    }
+    else
+    {
+        // todo:
+        
+        ServerRestartPlayer();
+    }
+}
+
+void ANZPlayerController::OnStopFire()
+{
+    if (GetPawn() != NULL)
+    {
+        new(DeferredFireInputs) FDeferredFireInput(0, false);
+    }
+}
+
+void ANZPlayerController::OnAltFire()
+{
+    if (GetPawn() != NULL)
+    {
+        new(DeferredFireInputs) FDeferredFireInput(1, true);
+    }
+    else if (IsInState(NAME_Spectating) &&
+             GetWorld()->GetGameState() != NULL && GetWorld()->GetGameState()->HasMatchStarted())
+    {
+        // todo:
+        
+        if ((PlayerState == NULL || !PlayerState->bOnlySpectator) && bPlayerIsWaiting)
+        {
+            ServerRestartPlayer();
+        }
+        else
+        {
+            bAutoCam = false;
+            ViewSelf();
+        }
+    }
+    else
+    {
+        // todo:
+        
+        ServerRestartPlayerAltFire();
+    }
+}
+
+void ANZPlayerController::OnStopAltFire()
+{
+    if (GetPawn() != NULL)
+    {
+        new(DeferredFireInputs) FDeferredFireInput(1, false);
     }
 }
 

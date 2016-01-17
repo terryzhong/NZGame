@@ -8,6 +8,7 @@
 #include "NZPlayerController.h"
 
 
+
 ANZGameMode::ANZGameMode()
 {
     HUDClass = ANZHUD::StaticClass();
@@ -20,3 +21,7 @@ ANZGameMode::ANZGameMode()
     
 }
 
+bool ANZGameMode::PlayerCanAltRestart_Implementation(APlayerController* Player)
+{
+    return PlayerCanRestart(Player);
+}

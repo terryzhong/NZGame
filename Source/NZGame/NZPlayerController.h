@@ -9,6 +9,20 @@
 #define FOV_CONFIG_MIN 80.0f
 #define FOV_CONFIG_MAX 120.0f
 
+struct FDeferredFireInput
+{
+    /** The fire mode */
+    uint8 FireMode;
+    
+    /** If true, call StartFire(), false call StopFire() */
+    bool bStartFire;
+    
+    FDeferredFireInput(uint8 InFireMode, bool bInStartFire)
+        : FireMode(InFireMode)
+        , bStartFire(bInStartFire)
+    {}
+};
+
 
 /**
  * 
@@ -53,6 +67,36 @@ public:
     virtual void ProcessPlayerInput(const float DeltaTime, const bool bGamePaused) override;
     virtual void PawnPendingDestroy(APawn* InPawn) override;
     
+    
+    
+    UFUNCTION(Server, Reliable, WithValidation)
+    void ServerRestartPlayerAltFire();
+    
+    /** Switch between teams 0 and 1 */
+    UFUNCTION(Server, Reliable, WithValidation)
+    virtual void ServerSwitchTeam();
+    
+    
+    
+    
+    virtual void SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams()) override;
+    virtual void ServerViewSelf_Implementation(FViewTargetTransitionParams TransitionParams) override;
+    virtual void ViewSelf(FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams());
+    
+    /** 
+     * Update rotation to be good view of current viewtarget.
+     * UnBlockedPct is how much of the camera offset trace needs to be unlocked.
+     */
+    UFUNCTION()
+    virtual void FindGoodView(const FVector& Targetloc, bool bIsUpdate);
+    
+    
+    /** Enables auto best camera for spectators */
+    UPROPERTY(BlueprintReadWrite)
+    bool bAutoCam;
+    
+    
+    
 
 	UFUNCTION(exec)
 	virtual void SwitchToBestWeapon();
@@ -73,8 +117,13 @@ public:
     
     UFUNCTION(Exec)
     virtual void SwitchWeaponGroup(int32 Group);
-
     
+    /** Weapon fire input handling -- NOTE: Just forward to the pawn */
+    virtual void OnFire();
+    virtual void OnStopFire();
+    virtual void OnAltFire();
+    virtual void OnStopAltFire();
+
 	/** Handles moving forward */
 	virtual void MoveForward(float Value);
 
@@ -102,6 +151,13 @@ public:
 
 	virtual void AddYawInput(float Value) override;
 	virtual void AddPitchInput(float Value) override;
+    
+    /**
+     * Stores fire inputs until after movement has been executed (default would be fire -> movement -> render, this causes movement -> fire -> render)
+     * Makes weapons feel a little more responsive while strafing
+     */
+    TArray<FDeferredFireInput, TInlineAllocator<2> > DeferredFireInputs;
+    
 
 protected:
     UPROPERTY()

@@ -5,6 +5,18 @@
 #include "NZBaseGameMode.h"
 #include "NZGameMode.generated.h"
 
+
+namespace MatchState
+{
+    const FName PlayerIntro = FName(TEXT("PlayerIntro"));
+    const FName CountdownToBegin = FName(TEXT("CountdownToBegin"));
+    const FName MatchEnteringOvertime = FName(TEXT("MatchEnteringOvertime"));
+    const FName MatchIsInOvertime = FName(TEXT("MatchIsInOvertime"));
+    const FName MapVoteHappening = FName(TEXT("MapVoteHappening"));
+    const FName MatchIntermission = FName(TEXT("MatchIntermission"));
+    const FName MatchExitingIntermission = FName(TEXT("MatchExitingIntermission"));
+}
+
 /**
  * 
  */
@@ -18,4 +30,9 @@ public:
     
 	
 	
+    
+    UFUNCTION(BlueprintNativeEvent, Category = Game)
+    bool PlayerCanAltRestart(APlayerController* Player);
+    
+    
 };
