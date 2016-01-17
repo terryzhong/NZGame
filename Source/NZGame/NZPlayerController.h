@@ -23,6 +23,8 @@ private:
 	class ANZCharacter* NZCharacter;
 	
 public:
+    ANZPlayerController();
+    
 	UFUNCTION(BlueprintCallable, Category = PlayerController)
 	virtual ANZCharacter* GetNZCharacter();
     
