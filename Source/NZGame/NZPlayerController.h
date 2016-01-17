@@ -73,10 +73,36 @@ public:
     
     UFUNCTION(Exec)
     virtual void SwitchWeaponGroup(int32 Group);
+
     
+	/** Handles moving forward */
+	virtual void MoveForward(float Value);
+
+	/** Handles moving backward */
+	virtual void MoveBackward(float Value);
+
+	/** Handles strafing movement left */
+	virtual void MoveLeft(float Value);
+
+	/** Handles strafing movement right */
+	virtual void MoveRight(float Value);
+
+	/** Up and down when flying or swimming */
+	virtual void MoveUp(float Value);
+
+	/** Called to set the jump flag from input */
+	virtual void Jump();
+
+	/** Called when jump is released */
+	virtual void JumpRelease();
     
-    
-    
+	virtual void Crouch();
+	virtual void UnCrouch();
+	virtual void ToggleCrouch();
+
+	virtual void AddYawInput(float Value) override;
+	virtual void AddPitchInput(float Value) override;
+
 protected:
     UPROPERTY()
     AActor* FinalViewTarget;

@@ -269,6 +269,26 @@ public:
     
     UPROPERTY()
     TArray<FStoredAmmo> SavedAmmo;
+
+
+
+
+
+	/** Handles moving forward/backward */
+	virtual void MoveForward(float Value);
+
+	/** Handles strafing movement, left and right */
+	virtual void MoveRight(float Value);
+
+	/** Handles up and down when swimming or flying */
+	virtual void MoveUp(float Value);
+
+
+
+
+
+
+
     
     
     /** */

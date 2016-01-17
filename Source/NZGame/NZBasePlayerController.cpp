@@ -20,7 +20,7 @@ void ANZBasePlayerController::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     
-    UpdateInputMode();
+    //UpdateInputMode();
 }
 
 void ANZBasePlayerController::UpdateInputMode()

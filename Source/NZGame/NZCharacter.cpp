@@ -31,6 +31,7 @@ ANZCharacter::ANZCharacter()
     DefaultCrouchedEyeHeight = 30.f;
     CrouchedEyeHeight = DefaultCrouchedEyeHeight;
     CharacterCameraComponent->RelativeLocation = FVector(0, 0, DefaultBaseEyeHeight);
+	CharacterCameraComponent->bUsePawnControlRotation = true;
     
     // Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
     FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
@@ -530,6 +531,47 @@ bool ANZCharacter::IsDead()
 {
 	return bTearOff || IsPendingKillPending();
 }
+
+
+void ANZCharacter::MoveForward(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// Find out which way is forward
+		const FRotator Rotation = GetControlRotation();
+		FRotator YawRotation = (NZCharacterMovement && NZCharacterMovement->Is3DMovementMode()) ? Rotation : FRotator(0, Rotation.Yaw, 0);
+
+		// Add Movement in forward direction
+		AddMovementInput(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X), Value);
+	}
+}
+
+void ANZCharacter::MoveRight(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// Find out which way is right
+		const FRotator Rotation = GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+		// Add Movement in right direction
+		AddMovementInput(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y), Value);
+	}
+}
+
+void ANZCharacter::MoveUp(float Value)
+{
+	if (Value != 0.0f)
+	{
+		// Add movement in up direction
+		AddMovementInput(FVector(0.f, 0.f, 1.f), Value);
+	}
+}
+
+
+
+
+
 
 FVector ANZCharacter::GetLocationCenterOffset() const
 {

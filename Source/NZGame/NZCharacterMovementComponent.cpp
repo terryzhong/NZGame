@@ -5,4 +5,8 @@
 
 
 
+bool UNZCharacterMovementComponent::Is3DMovementMode() const
+{
+	return (MovementMode == MOVE_Flying) || (MovementMode == MOVE_Swimming);
+}
 

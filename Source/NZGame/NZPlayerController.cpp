@@ -14,7 +14,7 @@
 ANZPlayerController::ANZPlayerController()
 {
     // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
     
 }
 
@@ -128,21 +128,29 @@ void ANZPlayerController::SetPawn(APawn* InPawn)
 
 void ANZPlayerController::SetupInputComponent()
 {
-    Super::SetupInputComponent();
+	Super::SetupInputComponent();
     
-/*    InputComponent->BindAxis("MoveForward", this, &ANZPlayerController::MoveForward);
-    InputComponent->BindAxis("MoveBackward", this, &ANZPlayerController::MoveBackward);
-    InputComponent->BindAxis("MoveLeft", this, &ANZPlayerController::MoveLeft);
-    InputComponent->BindAxis("MoveRight", this, &ANZPlayerController::MoveRight);
-    InputComponent->BindAxis("MoveUp", this, &ANZPlayerController::MoveUp);
+	InputComponent->BindAxis("MoveForward", this, &ANZPlayerController::MoveForward);
+	InputComponent->BindAxis("MoveBackward", this, &ANZPlayerController::MoveBackward);
+	InputComponent->BindAxis("MoveLeft", this, &ANZPlayerController::MoveLeft);
+	InputComponent->BindAxis("MoveRight", this, &ANZPlayerController::MoveRight);
+	InputComponent->BindAxis("MoveUp", this, &ANZPlayerController::MoveUp);
+
+	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
+	// "turn" handles devices that provide an absolute delta, such as a mouse.
+	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
+	InputComponent->BindAxis("Turn", this, &ANZPlayerController::AddYawInput);
+	//InputComponent->BindAxis("TurnRate", this, &ANZPlayerController::TurnAtRate);
+	InputComponent->BindAxis("LookUp", this, &ANZPlayerController::AddPitchInput);
+	//InputComponent->BindAxis("LookUpRate", this, &ANZPlayerController::LookUpAtRate);
+
+	InputComponent->BindAction("Jump", IE_Pressed, this, &ANZPlayerController::Jump);
+	InputComponent->BindAction("Jump", IE_Released, this, &ANZPlayerController::JumpRelease);
+	InputComponent->BindAction("Crouch", IE_Pressed, this, &ANZPlayerController::Crouch);
+	InputComponent->BindAction("Crouch", IE_Released, this, &ANZPlayerController::UnCrouch);
+	InputComponent->BindAction("ToggleCrouch", IE_Pressed, this, &ANZPlayerController::ToggleCrouch);
     
-    InputComponent->BindAction("Jump", IE_Pressed, this, &ANZPlayerController::Jump);
-    InputComponent->BindAction("Jump", IE_Released, this, &ANZPlayerController::JumpRelease);
-    InputComponent->BindAction("Crouch", IE_Pressed, this, &ANZPlayerController::Crouch);
-    InputComponent->BindAction("Crouch", IE_Released, this, &ANZPlayerController::UnCrouch);
-    InputComponent->BindAction("ToggleCrouch", IE_Pressed, this, &ANZPlayerController::ToggleCrouch);
-    
-    InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
+ /*   InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
     InputComponent->BindAction("TapRight", IE_Pressed, this, &ANZPlayerController::OnTapRight);
     InputComponent->BindAction("TapForward", IE_Pressed, this, &ANZPlayerController::OnTapForward);
     InputComponent->BindAction("TapBack", IE_Pressed, this, &ANZPlayerController::OnTapBack);
@@ -154,16 +162,8 @@ void ANZPlayerController::SetupInputComponent()
     InputComponent->BindAction("TapRightRelease", IE_Released, this, &ANZPlayerController::OnTapRightRelease);
     InputComponent->BindAction("TapForwardRelease", IE_Released, this, &ANZPlayerController::OnTapForwardRelease);
     InputComponent->BindAction("TapBackRelease", IE_Released, this, &ANZPlayerController::OnTapBackRelease);
-    
-    // We have 2 versions of the rotation bindings to handle different kinds of devices differently
-    // "turn" handles devices that provide an absolute delta, such as a mouse.
-    // "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-    InputComponent->BindAxis("Turn", this, &APlayerController::AddYawInput);
-    InputComponent->BindAxis("TurnRate", this, &ANZPlayerController::TurnAtRate);
-    InputComponent->BindAxis("LookUp", this, &APlayerController::AddPitchInput);
-    InputComponent->BindAxis("LookUpRate", this, &ANZPlayerController::LookUpAtRate);
-    
-    InputComponent->BindAction("PrevWeapon", IE_Pressed, this, &ANZPlayerController::PrevWeapon);
+	    
+	InputComponent->BindAction("PrevWeapon", IE_Pressed, this, &ANZPlayerController::PrevWeapon);
     InputComponent->BindAction("NextWeapon", IE_Released, this, &ANZPlayerController::NextWeapon);
     InputComponent->BindAction("ThrowWeapon", IE_Released, this, &ANZPlayerController::ThrowWeapon);
     
@@ -384,6 +384,116 @@ void ANZPlayerController::SwitchWeaponGroup(int32 Group)
         }
     }
 }
+
+void ANZPlayerController::MoveForward(float Value)
+{
+	if (Value != 0.0f && NZCharacter != NULL)
+	{
+		MovementForwardAxis = Value;
+		NZCharacter->MoveForward(Value);
+	}
+	else if (GetSpectatorPawn() != NULL)
+	{
+		GetSpectatorPawn()->MoveForward(Value);
+	}
+}
+
+void ANZPlayerController::MoveBackward(float Value)
+{
+	MoveForward(Value * -1);
+}
+
+void ANZPlayerController::MoveLeft(float Value)
+{
+	MoveRight(Value * -1);
+}
+
+void ANZPlayerController::MoveRight(float Value)
+{
+	if (Value != 0.0f && NZCharacter != NULL)
+	{
+		MovementStrafeAxis = Value;
+		NZCharacter->MoveRight(Value);
+	}
+	else if (GetSpectatorPawn() != NULL)
+	{
+		GetSpectatorPawn()->MoveRight(Value);
+	}
+}
+
+void ANZPlayerController::MoveUp(float Value)
+{
+	if (Value != 0.0f && NZCharacter != NULL)
+	{
+		NZCharacter->MoveUp(Value);
+	}
+	else if (GetSpectatorPawn() != NULL)
+	{
+		GetSpectatorPawn()->MoveUp_World(Value);
+	}
+}
+
+void ANZPlayerController::AddYawInput(float Value)
+{
+	if (Value != 0.f)
+	{
+		Super::AddYawInput(Value);
+	}
+}
+
+void ANZPlayerController::AddPitchInput(float Value)
+{
+	if (Value != 0.f)
+	{
+		Super::AddPitchInput(Value);
+	}
+}
+
+void ANZPlayerController::Jump()
+{
+	if (NZCharacter != NULL && !IsMoveInputIgnored())
+	{
+		NZCharacter->bPressedJump = true;
+
+		// todo:
+	}
+}
+
+void ANZPlayerController::JumpRelease()
+{
+
+}
+
+void ANZPlayerController::Crouch()
+{
+	if (!IsMoveInputIgnored())
+	{
+		// todo:
+
+		if (NZCharacter != NULL)
+		{
+			NZCharacter->Crouch(false);
+		}
+	}
+}
+
+void ANZPlayerController::UnCrouch()
+{
+	// todo:
+
+	if (NZCharacter != NULL)
+	{
+		NZCharacter->UnCrouch(false);
+	}
+}
+
+void ANZPlayerController::ToggleCrouch()
+{
+	// todo:
+
+}
+
+
 
 
 

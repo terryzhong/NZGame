@@ -13,7 +13,10 @@ class NZGAME_API UNZCharacterMovementComponent : public UCharacterMovementCompon
 {
 	GENERATED_BODY()
 	
+public:
+
 	
-	
+	/** Return true if movement input should not be constrained to horizontal plane */
+	virtual bool Is3DMovementMode() const;
 	
 };
