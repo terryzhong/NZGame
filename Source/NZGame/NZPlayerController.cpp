@@ -10,6 +10,7 @@
 #include "NZProfileSettings.h"
 #include "NZGameState.h"
 #include "NZGameMode.h"
+#include "NZProjectile.h"
 
 
 
@@ -287,9 +288,51 @@ bool ANZPlayerController::ServerSwitchTeam_Validate()
 
 void ANZPlayerController::SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
 {
+    // remove any FOV shifts when changing targets (e.g. sniper zoom)
+    if (PlayerCameraManager != NULL)
+    {
+        PlayerCameraManager->UnlockFOV();
+    }
+    
+    if (FinalViewTarget != NULL)
+    {
+        NewViewTarget = FinalViewTarget;
+    }
+    
+    //ANZViewPlaceholder* NZPlaceholder = Cast<ANZViewPlaceholder>(GetViewTarget());
+    
     Super::SetViewTarget(NewViewTarget, TransitionParams);
     
-    // todo:
+    AActor* UpdatedViewTarget = GetViewTarget();
+    //if (NZPlaceholder != NULL && UpdatedViewTarget != NZPlaceholder)
+    //{
+    //    NZPlaceholder->Destroy();
+    //}
+    
+    if (StateName == NAME_Spectating)
+    {
+        ANZCharacter* Char = Cast<ANZCharacter>(UpdatedViewTarget);
+        if (Char)
+        {
+            ViewProjectileTime = 0.f;
+            LastSpectatedPlayerState = Cast<ANZPlayerState>(Char->PlayerState);
+            if (LastSpectatedPlayerState)
+            {
+                LastSpectatedPlayerId = LastSpectatedPlayerState->SpectatingID;
+            }
+        }
+        else if (!Cast<ANZProjectile>(UpdatedViewTarget) && (UpdatedViewTarget != this))
+        {
+            LastSpectatedPlayerState = NULL;
+            LastSpectatedPlayerId = -1;
+        }
+        
+        if (IsLocalController() && bSpectateBehindView && PlayerState && PlayerState->bOnlySpectator && (NewViewTarget != GetSpectatorPawn()) && NewViewTarget)
+        {
+            // Pick good starting rotation
+            FindGoodView(NewViewTarget->GetActorLocation(), false);
+        }
+    }
 }
 
 void ANZPlayerController::ServerViewSelf_Implementation(FViewTargetTransitionParams TransitionParams)

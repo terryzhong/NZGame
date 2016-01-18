@@ -27,6 +27,12 @@ bool ANZWeapon::HasAnyAmmo()
 }
 
 
+float ANZWeapon::GetImpartedMomentumMag(AActor* HitActor)
+{
+    return 0.f;
+}
+
+
 void ANZWeapon::BringUp(float OverflowTime)
 {
 

@@ -24,6 +24,17 @@ public:
     UFUNCTION(BLueprintCallable, Category = Character)
     virtual void SetCharacter(const FString& CharacterPath);
     
+    /**
+     * ID that can be used to consistently identify this player for spectating commands
+     * IDs are reused when players leave and new ones join, but a given player's ID remains stable and unique as long as that player is in the game
+     * NOTE: 1-based, zero is unassigned (bOnlySpectator spectators don't get a value)
+     */
+    UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
+    uint8 SpectatingID;
+    
+    
+    
+    
 	UFUNCTION(BlueprintNativeEvent)
 	void NotifyTeamChanged();
     

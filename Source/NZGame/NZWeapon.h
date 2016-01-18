@@ -5,6 +5,34 @@
 #include "NZInventory.h"
 #include "NZWeapon.generated.h"
 
+USTRUCT(BlueprintType)
+struct FInstantHitDamageInfo
+{
+    GENERATED_USTRUCT_BODY()
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
+    int32 Damage;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
+    TSubclassOf<UDamageType> DamageType;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
+    float Momentum;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
+    float TraceRange;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
+    float TraceHalfSize;
+    
+    FInstantHitDamageInfo()
+        : Damage(10)
+        , Momentum(0.0f)
+        , TraceRange(25000.0f)
+        , TraceHalfSize(0.0f)
+    {}
+};
+
 /**
  * 
  */
@@ -12,6 +40,12 @@ UCLASS(Config = Game)
 class NZGAME_API ANZWeapon : public ANZInventory
 {
 	GENERATED_BODY()
+    
+    friend class UNZWeaponState;
+    friend class UNZWeaponStateInactive;
+    friend class UNZWeaponStateActive;
+    friend class UNZWeaponStateEquipping;
+    friend class UNZWeaponStateUnequipping;
     
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_AttachmentType, Category = Weapon)
@@ -29,17 +63,38 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Weapon)
     int32 MaxAmmo;
     
+    /** Ammo cost for one shot of each fire mode */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
     TArray<int32> AmmoCost;
     
-    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-    //TArray<TSubclassOf<ANZProjectile> > ProjClass;
+    /** Projectile class for fire mode (if applicable) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<TSubclassOf<class ANZProjectile> > ProjClass;
     
-    //UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
-    //TArray<class FInstantHitDamageInfo> InstantHitInfo;
+    /** Instant hit data for fire mode (if applicable) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<FInstantHitDamageInfo> InstantHitInfo;
     
+    /** Firing state for mode, contains core firing sequence and directs to appropriate global firing functions */
+    UPROPERTY(Instanced, EditAnywhere, EditFixedSize, BlueprintReadWrite, Category = Weapon, NoClear)
+    TArray<class UNZWeaponStateFiring*> FiringState;
     
+    /** True for melee weapons affected by "stopping power" (momentum added for weapons that don't normally impart much momentum */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    bool bAffectedByStoppingPower;
     
+    /** Custom momentum scaling for friendly hitscanned pawns */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    float FriendlyMomentumScaling;
+    
+    virtual float GetImpartedMomentumMag(AActor* HitActor);
+    
+    virtual void Serialize(FArchive& Ar) override
+    {
+        float SavedSwitchPriority = AutoSwitchPriority;
+        Super::Serialize(Ar);
+        AutoSwitchPriority = SavedSwitchPriority;
+    }
     
     
     UFUNCTION(BlueprintCallable, Category = Weapon)
