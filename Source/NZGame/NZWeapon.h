@@ -33,6 +33,52 @@ struct FInstantHitDamageInfo
     {}
 };
 
+USTRUCT()
+struct FDelayedProjectileInfo
+{
+    GENERATED_USTRUCT_BODY()
+    
+    UPROPERTY()
+    TSubclassOf<class ANZProjectile> ProjectileClass;
+    
+    UPROPERTY()
+    FVector SpawnLocation;
+    
+    UPROPERTY()
+    FRotator SpawnRotation;
+    
+    FDelayedProjectileInfo()
+        : ProjectileClass(NULL)
+        , SpawnLocation(ForceInit)
+        , SpawnRotation(ForceInit)
+    {}
+};
+
+USTRUCT()
+struct FDelayedHitScanInfo
+{
+    GENERATED_USTRUCT_BODY()
+    
+    UPROPERTY()
+    FVector ImpactLocation;
+    
+    UPROPERTY()
+    uint8 FireMode;
+    
+    UPROPERTY()
+    FVector SpawnLocation;
+    
+    UPROPERTY()
+    FRotator SpawnRotation;
+    
+    FDelayedHitScanInfo()
+        : ImpactLocation(ForceInit)
+        , FireMode(0)
+        , SpawnLocation(ForceInit)
+        , SpawnRotation(ForceInit)
+    {}
+};
+
 /**
  * 
  */
@@ -95,6 +141,200 @@ public:
         Super::Serialize(Ar);
         AutoSwitchPriority = SavedSwitchPriority;
     }
+    
+    /** Synchronize random seed on server and firing client so projectiles stay synchronized */
+    virtual void NetSynchRandomSeed();
+    
+    /** Socket to attach weapon to hands; If None, then the hands are hidden */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    FName HandsAttachSocket;
+    
+    /** Time between shots, trigger checks, etc */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon, meta = (ClampMin = "0.1"))
+    TArray<float> FireInterval;
+    
+    /** Firing spread (random angle added to shots) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<float> Spread;
+    
+    /** Sound to play each time we fire */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<USoundBase*> FireSound;
+    
+    /** Sound to play on shooter when weapon is fired. This sound starts at the same time as the FireSound */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<USoundBase*> ReloadSound;
+    
+    /** Looping (ambient) sound to set on owner while firing */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<USoundBase*> FireLoopingSound;
+    
+    /** AnimMontage to play each time we fire */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<UAnimMontage*> FireAnimation;
+    
+    /** AnimMontage to play on hands each time we fire */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    TArray<UAnimMontage*> FireAnimationHands;
+    
+    /** Particle component for muzzle flash */
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    TArray<UParticleSystemComponent*> MuzzleFlash;
+    
+    /** Saved transform of MuzzleFlash components used for UpdateWeaponHand() to know original values from the blueprint */
+    UPROPERTY(Transient)
+    TArray<FTransform> MuzzleFlashDefaultTransforms;
+    
+    /** Saved sockets of MuzzleFlash components used for UpdateWeaponHand() to know original values from the blueprint */
+    UPROPERTY(Transient)
+    TArray<FName> MuzzleFlashSocketNames;
+    
+    /**
+     * Particle system for firing effects (instant hit beam and such)
+     * Particle will be sourced at FireOffset and a parameter HitLocation will be set for the target, if applicable
+     */
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    TArray<UParticleSystem*> FireEffect;
+    
+    /** Max distance to stretch weapon tracer */
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    float MaxTracerDist;
+    
+    /** Fire effect happens once every FireEffectInterval shots */
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    int32 FireEffectInterval;
+    
+    /** Shots since last fire effect */
+    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    int32 FireEffectCount;
+    
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    TArray<TSubclassOf<class ANZImpactEffect> > ImpactEffect;
+    
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    float ImpactEffectSkipDistance;
+    
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    float MaxImpactEffectSkipTime;
+    
+    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    FVector LastImpactEffectLocation;
+    
+    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    float LastImpactEffectTime;
+    
+    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    TArray<UMaterialInterface*> SavedMeshMaterials;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    bool bMustBeHolstered;
+    
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Weapon)
+    bool bCanThrowWeapon;
+    
+    UPROPERTY(EditDefaultsOnly, Category = UI)
+    bool bHideInMenus;
+    
+    UPROPERTY(EditDefaultsOnly, Category = UI)
+    bool bHideInCrosshairMenu;
+    
+    UPROPERTY(EditDefaultsOnly, Category = Weapon)
+    FVector FOVOffset;
+    
+    //UPROPERTY()
+    //UNZWeaponSkin* WeaponSkin;
+    
+    UFUNCTION()
+    virtual void AttachToHolster();
+    
+    UFUNCTION()
+    virtual void DetachFromHolster();
+    
+    virtual void DropFrom(const FVector& StartLocation, const FVector& TossVelocity) override;
+    
+    virtual bool InitializeDroppedPickup(class ANZDroppedPickup* Pickup);
+    
+    /** Return true if this weapon should be dropped if held on player death */
+    virtual bool ShouldDropOnDeath();
+    
+    /** First person mesh */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon)
+    USkeletalMeshComponent* Mesh;
+    
+    USkeletalMeshComponent* GetMesh() const { return Mesh; }
+    
+    /**
+     * Causes weapons fire to originate from the center of the player's view when in first person mode (and human controlled)
+     * In other cases the fire start point defaults to the weapon's world position
+     */
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    bool bFPFireFromCenter;
+    
+    /** If set ignore FireOffset for instant hit fire modes when in first person mode */
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    bool bFPIgnoreInstantHitFireOffset;
+    
+    /**
+     * Firing offset from weapon for weapons fire.
+     * If bFPFireFromCenter is true and it's a player in first person mode, this is from the camera center
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    FVector FireOffset;
+    
+    /** If true (on server), use the last bSpawnedShot saved position as starting point for this shot to synch with client firing position */
+    UPROPERTY()
+    bool bNetDelayedShot;
+    
+    /** Indicates this weapon is most useful in melee range (used by AI) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    bool bMeleeWeapon;
+    
+    /** 
+     * Indicates AI should prioritize accuracy over evasion 
+     * (low skill bots will stop moving, higher skill bots prioritize strafing and avoid actions that move enemy across view)
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    bool bPrioritizeAccuracy;
+    
+    /** Indicates AI should target for splash damage (e.g. shoot at feet or nearby walls) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    bool bRecommendSplashDamage;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    bool bRecommendSuppressiveFire;
+    
+    /** Indicates this is a sniping weapon (for AI, will prioritize headshots and long range targeting) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
+    bool bSniping;
+    
+    /** Delayed projectile information */
+    UPROPERTY()
+    FDelayedProjectileInfo DelayedProjectile;
+    
+    /** Delayed hitscan information */
+    UPROPERTY()
+    FDelayedHitScanInfo DelayedHitScan;
+    
+    /**
+     *
+     */
+    UFUNCTION(BlueprintCallable, Category = Effects)
+    bool ShouldPlay1PVisuals() const;
+    
+    /**
+     * Play impact effects client-side for predicted hitscan shot - decides whether to delay because of high client ping
+     */
+    virtual void PlayPredictedImpactEffects(FVector ImpactLoc);
+    
+    FTimerHandle PlayDelayedImpactEffectsHandle;
+    
+    virtual void PlayDelayedImpactEffects();
+    
+    
+    
+    
+    
+    
     
     
     UFUNCTION(BlueprintCallable, Category = Weapon)

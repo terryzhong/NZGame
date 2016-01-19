@@ -2,6 +2,8 @@
 
 #include "NZGame.h"
 #include "NZWeapon.h"
+#include "NZPlayerController.h"
+#include "NZCharacterMovementComponent.h"
 
 
 
@@ -31,6 +33,70 @@ float ANZWeapon::GetImpartedMomentumMag(AActor* HitActor)
 {
     return 0.f;
 }
+
+void ANZWeapon::NetSynchRandomSeed()
+{
+    ANZPlayerController* OwningPlayer = NZOwner ? Cast<ANZPlayerController>(NZOwner->GetController()) : NULL;
+    if (OwningPlayer && NZOwner && NZOwner->NZCharacterMovement)
+    {
+        FMath::RandInit(10000.f * NZOwner->NZCharacterMovement->GetCurrentSynchTime());
+    }
+}
+
+void ANZWeapon::AttachToHolster()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::DetachFromHolster()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::DropFrom(const FVector& StartLocation, const FVector& TossVelocity)
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::InitializeDroppedPickup(class ANZDroppedPickup* Pickup)
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+bool ANZWeapon::ShouldDropOnDeath()
+{
+    // todo:
+    check(false);
+    return false;    
+}
+
+bool ANZWeapon::ShouldPlay1PVisuals() const
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+void ANZWeapon::PlayPredictedImpactEffects(FVector ImpactLoc)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::PlayDelayedImpactEffects()
+{
+    // todo:
+    check(false);
+}
+
+
+
+
 
 
 void ANZWeapon::BringUp(float OverflowTime)
