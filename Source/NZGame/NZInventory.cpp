@@ -40,10 +40,48 @@ void ANZInventory::Removed()
 {
 }
 
+void ANZInventory::ClientGivenTo(APawn* NewInstigator, bool bAutoActivate)
+{
+}
+
+void ANZInventory::ClientGivenTo_Internal(bool bAutoActivate)
+{
+}
+
+void ANZInventory::eventClientGivenTo(bool bAutoActivate)
+{
+}
+
+void ANZInventory::ClientRemoved_Implementation()
+{
+}
+
+void ANZInventory::eventClientRemoved()
+{
+}
+
+void ANZInventory::CheckPendingClientGivenTo()
+{
+}
+
+void ANZInventory::OnRep_Instigator()
+{
+}
+
 void ANZInventory::DropFrom(const FVector& StartLocation, const FVector& TossVelocity)
 {
 }
 
 void ANZInventory::Destroyed()
 {
+}
+
+void ANZInventory::InitializeDroppedPickup(class ANZDroppedPickup* Pickup)
+{
+}
+
+UMeshComponent* ANZInventory::GetPickupMeshTemplate_Implementation(FVector& OverrideScale) const
+{
+    // todo:
+    return NULL;
 }

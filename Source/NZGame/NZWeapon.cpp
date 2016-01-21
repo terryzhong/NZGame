@@ -61,11 +61,10 @@ void ANZWeapon::DropFrom(const FVector& StartLocation, const FVector& TossVeloci
     check(false);
 }
 
-bool ANZWeapon::InitializeDroppedPickup(class ANZDroppedPickup* Pickup)
+void ANZWeapon::InitializeDroppedPickup(class ANZDroppedPickup* Pickup)
 {
     // todo:
     check(false);
-    return false;
 }
 
 bool ANZWeapon::ShouldDropOnDeath()
@@ -94,19 +93,24 @@ void ANZWeapon::PlayDelayedImpactEffects()
     check(false);
 }
 
-
-
-
-
-
-void ANZWeapon::BringUp(float OverflowTime)
+void ANZWeapon::SpawnDelayedFakeProjectile()
 {
-
+    // todo:
+    check(false);    
 }
 
-bool ANZWeapon::PutDown()
+float ANZWeapon::GetBringUpTime()
 {
-	return false;
+    // todo:
+    check(false);
+    return 0.0f;
+}
+
+float ANZWeapon::GetPutDownTime()
+{
+    // todo:
+    check(false);
+    return 0.0f;    
 }
 
 bool ANZWeapon::FollowsInList(ANZWeapon* OtherWeapon)
@@ -120,4 +124,227 @@ bool ANZWeapon::FollowsInList(ANZWeapon* OtherWeapon)
     return (Group == OtherWeapon->Group) ? (GroupSlot > OtherWeapon->GroupSlot) : (Group > OtherWeapon->Group);
 }
 
+void ANZWeapon::DeactivateSpawnProtection()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::UpdateViewBob(float DeltaTime)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::PostInitProperties()
+{
+    Super::PostInitProperties();
+    
+    // todo:
+}
+
+void ANZWeapon::BeginPlay()
+{
+    Super::BeginPlay();
+    
+    // todo:
+}
+
+UMeshComponent* ANZWeapon::GetPickupMeshTemplate_Implementation(FVector& OverrideScale) const
+{
+    // todo:
+    check(false);
+    return NULL;
+}
+
+void ANZWeapon::GotoState(class UNZWeaponState* NewState)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::StartFire(uint8 FireModeNum)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::StopFire(uint8 FireModeNum)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::ServerStartFire_Implementation(uint8 FireModeNum, bool bClientFired)
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::ServerStartFire_Validate(uint8 FireModeNum, bool bClientFired)
+{
+    return true;
+}
+
+void ANZWeapon::ServerStartFireOffset_Implementation(uint8 FireModeNum, uint8 ZOffset, bool bClientFired)
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::ServerStartFireOffset_Validate(uint8 FireModeNum, uint8 ZOffset, bool bClientFired)
+{
+    return true;
+}
+
+void ANZWeapon::ServerStopFire_Implementation(uint8 FireModeNum)
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::ServerStopFire_Validate(uint8 FireModeNum)
+{
+    return true;
+}
+
+bool ANZWeapon::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+void ANZWeapon::EndFiringSequence(uint8 FireModeNum)
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::WillSpawnShot(float DeltaTime)
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+bool ANZWeapon::CanFireAgain()
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+void ANZWeapon::OnStartedFiring()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::OnStoppedFiring()
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::HandleContinuedFiring()
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+void ANZWeapon::OnContinuedFiring()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::OnMultiPress(uint8 OtherFireMode)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::BringUp(float OverflowTime)
+{
+    // todo:
+    check(false);    
+}
+
+bool ANZWeapon::PutDown()
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+void ANZWeapon::OnBringUp()
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::eventPreventPutDown()
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+void ANZWeapon::AttachToOwner()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::DetachFromOwner()
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::IsChargedFireMode(uint8 TestMode) const
+{
+    // todo:
+    check(false);
+    return false;
+}
+
+void ANZWeapon::GivenTo(ANZCharacter* NewOwner, bool bAutoActivate)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::ClientGivenTo_Internal(bool bAutoActivate)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::Removed()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::ClientRemoved_Implementation()
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::FireShot()
+{
+    // todo:
+    check(false);
+}
+
+bool ANZWeapon::FireShotOverride()
+{
+    // todo:
+    check(false);
+    return false;
+}
 

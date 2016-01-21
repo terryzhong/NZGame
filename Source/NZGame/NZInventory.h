@@ -43,6 +43,31 @@ protected:
     void eventRemoved();
     virtual void Removed();
     
+    /** Client side handling of owner transition */
+    UFUNCTION(Client, Reliable)
+    void ClientGivenTo(APawn* NewInstigator, bool bAutoActivate);
+    virtual void ClientGivenTo_Internal(bool bAutoActivate);
+    
+    /** Called only on the client that is given the item */
+    UFUNCTION(BlueprintImplementableEvent)
+    void eventClientGivenTo(bool bAutoActivate);
+    
+    UFUNCTION(Client, Reliable)
+    virtual void ClientRemoved();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void eventClientRemoved();
+    
+    FTimerHandle CheckPendingClientGivenToHandle;
+    void CheckPendingClientGivenTo();
+    virtual void OnRep_Instigator() override;
+    
+    uint32 bPendingClientGivenTo : 1;
+    uint32 bPendingAutoActivate : 1;
+    
+    UPROPERTY(EditDefaultsOnly, Category = Pickup)
+    UMeshComponent* PickupMesh;
+    
 public:
     /** 
      * Returns next inventory item in the chain
@@ -61,6 +86,14 @@ public:
     
     virtual void DropFrom(const FVector& StartLocation, const FVector& TossVelocity);
     virtual void Destroyed() override;
+    
+    virtual void InitializeDroppedPickup(class ANZDroppedPickup* Pickup);
+    
+    /** Return a component that can be instanced to be applied to pickups */
+    UFUNCTION(BlueprintNativeEvent)
+    UMeshComponent* GetPickupMeshTemplate(FVector& OverrideScale) const;
+    
+    
 };
 
 

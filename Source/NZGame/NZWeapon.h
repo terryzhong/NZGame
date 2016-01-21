@@ -252,7 +252,7 @@ public:
     
     virtual void DropFrom(const FVector& StartLocation, const FVector& TossVelocity) override;
     
-    virtual bool InitializeDroppedPickup(class ANZDroppedPickup* Pickup);
+    virtual void InitializeDroppedPickup(class ANZDroppedPickup* Pickup);
     
     /** Return true if this weapon should be dropped if held on player death */
     virtual bool ShouldDropOnDeath();
@@ -328,27 +328,48 @@ public:
     
     FTimerHandle PlayDelayedImpactEffectsHandle;
     
+    /** Trigger delayed hitscan effects, delayed because client ping above max forward prediction limit */
     virtual void PlayDelayedImpactEffects();
     
+    FTimerHandle SpawnDelayedFakeProjHandle;
     
+    /** Spawn a delayed projectile, delayed because client ping above max forward prediction limit */
+    virtual void SpawnDelayedFakeProjectile();
     
+    /** Time to bring up the weapon */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    float BringUpTime;
     
+    /** Time to put down the weapon */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    float PutDownTime;
     
+    /** Scales refire put down time for the weapon */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    float RefirePutDownTimePercent;
     
-    
+    /** Earliest time can fire again (failsafe for weapon swapping) */
+    UPROPERTY()
+    float EarliestFireTime;
     
     UFUNCTION(BlueprintCallable, Category = Weapon)
-    virtual bool HasAnyAmmo();
+    virtual float GetBringUpTime();
     
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual float GetPutDownTime();
     
+    /** Equip anims */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UAnimMontage* BringUpAnim;
     
-
-    virtual void BringUp(float OverflowTime = 0.0f);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UAnimMontage* BringUpAnimHands;
     
-    virtual bool PutDown();
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UAnimMontage* PutDownAnim;
     
-
-    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UAnimMontage* PutDownAnimHands;
     
     /**
      * Weapon group - NextWeapon() picks the next highest group, PrevWeapon() the next lowest, etc
@@ -377,6 +398,170 @@ public:
      */
     UPROPERTY(EditAnywhere, Config, Transient, BlueprintReadOnly, Category = Selection)
     float AutoSwitchPriority;
+
+    /** Deactivate any owner spawn protection */
+    virtual void DeactivateSpawnProtection();
+    
+    /**
+     * Whether this weapon stays around by default when someone picks it up
+     * (i.e. multiple people can pick up from the same spot without waiting for respawn time)
+     */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    bool bWeaponStay;
+    
+    /** Base offset of first person mesh, cached from offset set up in blueprint */
+    UPROPERTY()
+    FVector FirstPMeshOffset;
+    
+    /** Base relative roation of first person mesh, cached from offset set up in blueprint */
+    UPROPERTY()
+    FRotator FirstPMeshRotation;
+    
+    /** Scaling for 1st person weapon bob */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float WeaponBobScaling;
+    
+    /** Scaling for 1st person firing view kickback */
+    UPROPERTY(EditAnywhere, BLueprintReadWrite, Category = WeaponBob)
+    float FiringViewKickback;
+    
+    virtual void UpdateViewBob(float DeltaTime);
+    
+    virtual void PostInitProperties() override;
+    virtual void BeginPlay() override;
+    virtual void RegisterAllComponents() override
+    {
+        // Don't register in game by default for perf, we'll manually call Super from AttachToOwner()
+        if (GetWorld()->WorldType == EWorldType::Editor || GetWorld()->WorldType == EWorldType::Preview)
+        {
+            Super::RegisterAllComponents();
+        }
+        else
+        {
+            RootComponent = NULL;   // This was set for the editor view, but we don't want it
+        }
+    }
+    
+    virtual UMeshComponent* GetPickupMeshTemplate_Implementation(FVector& OverrideScale) const override;
+    
+    virtual void GotoState(class UNZWeaponState* NewState);
+    
+    /**
+     * Notification of state change (CurrentState is new state)
+     * If a state change triggers another state change (i.e. within BeginState()/EndState()) this function will only
+     * be called once, when CurrentState is the final state
+     */
+    virtual void StateChanged() {}
+    
+    /** Firing entry point */
+    virtual void StartFire(uint8 FireModeNum);
+    virtual void StopFire(uint8 FireModeNum);
+    
+    /** Tell server fire button was pressed. bClientFired is true if client actually fired weapon */
+    UFUNCTION(Server, Reliable, WithValidation)
+    virtual void ServerStartFire(uint8 FireModeNum, bool bClientFired);
+    
+    /** ServerStartFire, also pass Z offset since it is interpolation */
+    UFUNCTION(Server, Reliable, WithValidation)
+    virtual void ServerStartFireOffset(uint8 FireModeNum, uint8 ZOffset, bool bClientFired);
+    
+    /** Just replicated ZOffset for shot fire location */
+    UPROPERTY()
+    float FireZOffset;
+    
+    /** When received FireZOffset - Only valid for same time and next frame */
+    UPROPERTY()
+    float FireZOffsetTime;
+    
+    UFUNCTION(Server, Reliable, WithValidation)
+    virtual void ServerStopFire(uint8 FireModeNum);
+    
+    virtual bool BeginFiringSequence(uint8 FireModeNum, bool bClientFired);
+    virtual void EndFiringSequence(uint8 FireModeNum);
+    
+    /** Returns true if weapon will true fire a shot this frame - used for network synchronization */
+    virtual bool WillSpawnShot(float DeltaTime);
+    
+    /** Returns true if weapon can fire again (fire button is pressed, weapon is held, has ammo, etc.) */
+    virtual bool CanFireAgain();
+    
+    /** Hook when the firing state starts; called on both client and server */
+    UFUNCTION(BlueprintNativeEvent)
+    void OnStartedFiring();
+    
+    /** Hook for the return to active state (was firing, refire timer expired, trigger released and/or out of ammo) */
+    UFUNCTION(BlueprintNativeEvent)
+    void OnStoppedFiring();
+    
+    /** Return true and trigger effects if should continue firing, otherwise sends weapon to its active state */
+    virtual bool HandleContinuedFiring();
+    
+    /** Hook for when the weapon has fired, the refire delay passes, and the user still wants to fire (trigger still down) so the firing loop will repeat */
+    UFUNCTION(BlueprintNativeEvent)
+    void OnContinuedFiring();
+    
+    /**
+     * Blueprint hook for pressing one fire mode while another is currently firing (e.g. hold alt, press primary)
+     * CurrentFireMode == current, OtherFireMode == one just pressed
+     */
+    UFUNCTION(BlueprintNativeEvent)
+    void OnMultiPress(uint8 OtherFireMode);
+
+    /**
+     * Activates the weapon as part of a weapon switch
+     * (this weapon has already been set to Pawn->Weapon)
+     * @param OverflowTime - overflow from timer of previous weapon PutDown() due to tick delta
+     */
+    virtual void BringUp(float OverflowTime = 0.0f);
+    
+    /**
+     * Puts the weapon away as part of a weapon switch
+     * Return false to prevent weapon switch (must keep this weapon equipped)
+     */
+    virtual bool PutDown();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnBringUp();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    bool eventPreventPutDown();
+    
+    UFUNCTION(BlueprintNativeEvent)
+    void AttachToOwner();
+    
+    UFUNCTION(BlueprintNativeEvent)
+    void DetachFromOwner();
+    
+    virtual uint8 GetNumFireMode() const
+    {
+        return FMath::Min3(255, FiringState.Num(), FireInterval.Num());
+    }
+    
+    virtual bool IsChargedFireMode(uint8 TestMode) const;
+    
+    virtual void GivenTo(ANZCharacter* NewOwner, bool bAutoActivate) override;
+    virtual void ClientGivenTo_Internal(bool bAutoActivate) override;
+    
+    virtual void Removed() override;
+    virtual void ClientRemoved_Implementation() override;
+    
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void FireShot();
+    
+    UFUNCTION(BlueprintImplementableEvent)
+    bool FireShotOverride();
+    
+    
+    
+    
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual bool HasAnyAmmo();
+    
+    
+    
+    
+    
+    
     
     
 };
