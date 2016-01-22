@@ -235,13 +235,13 @@ bool ANZWeapon::CanFireAgain()
     return false;
 }
 
-void ANZWeapon::OnStartedFiring()
+void ANZWeapon::OnStartedFiring_Implementation()
 {
     // todo:
     check(false);
 }
 
-void ANZWeapon::OnStoppedFiring()
+void ANZWeapon::OnStoppedFiring_Implementation()
 {
     // todo:
     check(false);
@@ -254,13 +254,13 @@ bool ANZWeapon::HandleContinuedFiring()
     return false;
 }
 
-void ANZWeapon::OnContinuedFiring()
+void ANZWeapon::OnContinuedFiring_Implementation()
 {
     // todo:
     check(false);
 }
 
-void ANZWeapon::OnMultiPress(uint8 OtherFireMode)
+void ANZWeapon::OnMultiPress_Implementation(uint8 OtherFireMode)
 {
     // todo:
     check(false);
@@ -279,26 +279,13 @@ bool ANZWeapon::PutDown()
     return false;
 }
 
-void ANZWeapon::OnBringUp()
+void ANZWeapon::AttachToOwner_Implementation()
 {
     // todo:
     check(false);
 }
 
-bool ANZWeapon::eventPreventPutDown()
-{
-    // todo:
-    check(false);
-    return false;
-}
-
-void ANZWeapon::AttachToOwner()
-{
-    // todo:
-    check(false);
-}
-
-void ANZWeapon::DetachFromOwner()
+void ANZWeapon::DetachFromOwner_Implementation()
 {
     // todo:
     check(false);
@@ -340,11 +327,3 @@ void ANZWeapon::FireShot()
     // todo:
     check(false);
 }
-
-bool ANZWeapon::FireShotOverride()
-{
-    // todo:
-    check(false);
-    return false;
-}
-

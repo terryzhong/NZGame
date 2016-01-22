@@ -520,23 +520,29 @@ public:
      */
     virtual bool PutDown();
     
+	/** Hook to do effects when the weapon is raised */
     UFUNCTION(BlueprintImplementableEvent)
     void OnBringUp();
     
+	/** Allows blueprint to prevent the weapon from being switched away from */
     UFUNCTION(BlueprintImplementableEvent)
     bool eventPreventPutDown();
     
+	/** Attach the visuals to Owner's first person view */
     UFUNCTION(BlueprintNativeEvent)
     void AttachToOwner();
     
+	/** Detach the visuals from the Owner's first person view */
     UFUNCTION(BlueprintNativeEvent)
     void DetachFromOwner();
     
+	/** Return number of fire mode */
     virtual uint8 GetNumFireMode() const
     {
         return FMath::Min3(255, FiringState.Num(), FireInterval.Num());
     }
     
+	/** Returns if the specified fire mode */
     virtual bool IsChargedFireMode(uint8 TestMode) const;
     
     virtual void GivenTo(ANZCharacter* NewOwner, bool bAutoActivate) override;
@@ -545,14 +551,51 @@ public:
     virtual void Removed() override;
     virtual void ClientRemoved_Implementation() override;
     
+	/** Fires a shot and consumes ammo */
     UFUNCTION(BlueprintCallable, Category = Weapon)
     virtual void FireShot();
     
+	/**
+	 * Blueprint override for firing
+	 * NOTE: do an authority check before spawning projectiles, etc as this function is called on both sides
+	 */
     UFUNCTION(BlueprintImplementableEvent)
     bool FireShotOverride();
     
+	/**
+	 * Plays an anim on the weapon and optionally hands antomatically handles fire rate modifiers by default, overridden if RateOverride is > 0.0
+	 */
+	UFUNCTION(BlueprintCallable, Category = Weapon)
+	virtual void PlayWeaponAnim(UAnimMontage* WeaponAnim, UAnimMontage* HandsAnim = NULL, float RateOverride = 0.0f);
     
-    
+	/** Returns montage to play on the weapon for the specified firing mode */
+	UFUNCTION(BlueprintCallable, Category = Weapon)
+	virtual UAnimMontage* GetFiringAnim(uint8 FireMode, bool bOnHands = false) const;
+
+	/** Play firing effects not associated with the shot's results (e.g. muzzle flash but generally NOT emitter to target) */
+	UFUNCTION(BlueprintCallable, Category = Weapon)
+	virtual void PlayFiringEffects();
+
+	UFUNCTION(BlueprintCallable, Category = Weapon)
+	virtual void StopFiringEffects();
+
+	/** Blueprint hook to modify spawned instance of FireEffect (e.g. tracer or beam) */
+	UFUNCTION(BlueprintImplementableEvent, Category = Weapon)
+	void ModifyFireEffect(UParticleSystemComponent* Effect);
+
+	UFUNCTION(BlueprintCallable, Category = Weapon)
+	virtual void GetImpactSpawnPosition(const FVector& TragetLoc, FVector& SpawnLocation, FRotator& SpawnRotation);
+
+	/** It true, don't spawn impact effect. Used for hitscan hits, skips by default for pawn and projectile hits */
+	UFUNCTION(BlueprintCallable, Category = Weapon)
+	virtual bool CancelImpactEffect(const FHitResult& ImpactHit);
+
+	virtual void PlayImpactEffects(const FVector& TargetLoc, uint8 FireMode, const FVector& SpawnLocation, const FRotator& SpawnRotation);
+
+	static FHitResult GetImpactEffectHit(APawn* Shooter, const FVector& StartLoc, const FVector& TargetLoc);
+
+
+
     
     UFUNCTION(BlueprintCallable, Category = Weapon)
     virtual bool HasAnyAmmo();

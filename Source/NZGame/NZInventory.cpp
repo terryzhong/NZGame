@@ -40,7 +40,7 @@ void ANZInventory::Removed()
 {
 }
 
-void ANZInventory::ClientGivenTo(APawn* NewInstigator, bool bAutoActivate)
+void ANZInventory::ClientGivenTo_Implementation(APawn* NewInstigator, bool bAutoActivate)
 {
 }
 
@@ -48,15 +48,7 @@ void ANZInventory::ClientGivenTo_Internal(bool bAutoActivate)
 {
 }
 
-void ANZInventory::eventClientGivenTo(bool bAutoActivate)
-{
-}
-
 void ANZInventory::ClientRemoved_Implementation()
-{
-}
-
-void ANZInventory::eventClientRemoved()
 {
 }
 
