@@ -5,6 +5,10 @@
 #include "GameFramework/Character.h"
 #include "NZCharacter.generated.h"
 
+
+
+
+
 /**
  * Ammo counter
  */
@@ -100,6 +104,18 @@ public:
     /** Maximum interval to hold saved positions for */
     UPROPERTY()
     float MaxSavedPositionAge;
+    
+    /** Max time server will look back to found client synchronized shot position */
+    UPROPERTY(EditAnywhere, Category = Weapon)
+    float MaxShotSynchDelay;
+    
+    /** Returns most recent position with bShotSpawned */
+    virtual FVector GetDelayedShotPosition();
+    virtual FRotator GetDelayedShotRotation();
+    
+    virtual bool DelayedShotFound();
+    
+    
     
     
     /** Use this to iterator inventory */
@@ -233,6 +249,33 @@ public:
      * @param OverflowTime - Amount of time past end of timer that previous weapon PutDown() used (due to frame delta) - pass onto BringUp() to keep things in sync
      */
     virtual void WeaponChanged(float OverflowTime = 0.0f);
+    
+    
+    /** Replicated weapon firing info */
+    UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = FiringInfoReplicated, Category = Weapon)
+    uint8 FlashCount;
+    
+    UPROPERTY(BlueprintReadOnly, Replicated, Category = Weapon)
+    uint8 FireMode;
+    
+    UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = FiringExtraUpdated, Category = Weapon)
+    uint8 FlashExtra;
+    
+    UPROPERTY(BlueprintReadOnly, Category = Weapon)
+    float LastWeaponFireTime;
+    
+    /** Set when client is locally simulating FlashLocation so ignore any replicated value */
+    bool bLocalFlashLoc;
+    
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void SetFlashLocation(const FVector& InFlashLoc, uint8 InFireMode);
+    
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void IncrementFlashCount(uint8 InFireMode);
+    
+    
+    
+    
 
 
 
@@ -288,8 +331,9 @@ public:
 
 
 
-
-    
+    /** Repnotify handler for firing variables, generally just calls FiringInfoUpdated() */
+    UFUNCTION()
+    virtual void FiringInfoReplicated();
     
     /** */
     UPROPERTY(BlueprintReadWrite, Replicated, Category = Pawn)
@@ -297,6 +341,28 @@ public:
     
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Pawn)
     int32 HealthMax;
+    
+    UPROPERTY(BlueprintReadWrite, Replicated, Category = Pawn)
+    float DamageScaling;
+    
+    /** Multiplier to firing speed */
+    UPROPERTY(Replicated, ReplicatedUsing = FireRateChanged)
+    float FireRateMultiplier;
+    
+    /** Accessors to FireRateMultiplier */
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    float GetFireRateMultiplier();
+    
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    void SetFireRateMultiplier(float InMult);
+    
+    UFUNCTION()
+    void FireRateChanged();
+    
+    
+    
+    
+    
     
     /** Runtime material instance for setting body material parameters (team color, etc) */
 protected:
@@ -321,5 +387,39 @@ public:
     
     virtual FVector GetLocationCenterOffset() const;
 	
+    
+    // Weapon bob and eye offset
+    
+    /** */
+    UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+    FVector CurrentWeaponBob;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    FVector WeaponBobMagnitude;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    FVector WeaponJumpBob;
+    
+    UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+    FVector DesiredJumpBob;
+    
+    UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+    FVector CurrentJumpBob;
+    
+    
+    UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+    FVector TargetEyeOffset;
+    
+    
+    
+    
+    
+    /** Local player currently viewing this character */
+    UPROPERTY()
+    class ANZPlayerController* CurrentViewerPC;
+    
+    virtual class ANZPlayerController* GetLocalViewer();
+    
+    
 };
 

@@ -34,5 +34,8 @@ public:
     UFUNCTION(BlueprintNativeEvent, Category = Game)
     bool PlayerCanAltRestart(APlayerController* Player);
     
+    /** If true, firing weapons costs ammo */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Game)
+    bool bAmmoIsLimited;
     
 };

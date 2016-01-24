@@ -5,4 +5,9 @@
 
 
 
+void ANZBot::SwitchToBestWeapon()
+{
+    // todo:
+    check(false);
+}
 

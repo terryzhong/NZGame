@@ -23,6 +23,15 @@ struct FDeferredFireInput
     {}
 };
 
+/** Controls location and orientation of first person weapon */
+UENUM()
+enum EWeaponHand
+{
+    HAND_Right,
+    HAND_Left,
+    HAND_Center,
+    HAND_Hidden,
+};
 
 /**
  * 
@@ -163,6 +172,25 @@ public:
     TArray<FDeferredFireInput, TInlineAllocator<2> > DeferredFireInputs;
     
 
+    // Perceived latency reduction
+    
+    /** Return amount of time to tick or simulate to make up for network lag */
+    virtual float GetPredictionTime();
+    
+    /** How long fake projectile should sleep before starting to simulate (because client ping is greater than MaxPredictionPing) */
+    virtual float GetProjectileSleepTime();
+    
+    /** List of fake projectiles currently out there for this client */
+    UPROPERTY()
+    TArray<class ANZProjectile*> FakeProjectiles;
+    
+    // Ping calculation
+    
+    /** Guess of this player's target on last shot, used by AI */
+    UPROPERTY(BlueprintReadWrite, Category = AI)
+    APawn* LastShotTargetGuess;
+    
+    
 protected:
     UPROPERTY()
     AActor* FinalViewTarget;

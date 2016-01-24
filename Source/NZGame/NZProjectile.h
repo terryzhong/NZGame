@@ -20,6 +20,13 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
+    
+    /** Sphere collision component */
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Projectile)
+    USphereComponent* CollisionComp;
 	
-	
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Projectile)
+    class UProjectileMovementComponent* ProjectileMovement;
+    
+    
 };

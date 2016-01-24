@@ -3,6 +3,7 @@
 #pragma once
 
 #include "NZInventory.h"
+#include "NZPlayerController.h"
 #include "NZWeapon.generated.h"
 
 USTRUCT(BlueprintType)
@@ -22,6 +23,7 @@ struct FInstantHitDamageInfo
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
     float TraceRange;
     
+    /** Size of trace (radius of sphere); if <= 0, line trace is used */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
     float TraceHalfSize;
     
@@ -30,6 +32,27 @@ struct FInstantHitDamageInfo
         , Momentum(0.0f)
         , TraceRange(25000.0f)
         , TraceHalfSize(0.0f)
+    {}
+};
+
+USTRUCT()
+struct FDelayedProjectileInfo
+{
+    GENERATED_USTRUCT_BODY()
+    
+    UPROPERTY()
+    TSubclassOf<class ANZProjectile> ProjectileClass;
+    
+    UPROPERTY()
+    FVector SpawnLocation;
+    
+    UPROPERTY()
+    FRotator SpawnRotation;
+    
+    FDelayedProjectileInfo()
+        : ProjectileClass(NULL)
+        , SpawnLocation(ForceInit)
+        , SpawnRotation(ForceInit)
     {}
 };
 
@@ -51,10 +74,10 @@ struct FDelayedHitScanInfo
     FRotator SpawnRotation;
     
     FDelayedHitScanInfo()
-    : ImpactLocation(ForceInit)
-    , FireMode(0)
-    , SpawnLocation(ForceInit)
-    , SpawnRotation(ForceInit)
+        : ImpactLocation(ForceInit)
+        , FireMode(0)
+        , SpawnLocation(ForceInit)
+        , SpawnRotation(ForceInit)
     {}
 };
 
@@ -75,20 +98,53 @@ struct FZoomInfo
 {
     GENERATED_USTRUCT_BODY()
     
+    /** FOV angle at start of zoom, or zero to start at the camera's default FOV */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Zoom)
     float StartFOV;
     
+    /** FOV angle at the end of the zoom, or zero to end at the camera's default FOV */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Zoom)
     float EndFOV;
     
+    /** Time to reach EndFOV from StartFOV */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Zoom)
     float Time;
+};
+
+USTRUCT()
+struct FTextureUVs
+{
+    GENERATED_USTRUCT_BODY()
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureUVs")
+    float U;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureUVs")
+    float V;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureUVs")
+    float UL;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureUVs")
+    float VL;
+    
+    FTextureUVs()
+    : U(0.0f)
+    , V(0.0f)
+    , UL(0.0f)
+    , VL(0.0f)
+    {};
+    
+    FTextureUVs(float inU, float inV, float inUL, float inVL)
+    {
+        U = inU; V = inV; UL = inUL;  VL = inVL;
+    }
 };
 
 /**
  * 
  */
-UCLASS(Config = Game)
+UCLASS(Blueprintable, Abstract, NotPlaceable, Config = Game)
 class NZGAME_API ANZWeapon : public ANZInventory
 {
 	GENERATED_BODY()
@@ -143,6 +199,8 @@ public:
     
     virtual void Serialize(FArchive& Ar) override
     {
+        // Prevent AutoSwitchPriority from being serialized using non-config paths
+        // Without this any local user setting will get pushed to blueprints and then override other user's configuration
         float SavedSwitchPriority = AutoSwitchPriority;
         Super::Serialize(Ar);
         AutoSwitchPriority = SavedSwitchPriority;
@@ -214,36 +272,47 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = Weapon)
     int32 FireEffectCount;
     
+    /** Optional effect for instant hit endpoint */
     UPROPERTY(EditAnywhere, Category = Weapon)
     TArray<TSubclassOf<class ANZImpactEffect> > ImpactEffect;
     
+    /** Throttling for impact effects - don't spawn another unless last effect is farther than this away or longer ago than MaxImpactEffectSkipTime */
     UPROPERTY(EditAnywhere, Category = Weapon)
     float ImpactEffectSkipDistance;
     
+    /** Throttling for impact effects - don't spawn another unless last effect is farther than ImpactEffectSkipDistance away or longer ago than this */
     UPROPERTY(EditAnywhere, Category = Weapon)
     float MaxImpactEffectSkipTime;
     
+    /** FlashLocation for last played impact effect */
     UPROPERTY(BlueprintReadWrite, Category = Weapon)
     FVector LastImpactEffectLocation;
     
+    /** Last time an impact effect was played */
     UPROPERTY(BlueprintReadWrite, Category = Weapon)
     float LastImpactEffectTime;
     
+    /** Materials on weapon mesh first time we change its skin, used to preserve any runtime blueprint changes */
     UPROPERTY(BlueprintReadWrite, Category = Weapon)
     TArray<UMaterialInterface*> SavedMeshMaterials;
     
+    /** It true, weapon is visibly holstered when not active. There can only be one holstered weapon in inventory at a time */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
     bool bMustBeHolstered;
     
+    /** If true, weapon can be thrown */
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Weapon)
     bool bCanThrowWeapon;
     
+    /** If true, don't display in menus like the weapon priority menu (generally because the weapon's use is outside the user's control, e.g. instagib */
     UPROPERTY(EditDefaultsOnly, Category = UI)
     bool bHideInMenus;
     
+    /** It true, don't display in custom crosshair menu */
     UPROPERTY(EditDefaultsOnly, Category = UI)
     bool bHideInCrosshairMenu;
     
+    /** Hack for adjusting first person weapon mesh at different FOVs (until we have separate render pass for first person weapon) */
     UPROPERTY(EditDefaultsOnly, Category = Weapon)
     FVector FOVOffset;
     
@@ -306,6 +375,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     bool bRecommendSplashDamage;
     
+    /** Indicates AI should target for splash damage (e.g. shoot at feet or nearby walls) */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     bool bRecommendSuppressiveFire;
     
@@ -322,7 +392,9 @@ public:
     FDelayedHitScanInfo DelayedHitScan;
     
     /**
-     *
+     * Return whether to play first person visual effects
+     * Not as trivial as it sounds as we need to appropriately handle bots (never actually 1P)
+     * First person spectating (can be 1P even though it's a remote client), hidden weapons setting (should draw even though weapon mesh is hidden), etc
      */
     UFUNCTION(BlueprintCallable, Category = Effects)
     bool ShouldPlay1PVisuals() const;
@@ -543,7 +615,7 @@ public:
     void DetachFromOwner();
     
 	/** Return number of fire mode */
-    virtual uint8 GetNumFireMode() const
+    virtual uint8 GetNumFireModes() const
     {
         return FMath::Min3(255, FiringState.Num(), FireInterval.Num());
     }
@@ -741,9 +813,11 @@ public:
     
     virtual void SetSkin(UMaterialInterface* NewSkin);
     
+    /** Previous frame's weapon rotation */
     UPROPERTY()
     FRotator LastRotation;
     
+    /** Saved values used for lagging weapon rotation */
     UPROPERTY()
     float OldRotDiff[2];
     UPROPERTY()
@@ -751,29 +825,39 @@ public:
     UPROPERTY()
     float OldMaxDiff[2];
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon Rotation)
+    /** How fast weapon rotation offsets */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Rotation")
     float RotChgSpeed;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon Rotation)
+    /** How fast weapon rotation returns */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Rotation")
     float ReturnChgSpeed;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon Rotation)
+    /** Max weapon rotation yaw offset */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Rotation")
     float MaxYawLag;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon Rotation)
+    /** Max weapon rotation pitch offset */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Rotation")
     float MaxPitchLag;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon Rotation)
+    /** If true, the weapon's rotation will procedurally lag behind the holder's rotation */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Rotation")
     bool bProceduralLagRotation;
     
+    /** @return whether the weapon's rotation is allowed to lag behind the holder's rotation */
     virtual bool ShouldLagRot();
     
+    /** Lag a component of weapon rotation behind player's rotation */
     virtual float LagWeaponRotation(float NewValue, float LastValue, float DeltaTime, float MaxDiff, int32 Index);
     
+    /** Called when initially attaching the first person weapon and when a camera viewing this player changes the weapon hand setting */
     virtual void UpdateWeaponHand();
     
+    /** Get weapon hand from the owning playercontroller, or spectating playercontroller if it's a client and a nonlocal player */
     EWeaponHand GetWeaponHand() const;
     
+    /** Begin unequipping this weapon */
     virtual void UnEquip();
     
     virtual void GotoEquippingState(float OverflowTime);
@@ -781,33 +865,57 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = Weapon)
     virtual bool IsUnEquipping() { return GetCurrentState() == UnequippingState; }
     
+    /** Informational function that returns the damage radius that a given fire mode has (used by e.g. bots) */
     UFUNCTION(BlueprintNativeEvent, Category = AI)
     float GetDamageRadius(uint8 TestMode) const;
     
     virtual float BotDesireability_Implementation(APawn* Asker, AActor* Pickup, float PathDistance) const;
     virtual float DetourWeight_Implementation(APawn* Asker, AActor* Pickup, float PathDistance) const;
     
+    /**
+     * Base weapon selection rating for AI
+     * This is often used to determine if the AI has a good enough weapon to not pursue further pickups
+     * since GetAIRating() will fluctuate wildly depending on the combat scenario
+     */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = AI)
     float BaseAISelectRating;
     
+    /** AI switches to the weapon that returns the highest rating */
     UFUNCTION(BlueprintNativeEvent, Category = AI)
     float GetAISelectRating();
     
+    /**
+     * Return a value from -1 to 1 for suggested method of attack for AI when holding this weapon, 
+     * where < 0 indicates back off and fire from afar while > 0 indicates AI should advance/charge
+     */
     UFUNCTION(BlueprintNativeEvent, Category = AI)
     float SuggestAttackStyle();
     
+    /** 
+     * Return a value from -1 to 1 for suggested method of defense for AI when fighting a player with this weapon, 
+     * where < 0 indicates back off and fire from afar while > 0 indicates AI should advance/charge
+     */
     UFUNCTION(BlueprintNativeEvent, Category = AI)
     float SuggestDefenseStyle();
     
+    /**
+     * Called by the AI to ask if a weapon attack is being prepared; 
+     * For example loading rockets or waiting for a shock ball to combo the AI uses this to know it shouldn't move around too much and should focus on its current target to avoid messing up the shot
+     */
     UFUNCTION(BlueprintNativeEvent, Category = AI)
     bool IsPreparingAttack();
     
+    /** Called by the AI to ask if it should avoid firing even if the weapon can currently hit its target (e.g. setting up a combo) */
     UFUNCTION(BlueprintNativeEvent, Category = AI)
     bool ShouldAIDelayFiring();
     
     UFUNCTION(BlueprintNativeEvent, Category = AI)
     bool CanAttack(AActor* Target, const FVector& TargetLoc, bool bDirectOnly, bool bPreferCurrentMode, UPARAM(ref) uint8& BestFireMode, UPARAM(ref) FVector& OptimalTargetLoc);
     
+    /**
+     * Convenience redirect it the out params are not needed (just checking if firing is a good idea)
+     * would prefer to use pointer params but Blueprints don't support that
+     */
     inline bool CanAttack(AActor* Target, const FVector& TargetLoc, bool bDirectOnly)
     {
         uint8 UnusedFireMode;
@@ -815,11 +923,19 @@ public:
         return CanAttack(Target, TargetLoc, bDirectOnly, false, UnusedFireMode, UnusedOptimalLoc);
     }
     
+    /**
+     * Called by AI to try an assisted jump (e.g. impact jump or rocket jump)
+     * return true if an action was performed and the bot can continue along its path
+     */
     virtual bool DoAssistedJump()
     {
         return false;
     }
     
+    /** 
+     * Returns the meshes used to represent this weapon in first person,
+     * for example so they can be hidden when viewing in 3p weapons that have additional relevant meshes (hands, dual wield, etc) should override to return those additional components
+     */
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = Mesh)
     TArray<UMeshComponent*> Get1PMeshes() const;
     
@@ -845,17 +961,20 @@ protected:
     UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
     UNZWeaponState* InactiveState;
     
+    /** Overlay mesh for overlay effects */
     UPROPERTY()
     USkeletalMeshComponent* OverlayMesh;
     
 public:
     float WeaponBarScale;
     
+    /** The UV coords for this weapon when displaying it on the weapon bar */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HUD)
-    FTextureUVs WeaponBarSelectedUVs;
+    struct FTextureUVs WeaponBarSelectedUVs;
     
+    /** The UV coords for this weapon when displaying it on the weapon bar */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HUD)
-    FTextureUVs WeaponBarInactiveUVs;
+    struct FTextureUVs WeaponBarInactiveUVs;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stats)
     FName KillStatsName;
@@ -870,6 +989,9 @@ public:
     FName AltDeathStatsName;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stats)
+    FName HitsStatsName;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Stats)
     FName ShotsStatsName;
     
     virtual int32 GetWeaponKillStats(ANZPlayerState* PS) const;
@@ -877,6 +999,7 @@ public:
     virtual float GetWeaponShotsStats(ANZPlayerState* PS) const;
     virtual float GetWeaponHitsStats(ANZPlayerState* PS) const;
     
+    // Temp for testing 1p offsets
     UFUNCTION(exec)
     void TestWeaponLoc(float X, float Y, float Z);
     UFUNCTION(exec)
@@ -884,6 +1007,7 @@ public:
     UFUNCTION(exec)
     void TestWeaponScale(float X, float Y, float Z);
     
+    /** Blueprint hook to modify team color materials */
     UFUNCTION(BlueprintImplementableEvent, Category = Weapon)
     void NotifyTeamChanged();
     
@@ -894,40 +1018,48 @@ public:
     UFUNCTION(BlueprintNativeEvent, Category = Weapon)
     void FiringEffectsUpdated(uint8 InFireMode, FVector InFlashLocation);
     
+    /** Used to reset the ZoomTime */
     UPROPERTY(Replicated, ReplicatedUsing = OnRep_ZoomCount)
     uint8 ZoomCount;
     UFUNCTION()
     virtual void OnRep_ZoomCount();
     
+    /** The state of the weapons zoom. Override OnRep_ZoomState to handle any state changes */
     UPROPERTY(BlueprintReadOnly, Category = Zoom, Replicated, ReplicatedUsing = OnRep_ZoomState)
     TEnumAsByte<EZoomState::Type> ZoomState;
     UFUNCTION(BlueprintNativeEvent)
     void OnRep_ZoomState();
     
+    /** Current zoom mode. An index into ZoomModes array */
     UPROPERTY(BlueprintReadOnly, Category = Zoom, Replicated)
     uint8 CurrentZoomMode;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Zoom)
     TArray<FZoomInfo> ZoomModes;
     
+    /** How long the weapon been zooming for */
     UPROPERTY(BlueprintReadOnly, Category = Zoom, Replicated)
     float ZoomTime;
     
+    /** Sets a new zoom mode. Index into ZoomModes */
     UFUNCTION(BlueprintCallable, Category = Zoom)
     virtual void SetZoomMode(uint8 NewZoomMode);
     UFUNCTION(Server, Reliable, WithValidation)
     virtual void ServerSetZoomMode(uint8 NewZoomMode);
     virtual void LocalSetZoomMode(uint8 NewZoomMode);
     
+    /** Sets the zoom state */
     UFUNCTION(BlueprintCallable, Category = Zoom)
     virtual void SetZoomState(TEnumAsByte<EZoomState::Type> NewZoomState);
     UFUNCTION(Server, Reliable, WithValidation)
     virtual void ServerSetZoomState(uint8 NewZoomState);
     virtual void LocalSetZoomState(uint8 NewZoomState);
     
+    /** Called when the weapon has zoomed in as far as it can go. Default is EZoomState::EZS_Zoomed */
     UFUNCTION(BlueprintNativeEvent)
     void OnZoomedIn();
     
+    /** Called when the weapon has zoomed all the way out. Default is EZoomState::EZS_NotZoomed */
     UFUNCTION(BlueprintNativeEvent)
     void OnZoomedOut();
     

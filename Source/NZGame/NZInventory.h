@@ -94,6 +94,9 @@ public:
     UMeshComponent* GetPickupMeshTemplate(FVector& OverrideScale) const;
     
     
+    
+    UFUNCTION(BlueprintNativeEvent)
+    bool StackPickup(ANZInventory* ContainedInv);
 };
 
 

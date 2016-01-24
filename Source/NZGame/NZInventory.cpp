@@ -77,3 +77,9 @@ UMeshComponent* ANZInventory::GetPickupMeshTemplate_Implementation(FVector& Over
     // todo:
     return NULL;
 }
+
+bool ANZInventory::StackPickup_Implementation(ANZInventory* ContainedInv)
+{
+    return false;
+}
+

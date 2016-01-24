@@ -149,6 +149,61 @@ void ANZCharacter::Destroyed()
 }
 
 
+FVector ANZCharacter::GetDelayedShotPosition()
+{
+    const float WorldTime = GetWorld()->GetTimeSeconds();
+    for (int32 i = SavedPositions.Num() - 1; i >= 0; i--)
+    {
+        if (SavedPositions[i].bShotSpawned)
+        {
+            return SavedPositions[i].Position;
+        }
+        if (WorldTime - SavedPositions[i].Time > MaxShotSynchDelay)
+        {
+            break;
+        }
+    }
+    return GetActorLocation();
+}
+
+FRotator ANZCharacter::GetDelayedShotRotation()
+{
+    const float WorldTime = GetWorld()->GetTimeSeconds();
+    for (int32 i = SavedPositions.Num() - 1; i >= 0; i--)
+    {
+        if (SavedPositions[i].bShotSpawned)
+        {
+            return SavedPositions[i].Rotation;
+        }
+        if (WorldTime - SavedPositions[i].Time > MaxShotSynchDelay)
+        {
+            break;
+        }
+    }
+    return GetActorRotation();
+}
+
+bool ANZCharacter::DelayedShotFound()
+{
+    const float WorldTime = GetWorld()->GetTimeSeconds();
+    for (int32 i = SavedPositions.Num() - 1; i >= 0; i--)
+    {
+        if (SavedPositions[i].bShotSpawned)
+        {
+            return true;
+        }
+        if (WorldTime - SavedPositions[i].Time > MaxShotSynchDelay)
+        {
+            break;
+        }
+    }
+    return false;
+}
+
+
+
+
+
 ANZInventory* ANZCharacter::K2_CreateInventory(TSubclassOf<ANZInventory> NewInvClass, bool bAutoActivate)
 {
     ANZInventory* Inv = NULL;
@@ -569,6 +624,24 @@ void ANZCharacter::MoveUp(float Value)
 }
 
 
+float ANZCharacter::GetFireRateMultiplier()
+{
+    return FMath::Max<float>(FireRateMultiplier, 0.1f);
+}
+
+void ANZCharacter::SetFireRateMultiplier(float InMult)
+{
+    FireRateMultiplier = InMult;
+    FireRateChanged();
+}
+
+void ANZCharacter::FireRateChanged()
+{
+    if (Weapon != NULL)
+    {
+        Weapon->UpdateTiming();
+    }
+}
 
 
 

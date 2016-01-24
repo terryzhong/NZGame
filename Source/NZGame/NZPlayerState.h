@@ -62,5 +62,15 @@ public:
 public:
     UPROPERTY(Replicated)
     TArray<class ANZReplicatedLoadoutInfo*> Loadout;
+    
+    
+public:
+    UPROPERTY()
+    float LastScoreStatsUpdateTime;
+    
+    /** Accessors for StatsData */
+    float GetStatsValue(FName StatsName) const;
+    void SetStatsValue(FName StatsName, float NewValue);
+    void ModifyStatsValue(FName StatsName, float Change);
 
 };
