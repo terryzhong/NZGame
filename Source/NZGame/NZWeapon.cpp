@@ -10,6 +10,7 @@
 #include "NZProjectile.h"
 #include "NZGameMode.h"
 #include "NZPlayerState.h"
+#include "NZWeaponStateFiring.h"
 
 
 
@@ -50,27 +51,6 @@ void ANZWeapon::OnRep_Ammo()
             }
         }
     }
-}
-
-bool ANZWeapon::HasAnyAmmo()
-{
-    bool bHadCost = false;
-    
-    // Only consider zero cost firemodes as having ammo if they all have no cost
-    // the assumption here is that for most weapons with an ammo-using firmode,
-    // any that don't use ammo are support firemodes that can't function effectively without the other one
-    for (int32 i = GetNumFireModes() - 1; i >= 0; i--)
-    {
-        if (AmmoCost[i] > 0)
-        {
-            bHadCost = true;
-            if (HasAmmo(i))
-            {
-                return true;
-            }
-        }
-    }
-    return !bHadCost;
 }
 
 float ANZWeapon::GetImpartedMomentumMag(AActor* HitActor)
@@ -209,8 +189,27 @@ UMeshComponent* ANZWeapon::GetPickupMeshTemplate_Implementation(FVector& Overrid
 
 void ANZWeapon::GotoState(class UNZWeaponState* NewState)
 {
-    // todo:
-    check(false);
+    if (NewState == NULL || !NewState->IsIn(this))
+    {
+        //UE_LOG(NZ, Warning, TEXT("Attempt to send %s to invalid state %s"), *GetName(), *GetFullNameSafe(NewState));
+    }
+    else if (ensureMsgf(NZOwner != NULL || NewState == InactiveState, TEXT("Attempt to send %s to state %s while not owned"), *GetName(), *GetNameSafe(NewState)))
+    {
+        if (CurrentState != NewState)
+        {
+            UNZWeaponState* PrevState = CurrentState;
+            if (CurrentState != NULL)
+            {
+                CurrentState->EndState();   // NOTE: may trigger another GotoState() call
+            }
+            if (CurrentState == PrevState)
+            {
+                CurrentState = NewState;
+                CurrentState->BeginState(PrevState);    // NOTE: may trigger another GotoState() call
+                StateChanged();
+            }
+        }
+    }
 }
 
 void ANZWeapon::StartFire(uint8 FireModeNum)
@@ -749,5 +748,260 @@ void ANZWeapon::FireInstantHit(bool bDealDamage, FHitResult* OutHit)
         *OutHit = Hit;
     }
 }
+
+void ANZWeapon::K2_FireInstantHit(bool bDealDamage, FHitResult& OutHit)
+{
+    if (!InstantHitInfo.IsValidIndex(CurrentFireMode))
+    {
+        FFrame::KismetExecutionMessage(*FString::Printf(TEXT("%s::FireInstantHit(): Fire mode %i doesn't have instant hit info"), *GetName(), int32(CurrentFireMode)), ELogVerbosity::Warning);
+    }
+    else if (GetNZOwner() != NULL)
+    {
+        FireInstantHit(bDealDamage, &OutHit);
+    }
+    else
+    {
+        FFrame::KismetExecutionMessage(*FString::Printf(TEXT("%s::FireInstantHit(): Weapon is not owned (owner died while script was running?)"), *GetName()), ELogVerbosity::Warning);
+    }
+}
+
+void ANZWeapon::HitScanTrace(const FVector& StartLocation, const FVector& EndTrace, float TraceRadius, FHitResult& Hit, float PredictionTime)
+{
+    ECollisionChannel TraceChannel = COLLISION_TRACE_WEAPONNOCHARACTER;
+    FCollisionQueryParams QueryParams(GetClass()->GetFName(), true, NZOwner);
+    if (TraceRadius <= 0.0f)
+    {
+        if (!GetWorld()->LineTraceSingleByChannel(Hit, StartLocation, EndTrace, TraceChannel, QueryParams))
+        {
+            Hit.Location = EndTrace;
+        }
+    }
+    else
+    {
+        if (GetWorld()->SweepSingleByChannel(Hit, StartLocation, EndTrace, FQuat::Identity, TraceChannel, FCollisionShape::MakeSphere(TraceRadius), QueryParams))
+        {
+            Hit.Location += (EndTrace - StartLocation).GetSafeNormal() * TraceRadius;
+        }
+        else
+        {
+            Hit.Location = EndTrace;
+        }
+    }
+    
+    if (!(Hit.Location - StartLocation).IsNearlyZero())
+    {
+        ANZCharacter* BestTarget = NULL;
+        FVector BestPoint(0.f);
+        FVector BestCapsulePoint(0.f);
+        float BestCollisionRadius = 0.f;
+        for (FConstPawnIterator Iterator = GetWorld()->GetPawnIterator(); Iterator; ++Iterator)
+        {
+            ANZCharacter* Target = Cast<ANZCharacter>(*Iterator);
+            if (Target && (Target != NZOwner))
+            {
+                FVector TargetLocation = ((PredictionTime > 0.f) && (Role == ROLE_Authority)) ? Target->GetRewindLocation(PredictionTime) : Target->GetActorLocation();
+                
+                // now see if trace would hit the capsule
+                float CollisionHeight = Target->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+                // todo:
+                /*
+                if (Target->NZCharacterMovement && Target->NZCharacterMovement->bIsFloorSliding)
+                {
+                    TargetLocation.Z = TargetLocation.Z - CollisionHeight + Target->SlideTargetHeight;
+                    CollisionHeight = Target->SlideTargetHeight;
+                }
+                 */
+                float CollisionRadius = Target->GetCapsuleComponent()->GetScaledCapsuleRadius();
+                
+                bool bHitTarget = false;
+                FVector ClosestPoint(0.f);
+                FVector ClosestCapsulePoint = TargetLocation;
+                if (CollisionRadius >= CollisionHeight)
+                {
+                    ClosestPoint = FMath::ClosestPointOnSegment(TargetLocation, StartLocation, Hit.Location);
+                    bHitTarget = ((ClosestPoint - TargetLocation).SizeSquared() < FMath::Square(CollisionHeight + TraceRadius));
+                }
+                else
+                {
+                    FVector CapsuleSegment = FVector(0.f, 0.f, CollisionHeight - CollisionRadius);
+                    FMath::SegmentDistToSegmentSafe(StartLocation, Hit.Location, TargetLocation - CapsuleSegment, TargetLocation + CapsuleSegment, ClosestPoint, ClosestCapsulePoint);
+                    bHitTarget = ((ClosestPoint - ClosestCapsulePoint).SizeSquared() < FMath::Square(CollisionRadius + TraceRadius));
+                }
+                
+                if (bHitTarget && (!BestTarget || ((ClosestPoint - StartLocation).SizeSquared() < (BestPoint - StartLocation).SizeSquared())))
+                {
+                    BestTarget = Target;
+                    BestPoint = ClosestPoint;
+                    BestCapsulePoint = ClosestCapsulePoint;
+                    BestCollisionRadius = CollisionRadius;
+                }
+            }
+        }
+        
+        if (BestTarget)
+        {
+            // We found a player to hit, so update hit result
+            
+            // First find proper hit location on surface of capsule
+            float ClosestDistSq = (BestPoint - BestCapsulePoint).SizeSquared();
+            float BackDist = FMath::Sqrt(FMath::Max(0.f, BestCollisionRadius * BestCollisionRadius - ClosestDistSq));
+            
+            Hit.Location = BestPoint + BackDist * (StartLocation - EndTrace).GetSafeNormal();
+            Hit.Normal = (Hit.Location - BestCapsulePoint).GetSafeNormal();
+            Hit.ImpactNormal = Hit.Normal;
+            Hit.Actor = BestTarget;
+            Hit.bBlockingHit = true;
+            Hit.Component = BestTarget->GetCapsuleComponent();
+            Hit.ImpactPoint = BestPoint;
+            Hit.Time = (BestPoint - StartLocation).Size() / (EndTrace - StartLocation).Size();
+        }
+    }
+}
+
+ANZProjectile* ANZWeapon::FireProjectile()
+{
+    //UE_LOG(LogNZWeapon, Verbose, TEXT("%s::FireProjectile()"), *GetName());
+
+    if (GetNZOwner() == NULL)
+    {
+        //UE_LOG(LogNZWeapon, Warning, TEXT("%s::FireProjectile(): Weapon is not owned (owner died during firing sequence)"), *GetName());
+        return NULL;
+    }
+    
+    checkSlow(ProjClass.IsValidIndex(CurrentFireMode) && ProjClass[CurrentFireMode] != NULL);
+    if (Role == ROLE_Authority)
+    {
+        NZOwner->IncrementFlashCount(CurrentFireMode);
+        ANZPlayerState* PS = NZOwner->Controller ? Cast<ANZPlayerState>(NZOwner->Controller->PlayerState) : NULL;
+        if (PS && (ShotsStatsName != NAME_None))
+        {
+            PS->ModifyStatsValue(ShotsStatsName, 1);
+        }
+    }
+    // Spawn the projectile at the muzzle
+    const FVector SpawnLocation = GetFireStartLoc();
+    const FRotator SpawnRotation = GetAdjustedAim(SpawnLocation);
+    return SpawnNetPredictedProjectile(ProjClass[CurrentFireMode], SpawnLocation, SpawnRotation);
+}
+
+ANZProjectile* ANZWeapon::SpawnNetPredictedProjectile(TSubclassOf<ANZProjectile> ProjectileClass, FVector SpawnLocation, FRotator SpawnRotation)
+{
+    ANZPlayerController* OwningPlayer = NZOwner ? Cast<ANZPlayerController>(NZOwner->GetController()) : NULL;
+    float CatchupTickDelta = ((GetNetMode() != NM_Standalone) && OwningPlayer) ? OwningPlayer->GetPredictionTime() : 0.f;
+    
+    if ((CatchupTickDelta > 0.f) && (Role != ROLE_Authority))
+    {
+        float SleepTime = OwningPlayer->GetProjectileSleepTime();
+        if (SleepTime > 0.f)
+        {
+            // Lag is so high need to delay spawn
+            if (!GetWorldTimerManager().IsTimerActive(SpawnDelayedFakeProjHandle))
+            {
+                DelayedProjectile.ProjectileClass = ProjectileClass;
+                DelayedProjectile.SpawnLocation = SpawnLocation;
+                DelayedProjectile.SpawnRotation = SpawnRotation;
+                GetWorldTimerManager().SetTimer(SpawnDelayedFakeProjHandle, this, &ANZWeapon::SpawnDelayedFakeProjectile, SleepTime, false);
+            }
+            return NULL;
+        }
+    }
+    
+    FActorSpawnParameters Params;
+    Params.Instigator = NZOwner;
+    Params.Owner = NZOwner;
+    Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    ANZProjectile* NewProjectile = ((Role == ROLE_Authority) || (CatchupTickDelta > 0.f)) ? GetWorld()->SpawnActor<ANZProjectile>(ProjectileClass, SpawnLocation, SpawnRotation, Params) : NULL;
+    if (NewProjectile)
+    {
+        if (NZOwner)
+        {
+            NZOwner->LastFiredProjectile = NewProjectile;
+        }
+        if (Role == ROLE_Authority)
+        {
+            NewProjectile->HitsStatsName = HitsStatsName;
+            if ((CatchupTickDelta > 0.f) && NewProjectile->ProjectileMovement)
+            {
+                // Server ticks projectile to match with when client actually fired
+                // TODO: account for CustomTimeDilation?
+                if (NewProjectile->PrimaryActorTick.IsTickFunctionEnabled())
+                {
+                    NewProjectile->TickActor(CatchupTickDelta * NewProjectile->CustomTimeDilation, LEVELTICK_All, NewProjectile->PrimaryActorTick);
+                }
+                NewProjectile->ProjectileMovement->TickComponent(CatchupTickDelta * NewProjectile->CustomTimeDilation, LEVELTICK_All, NULL);
+                NewProjectile->SetForwardTicked(true);
+                if (NewProjectile->GetLifeSpan() > 0.f)
+                {
+                    NewProjectile->SetLifeSpan(FMath::Max(0.001f, NewProjectile->GetLifeSpan() - CatchupTickDelta));
+                }
+            }
+            else
+            {
+                NewProjectile->SetForwardTicked(false);
+            }
+        }
+        else
+        {
+            NewProjectile->InitFakeProjectile(OwningPlayer);
+            NewProjectile->SetLifeSpan(FMath::Min(NewProjectile->GetLifeSpan(), 2.f * FMath::Max(0.f, CatchupTickDelta)));
+        }
+    }
+    
+    return NewProjectile;
+}
+
+bool ANZWeapon::HasAmmo(uint8 FireModeNum)
+{
+    return (AmmoCost.IsValidIndex(FireModeNum) && Ammo >= AmmoCost[FireModeNum]);
+}
+
+bool ANZWeapon::HasAnyAmmo()
+{
+    bool bHadCost = false;
+    
+    // Only consider zero cost firemodes as having ammo if they all have no cost
+    // The assumption here is that for most weapons with an ammo-using firemode,
+    // any that don't use ammo are support firemodes that can't function effectively without the other one
+    for (int32 i = GetNumFireModes() - 1; i >= 0; i--)
+    {
+        if (AmmoCost[i] > 0)
+        {
+            bHadCost = true;
+            if (HasAmmo(i))
+            {
+                return true;
+            }
+        }
+    }
+    return !bHadCost;
+}
+
+float ANZWeapon::GetRefireTime(uint8 FireModeNum)
+{
+    if (FireInterval.IsValidIndex(FireModeNum))
+    {
+        float Result = FireInterval[FireModeNum];
+        if (NZOwner != NULL)
+        {
+            Result /= NZOwner->GetFireRateMultiplier();
+        }
+        return FMath::Max<float>(0.01f, Result);
+    }
+    else
+    {
+        //UE_LOG(NZ, Warning, TEXT("Invalid firing mode %i in %s::GetRefireTime()"), int32(FireModeNum), *GetName());
+        return 0.1f;
+    }
+}
+
+void ANZWeapon::GotoFireMode(uint8 NewFireMode)
+{
+    if (FiringState.IsValidIndex(NewFireMode))
+    {
+        CurrentFireMode = NewFireMode;
+        GotoState(FiringState[NewFireMode]);
+    }
+}
+
 
 

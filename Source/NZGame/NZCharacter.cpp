@@ -149,6 +149,30 @@ void ANZCharacter::Destroyed()
 }
 
 
+FVector ANZCharacter::GetRewindLocation(float PredictionTime)
+{
+    FVector TargetLocation = GetActorLocation();
+    float TargetTime = GetWorld()->GetTimeSeconds() - PredictionTime;
+    if (PredictionTime > 0.f)
+    {
+        for (int32 i = SavedPositions.Num() - 1; i >= 0; i--)
+        {
+            TargetLocation = SavedPositions[i].Position;
+            if (SavedPositions[i].Time < TargetTime)
+            {
+                if (!SavedPositions[i].bTeleported && (i < SavedPositions.Num() - 1))
+                {
+                    float Percent = (SavedPositions[i + 1].Time == SavedPositions[i].Time) ? 1.f : (TargetTime - SavedPositions[i].Time) / (SavedPositions[i + 1].Time - SavedPositions[i].Time);
+                    TargetLocation = SavedPositions[i].Position + Percent * (SavedPositions[i + 1].Position - SavedPositions[i].Position);
+                }
+                break;
+            }
+        }
+    }
+    return TargetLocation;
+}
+
+
 FVector ANZCharacter::GetDelayedShotPosition()
 {
     const float WorldTime = GetWorld()->GetTimeSeconds();

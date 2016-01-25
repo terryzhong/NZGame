@@ -105,6 +105,10 @@ public:
     UPROPERTY()
     float MaxSavedPositionAge;
     
+    /** Returns this character's position PredictionTime seconds ago */
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual FVector GetRewindLocation(float PredictionTime);
+    
     /** Max time server will look back to found client synchronized shot position */
     UPROPERTY(EditAnywhere, Category = Weapon)
     float MaxShotSynchDelay;
@@ -113,6 +117,7 @@ public:
     virtual FVector GetDelayedShotPosition();
     virtual FRotator GetDelayedShotRotation();
     
+    /** Return true if there's a recent delayed shot */
     virtual bool DelayedShotFound();
     
     
@@ -244,6 +249,10 @@ public:
         return PendingWeapon;
     }
     
+    /** Used for spectating fired projectiles */
+    UPROPERTY(BlueprintReadOnly, Category = Weapon)
+    class ANZProjectile* LastFiredProjectile;
+    
     /**
      * Called by weapon being put down when it has finished being unequipped. Transition PendingWeapon to Weapon and bring it up
      * @param OverflowTime - Amount of time past end of timer that previous weapon PutDown() used (due to frame delta) - pass onto BringUp() to keep things in sync
@@ -273,6 +282,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = Weapon)
     virtual void IncrementFlashCount(uint8 InFireMode);
     
+    /** Called when FlashExtra is updated; routes call to weapon attachment */
+    UFUNCTION()
+    virtual void FiringExtraUpdated();
+    
+    /** Repnotify handler for firing variables, generally just calls FiringInfoUpdated() */
+    UFUNCTION()
+    virtual void FiringInfoReplicated();
     
     
     
@@ -331,9 +347,6 @@ public:
 
 
 
-    /** Repnotify handler for firing variables, generally just calls FiringInfoUpdated() */
-    UFUNCTION()
-    virtual void FiringInfoReplicated();
     
     /** */
     UPROPERTY(BlueprintReadWrite, Replicated, Category = Pawn)
