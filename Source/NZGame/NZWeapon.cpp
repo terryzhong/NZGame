@@ -11,6 +11,9 @@
 #include "NZGameMode.h"
 #include "NZPlayerState.h"
 #include "NZWeaponStateFiring.h"
+#include "NZHUDWidget.h"
+#include "NZHUD.h"
+#include "NZWeaponStateEquipping.h"
 
 
 
@@ -1003,5 +1006,309 @@ void ANZWeapon::GotoFireMode(uint8 NewFireMode)
     }
 }
 
+bool ANZWeapon::IsFiring() const
+{
+    return CurrentState->IsFiring();
+}
 
+bool ANZWeapon::StackPickup_Implementation(ANZInventory* ContainedInv)
+{
+    AddAmmo(ContainedInv != NULL ? Cast<ANZWeapon>(ContainedInv)->Ammo : GetClass()->GetDefaultObject<ANZWeapon>()->Ammo);
+    return true;
+}
+
+void ANZWeapon::UpdateTiming()
+{
+    CurrentState->UpdateTiming();
+}
+
+void ANZWeapon::Tick(float DeltaTime)
+{
+    // Try to gracefully detect being active with no owner, which should never happen because we should always end up going through Removed() and goint to the inactive state
+    if (CurrentState != InactiveState && (NZOwner == NULL || NZOwner->IsPendingKillPending()) && CurrentState != NULL)
+    {
+        //UE_LOG(NZ, Warning, TEXT("%s lost Owner while active (state %s"), *GetName(), *GetNameSafe(CurrentState));
+        GotoState(InactiveState);
+    }
+    
+    Super::Tick(DeltaTime);
+    
+    // Note that this relies on us making BeginPlay() always called before first tick; see UNZGameEngine::LoadMap()
+    if (CurrentState != InactiveState)
+    {
+        CurrentState->Tick(DeltaTime);
+    }
+    
+    TickZoom(DeltaTime);
+}
+
+void ANZWeapon::Destroyed()
+{
+    Super::Destroyed();
+    
+    // This makes sure timers, etc go away
+    GotoState(InactiveState);
+}
+
+void ANZWeapon::InstanceMuzzleFlashArray(AActor* Weap, TArray<UParticleSystemComponent*>& MFArray)
+{
+    TArray<const UBlueprintGeneratedClass*> ParentBPClassStack;
+    UBlueprintGeneratedClass::GetGeneratedClassesHierarchy(Weap->GetClass(), ParentBPClassStack);
+    for (int32 i = ParentBPClassStack.Num() - 1; i >= 0; i--)
+    {
+        const UBlueprintGeneratedClass* CurrentBPGClass = ParentBPClassStack[i];
+        if (CurrentBPGClass->SimpleConstructionScript)
+        {
+            TArray<USCS_Node*> ConstructionNodes = CurrentBPGClass->SimpleConstructionScript->GetAllNodes();
+            for (int32 j = 0; j < ConstructionNodes.Num(); j++)
+            {
+                for (int32 k = 0; k < MFArray.Num(); k++)
+                {
+                    if (Cast<UParticleSystemComponent>(ConstructionNodes[j]->ComponentTemplate) == MFArray[k])
+                    {
+                        MFArray[k] = Cast<UParticleSystemComponent>((UObject*)FindObjectWithOuter(Weap, ConstructionNodes[j]->ComponentTemplate->GetClass(), ConstructionNodes[j]->VariableName));
+                    }
+                }
+            }
+        }
+    }
+}
+
+FLinearColor ANZWeapon::GetCrosshairColor(class UNZHUDWidget* WeaponHudWidget) const
+{
+    FLinearColor CrosshairColor = FLinearColor::White;
+    return WeaponHudWidget->NZHUDOwner->GetCrosshairColor(CrosshairColor);
+}
+
+bool ANZWeapon::ShouldDrawFFIndicator(APlayerController* Viewer, ANZPlayerState*& HitPlayerState) const
+{
+    bool bDrawFriendlyIndicator = false;
+    HitPlayerState = NULL;
+    ANZGameState* GameState = GetWorld()->GetGameState<ANZGameState>();
+    if (GameState != NULL)
+    {
+        FVector CameraLoc;
+        FRotator CameraRot;
+        Viewer->GetPlayerViewPoint(CameraLoc, CameraRot);
+        FHitResult Hit;
+        GetWorld()->LineTraceSingleByChannel(Hit, CameraLoc, CameraLoc + CameraRot.Vector() * 50000.0f, COLLISION_TRACE_WEAPON, FCollisionQueryParams(FName(TEXT("CrosshairFriendIndicator")), true, NZOwner));
+        if (Hit.Actor != NULL)
+        {
+            ANZCharacter* Character = Cast<ANZCharacter>(Hit.Actor.Get());
+            if (Character != NULL)
+            {
+                bDrawFriendlyIndicator = GameState->OnSameTeam(Hit.Actor.Get(), NZOwner);
+                
+                if (/*!Char->IsFeigningDeath()*/true)
+                {
+                    if (Character->PlayerState != NULL)
+                    {
+                        HitPlayerState = Cast<ANZPlayerState>(Character->PlayerState);
+                    }
+                    else if (Character->DrivenVehicle != NULL && Character->DrivenVehicle->PlayerState != NULL)
+                    {
+                        HitPlayerState = Cast<ANZPlayerState>(Character->DrivenVehicle->PlayerState);
+                    }
+                }
+            }
+        }
+    }
+    return bDrawFriendlyIndicator;
+}
+
+float ANZWeapon::GetCrosshairScale(class ANZHUD* HUD)
+{
+    return HUD->GetCrosshairScale();
+}
+
+void ANZWeapon::DrawWeaponCrosshair(UNZHUDWidget* WeaponHudWidget, float RenderDelta)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::UpdateCrosshairTarget(ANZPlayerState* NewCrosshairTarget, UNZHUDWidget* WeaponHudWidget, float RenderDelta)
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::UpdateOverlaysShared(AActor* WeaponActor, ANZCharacter* InOwner, USkeletalMeshComponent* InMesh, const TArray<struct FParticleSysParam>& InOverlayEffectParams, USkeletalMeshComponent*& InOverlayMesh) const
+{
+    // todo:
+    check(false);
+}
+
+void ANZWeapon::UpdateOverlays()
+{
+    UpdateOverlaysShared(this, GetNZOwner(), Mesh, OverlayEffectParams, OverlayMesh);
+}
+
+void ANZWeapon::SetSkin(UMaterialInterface* NewSkin)
+{
+    // FIXME: Workaround for poor GetNumMaterials() implementation
+    int32 NumMats = Mesh->GetNumMaterials();
+    if (Mesh->SkeletalMesh != NULL)
+    {
+        NumMats = FMath::Max<int32>(NumMats, Mesh->SkeletalMesh->Materials.Num());
+    }
+    
+    // Save off existing materials if we haven't yet done so
+    while (SavedMeshMaterials.Num() < NumMats)
+    {
+        SavedMeshMaterials.Add(Mesh->GetMaterial(SavedMeshMaterials.Num()));
+    }
+    
+    if (NewSkin != NULL)
+    {
+        for (int32 i = 0; i < NumMats; i++)
+        {
+            Mesh->SetMaterial(i, NewSkin);
+        }
+    }
+    else
+    {
+        for (int32 i = 0; i < NumMats; i++)
+        {
+            Mesh->SetMaterial(i, SavedMeshMaterials[i]);
+        }
+    }
+}
+
+bool ANZWeapon::ShouldLagRot()
+{
+    return bProceduralLagRotation;
+}
+
+float ANZWeapon::LagWeaponRotation(float NewValue, float LastValue, float DeltaTime, float MaxDiff, int32 Index)
+{
+    // todo:
+    check(false);
+    return 0.f;
+}
+
+void ANZWeapon::UpdateWeaponHand()
+{
+    if (Mesh != NULL && NZOwner != NULL)
+    {
+        FirstPMeshOffset = FVector::ZeroVector;
+        FirstPMeshRotation = FRotator::ZeroRotator;
+        
+        if (MuzzleFlashDefaultTransforms.Num() == 0)
+        {
+            for (UParticleSystemComponent* PSC : MuzzleFlash)
+            {
+                MuzzleFlashDefaultTransforms.Add((PSC == NULL) ? FTransform::Identity : PSC->GetRelativeTransform());
+                MuzzleFlashSocketNames.Add((PSC == NULL) ? NAME_None : PSC->AttachSocketName);
+            }
+        }
+        else
+        {
+            for (int32 i = 0; i < FMath::Min3<int32>(MuzzleFlash.Num(), MuzzleFlashDefaultTransforms.Num(), MuzzleFlashSocketNames.Num()); i++)
+            {
+                if (MuzzleFlash[i] != NULL)
+                {
+                    MuzzleFlash[i]->AttachSocketName = MuzzleFlashSocketNames[i];
+                    MuzzleFlash[i]->SetRelativeTransform(MuzzleFlashDefaultTransforms[i]);
+                }
+            }
+        }
+        
+        Mesh->AttachSocketName = HandsAttachSocket;
+        if (HandsAttachSocket == NAME_None)
+        {
+            NZOwner->FirstPersonMesh->SetRelativeTransform(FTransform::Identity);
+        }
+        else
+        {
+            USkeletalMeshComponent* DefaultHands = NZOwner->GetClass()->GetDefaultObject<ANZCharacter>()->FirstPersonMesh;
+            NZOwner->FirstPersonMesh->RelativeLocation = DefaultHands->RelativeLocation;
+            NZOwner->FirstPersonMesh->RelativeRotation = DefaultHands->RelativeRotation;
+            NZOwner->FirstPersonMesh->RelativeScale3D = DefaultHands->RelativeScale3D;
+            NZOwner->FirstPersonMesh->UpdateComponentToWorld();
+        }
+        
+        USkeletalMeshComponent* AdjustMesh = (HandsAttachSocket != NAME_None) ? NZOwner->FirstPersonMesh : Mesh;
+        USkeletalMeshComponent* AdjustMeshArchetype = Cast<USkeletalMeshComponent>(AdjustMesh->GetArchetype());
+        
+        switch (GetWeaponHand())
+        {
+            case HAND_Center:
+                // TODO: not implemented, fallthrough
+                //UE_LOG(NZ, Warning, TEXT("HAND_Center is not implemented yet!"));
+            case HAND_Right:
+                AdjustMesh->SetRelativeLocationAndRotation(AdjustMeshArchetype->RelativeLocation, AdjustMeshArchetype->RelativeRotation);
+                break;
+            case HAND_Left:
+            {
+                // TODO: should probably mirror, but mirroring breaks sockets at the moment (engine bug)
+                AdjustMesh->SetRelativeLocation(AdjustMeshArchetype->RelativeLocation * FVector(1.0f, -1.0f, 1.0f));
+                FRotator AdjustedRotation = (FRotationMatrix(AdjustMeshArchetype->RelativeRotation) * FScaleMatrix(FVector(1.0f, 1.0f, -1.0f))).Rotator();
+                AdjustMesh->SetRelativeRotation(AdjustedRotation);
+                break;
+            }
+            case HAND_Hidden:
+            {
+                AdjustMesh->SetRelativeLocationAndRotation(FVector(-50.0f, 0.0f, -50.0f), FRotator::ZeroRotator);
+                if (AdjustMesh != Mesh)
+                {
+                    Mesh->AttachSocketName = NAME_None;
+                    Mesh->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
+                }
+                for (int32 i = 0; i < MuzzleFlash.Num() && i < MuzzleFlashDefaultTransforms.Num(); i++)
+                {
+                    if (MuzzleFlash[i] != NULL)
+                    {
+                        MuzzleFlash[i]->AttachSocketName = NAME_None;
+                        MuzzleFlash[i]->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
+                    }
+                }
+                break;
+            }
+        }
+    }
+}
+
+EWeaponHand ANZWeapon::GetWeaponHand() const
+{
+    if (NZOwner == NULL && Role == ROLE_Authority)
+    {
+        return HAND_Right;
+    }
+    else
+    {
+        ANZPlayerController* Viewer = NULL;
+        if (NZOwner != NULL)
+        {
+            if (Role == ROLE_Authority)
+            {
+                Viewer = Cast<ANZPlayerController>(NZOwner->Controller);
+            }
+            if (Viewer == NULL)
+            {
+                Viewer = NZOwner->GetLocalViewer();
+                if (Viewer == NULL && NZOwner->Controller != NULL && NZOwner->Controller->IsLocalPlayerController())
+                {
+                    // This can happen during initial replication; Controller might be set but ViewTarget not
+                    Viewer = Cast<ANZPlayerController>(NZOwner->Controller);
+                }
+            }
+        }
+        return (Viewer != NULL) ? Viewer->GetWeaponHand() : HAND_Right;
+    }
+}
+
+void ANZWeapon::UnEquip()
+{
+    GotoState(UnequippingState);
+}
+
+void ANZWeapon::GotoEquippingState(float OverflowTime)
+{
+    GotoState(EquippingState);
+    if (CurrentState == EquippingState)
+    {
+        EquippingState->StartEquip(OverflowTime);
+    }
+}
 

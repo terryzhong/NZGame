@@ -377,6 +377,17 @@ public:
     
     
     
+    UPROPERTY(ReplicatedUsing = OnRepDrivenVehicle)
+    APawn* DrivenVehicle;
+    
+    UFUNCTION()
+    virtual void OnRepDrivenVehicle();
+    
+    virtual void StartDriving(APawn* Vehicle);
+    virtual void StopDriving(APawn* Vehicle);
+    
+    
+    
     /** Runtime material instance for setting body material parameters (team color, etc) */
 protected:
     UPROPERTY(BlueprintReadOnly, Category = Pawn)

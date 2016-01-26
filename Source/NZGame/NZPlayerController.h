@@ -110,6 +110,30 @@ public:
     
     
     
+protected:
+    UPROPERTY(GlobalConfig, BlueprintReadOnly, Category = Weapon)
+    TEnumAsByte<EWeaponHand> WeaponHand;
+public:
+    inline EWeaponHand GetWeaponHand() const
+    {
+        // Spectators always see right handed weapons
+        return IsInState(NAME_Spectating) ? HAND_Right : GetPreferredWeaponHand();
+    }
+    
+    inline EWeaponHand GetPreferredWeaponHand() const
+    {
+        return WeaponHand;
+    }
+    
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    void SetWeaponHand(EWeaponHand NewHand);
+    
+    UFUNCTION(Reliable, Server, WithValidation)
+    void ServerSetWeaponHand(EWeaponHand NewHand);
+    
+    
+    
+    
 
 	UFUNCTION(exec)
 	virtual void SwitchToBestWeapon();

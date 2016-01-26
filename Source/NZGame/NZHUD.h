@@ -26,4 +26,6 @@ public:
     EInputMode::Type GetInputMode() const;
 	
 	
+    virtual float GetCrosshairScale();
+    virtual FLinearColor GetCrosshairColor(FLinearColor InColor) const;
 };
