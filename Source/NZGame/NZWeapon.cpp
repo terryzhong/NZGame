@@ -1312,3 +1312,273 @@ void ANZWeapon::GotoEquippingState(float OverflowTime)
     }
 }
 
+float ANZWeapon::BotDesireability_Implementation(APawn* Asker, AActor* Pickup, float PathDistance) const
+{
+    // todo:
+    check(false);
+    return 0.f;
+}
+
+float ANZWeapon::DetourWeight_Implementation(APawn* Asker, AActor* Pickup, float PathDistance) const
+{
+    // todo:
+    check(false);
+    return 0.f;
+}
+
+float ANZWeapon::GetAISelectRating_Implementation()
+{
+    return HasAnyAmmo() ? BaseAISelectRating : 0.0f;
+}
+
+float ANZWeapon::SuggestAttackStyle_Implementation()
+{
+    return 0.0f;
+}
+
+float ANZWeapon::SuggestDefenseStyle_Implementation()
+{
+    return 0.0f;
+}
+
+bool ANZWeapon::IsPreparingAttack_Implementation()
+{
+    return false;
+}
+
+bool ANZWeapon::ShouldAIDelayFiring_Implementation()
+{
+    return false;
+}
+
+bool ANZWeapon::CanAttack_Implementation(AActor* Target, const FVector& TargetLoc, bool bDirectOnly, bool bPreferCurrentMode, UPARAM(ref) uint8& BestFireMode, UPARAM(ref) FVector& OptimalTargetLoc)
+{
+    OptimalTargetLoc = TargetLoc;
+    bool bVisible = false;
+    ANZBot* B = Cast<ANZBot>(NZOwner->Controller);
+    if (B != NULL)
+    {
+        // todo:
+    }
+    else
+    {
+        const FVector StartLoc = GetFireStartLoc();
+        FCollisionQueryParams Params(FName(TEXT("CanAttack")), false, Instigator);
+        Params.AddIgnoredActor(Target);
+        bVisible = !GetWorld()->LineTraceTestByChannel(StartLoc, TargetLoc, COLLISION_TRACE_WEAPON, Params);
+    }
+    if (bVisible)
+    {
+        // Skip zoom modes by default
+        TArray<uint8, TInlineAllocator<4> > ValidAIModes;
+        for (uint8 i = 0; i < GetNumFireModes(); i++)
+        {
+            // todo:
+            //if (Cast<UNZWeaponStateZooming>(FiringState[i]) == NULL)
+            {
+                ValidAIModes.Add(i);
+            }
+        }
+        if (!bPreferCurrentMode && ValidAIModes.Num() > 0)
+        {
+            BestFireMode = ValidAIModes[FMath::RandHelper(ValidAIModes.Num())];
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+TArray<UMeshComponent*> ANZWeapon::Get1PMeshes() const
+{
+    TArray<UMeshComponent*> Result;
+    Result.Add(Mesh);
+    Result.Add(OverlayMesh);
+    return Result;
+}
+
+int32 ANZWeapon::GetWeaponKillStats(ANZPlayerState* PS) const
+{
+    // todo:
+    check(false);
+    return 0;
+}
+
+int32 ANZWeapon::GetWeaponDeathStats(ANZPlayerState* PS) const
+{
+    // todo:
+    check(false);
+    return 0;
+}
+
+float ANZWeapon::GetWeaponShotsStats(ANZPlayerState* PS) const
+{
+    // todo:
+    check(false);
+    return 0.f;
+}
+
+float ANZWeapon::GetWeaponHitsStats(ANZPlayerState* PS) const
+{
+    // todo:
+    check(false);
+    return 0.f;
+}
+
+void ANZWeapon::TestWeaponLoc(float X, float Y, float Z)
+{
+    Mesh->SetRelativeLocation(FVector(X, Y, Z));
+}
+
+void ANZWeapon::TestWeaponRot(float Pitch, float Yaw, float Roll)
+{
+    Mesh->SetRelativeRotation(FRotator(Pitch, Yaw, Roll));
+}
+
+void ANZWeapon::TestWeaponScale(float X, float Y, float Z)
+{
+    Mesh->SetRelativeScale3D(FVector(X, Y, Z));
+}
+
+void ANZWeapon::FiringInfoUpdated_Implementation(uint8 InFireMode, uint8 FlashCount, FVector InFlashLocation)
+{
+    if (FlashCount > 0 || !InFlashLocation.IsZero())
+    {
+        CurrentFireMode = InFireMode;
+        PlayFiringEffects();
+    }
+    else
+    {
+        StopFiringEffects();
+    }
+}
+
+void ANZWeapon::FiringExtraUpdated_Implementation(uint8 NewFlashExtra, uint8 InFireMode)
+{
+    
+}
+
+void ANZWeapon::FiringEffectsUpdated(uint8 InFireMode, FVector InFlashLocation)
+{
+    FVector SpawnLocation;
+    FRotator SpawnRotation;
+    GetImpactSpawnPosition(InFlashLocation, SpawnLocation, SpawnRotation);
+    PlayImpactEffects(InFlashLocation, InFireMode, SpawnLocation, SpawnRotation);
+}
+
+void ANZWeapon::OnRep_ZoomCount()
+{
+    if (CreationTime != 0.0f && GetWorld()->TimeSeconds - CreationTime > 0.2)
+    {
+        ZoomTime = 0.0f;
+    }
+}
+
+void ANZWeapon::OnRep_ZoomState_Implementation()
+{
+    // todo:
+/*    if (GetNetMode() != NM_DedicatedServer && ZoomState == EZoomState::EZS_NotZoomed && GetNZOwner() && GetNZOwner()->GetPlayerCameraManager())
+    {
+        GetNZOwner()->GetPlayerCameraManager()->UnlockFOV();
+    }*/
+}
+
+void ANZWeapon::SetZoomMode(uint8 NewZoomMode)
+{
+    // Only locally controlled players set the zoom mode so the server stays in sync
+    if (GetNZOwner() && GetNZOwner()->IsLocallyControlled() && CurrentZoomMode != NewZoomMode)
+    {
+        if (Role < ROLE_Authority)
+        {
+            ServerSetZoomMode(NewZoomMode);
+        }
+        LocalSetZoomMode(NewZoomMode);
+    }
+}
+
+void ANZWeapon::ServerSetZoomMode_Implementation(uint8 NewZoomMode)
+{
+    LocalSetZoomMode(NewZoomMode);
+}
+
+bool ANZWeapon::ServerSetZoomMode_Validate(uint8 NewZoomMode)
+{
+    return true;
+}
+
+void ANZWeapon::LocalSetZoomMode(uint8 NewZoomMode)
+{
+    if (ZoomModes.IsValidIndex(CurrentZoomMode))
+    {
+        CurrentZoomMode = NewZoomMode;
+    }
+    else
+    {
+        //UE_LOG(LogNZWeapon, Warning, TEXT("%s::LocalSetZoomMode(): Invalid Zoom Mode: %d"), *GetName(), NewZoomMode);
+    }
+}
+
+void ANZWeapon::SetZoomState(TEnumAsByte<EZoomState::Type> NewZoomState)
+{
+    // Only locally controlled players set the zoom state so the server stays in sync
+    if (GetNZOwner() && GetNZOwner()->IsLocallyControlled() && NewZoomState != ZoomState)
+    {
+        if (Role < ROLE_Authority)
+        {
+            ServerSetZoomState(NewZoomState);
+        }
+        LocalSetZoomState(NewZoomState);
+    }
+}
+
+void ANZWeapon::ServerSetZoomState_Implementation(uint8 NewZoomState)
+{
+    LocalSetZoomState(NewZoomState);
+}
+
+bool ANZWeapon::ServerSetZoomState_Validate(uint8 NewZoomState)
+{
+    return true;
+}
+
+void ANZWeapon::LocalSetZoomState(uint8 NewZoomState)
+{
+    if (ZoomModes.IsValidIndex(CurrentZoomMode))
+    {
+        if (NewZoomState != ZoomState)
+        {
+            ZoomState = (EZoomState::Type)NewZoomState;
+            
+            // Need to reset the zoom time since this state might be skipped on spec clients if states switch too fast
+            if (ZoomState == EZoomState::EZS_NotZoomed)
+            {
+                ZoomCount++;
+                OnRep_ZoomCount();
+            }
+            OnRep_ZoomState();
+        }
+    }
+    else
+    {
+        //UE_LOG(LogNZWeapon, Warning, TEXT("%s::LocalSetZoomState(): Invalid Zoom Mode: %d"), *GetName(), CurrentZoomMode);
+    }
+}
+
+void ANZWeapon::OnZoomedIn_Implementation()
+{
+    SetZoomState(EZoomState::EZS_Zoomed);
+}
+
+void ANZWeapon::OnZoomedOut_Implementation()
+{
+    SetZoomState(EZoomState::EZS_NotZoomed);
+}
+
+void ANZWeapon::TickZoom(float DeltaTime)
+{
+    // todo:
+    check(false);
+}
+
