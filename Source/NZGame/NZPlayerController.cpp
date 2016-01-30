@@ -352,6 +352,35 @@ void ANZPlayerController::FindGoodView(const FVector& Targetloc, bool bIsUpdate)
     // todo:
 }
 
+void ANZPlayerController::SetWeaponHand(EWeaponHand NewHand)
+{
+    WeaponHand = NewHand;
+    ANZCharacter* NZCharTarget = Cast<ANZCharacter>(GetViewTarget());
+    if (NZCharTarget != NULL && NZCharTarget->GetWeapon() != NULL)
+    {
+        NZCharTarget->GetWeapon()->UpdateWeaponHand();
+    }
+    if (IsTemplate() || IsLocalPlayerController())
+    {
+        SaveConfig();
+    }
+    if (!IsTemplate() && Role < ROLE_Authority)
+    {
+        ServerSetWeaponHand(NewHand);
+    }
+}
+
+void ANZPlayerController::ServerSetWeaponHand_Implementation(EWeaponHand NewHand)
+{
+    SetWeaponHand(NewHand);
+}
+
+bool ANZPlayerController::ServerSetWeaponHand_Validate(EWeaponHand NewHand)
+{
+    return true;
+}
+
+
 
 
 
@@ -617,22 +646,6 @@ void ANZPlayerController::MoveUp(float Value)
 	}
 }
 
-void ANZPlayerController::AddYawInput(float Value)
-{
-	if (Value != 0.f)
-	{
-		Super::AddYawInput(Value);
-	}
-}
-
-void ANZPlayerController::AddPitchInput(float Value)
-{
-	if (Value != 0.f)
-	{
-		Super::AddPitchInput(Value);
-	}
-}
-
 void ANZPlayerController::Jump()
 {
 	if (NZCharacter != NULL && !IsMoveInputIgnored())
@@ -677,6 +690,39 @@ void ANZPlayerController::ToggleCrouch()
 
 }
 
+void ANZPlayerController::AddYawInput(float Value)
+{
+    if (Value != 0.f)
+    {
+        Super::AddYawInput(Value);
+    }
+}
+
+void ANZPlayerController::AddPitchInput(float Value)
+{
+    if (Value != 0.f)
+    {
+        Super::AddPitchInput(Value);
+    }
+}
+
+float ANZPlayerController::GetPredictionTime()
+{
+    // todo:
+    check(false);
+    return 0.f;
+    // Exact ping is in msec, devide by 1000 to get time in seconds
+    //if (Role == ROLE_Authority) { UE_LOG(NZ, Warning, TEXT("Server ExactPing %f"), PlayerState->ExactPing); }
+    //return (PlayerState && (GetNetMode() != NM_Standalone)) ? (0.0005f * FMath::Clamp(PlayerState->ExactPing - PredictionFudgeFactor, 0.f, MaxPredictionPing)) : 0.f;
+}
+
+float ANZPlayerController::GetProjectileSleepTime()
+{
+    // todo:
+    check(false);
+    return 0.f;
+    //return 0.001f * FMath::Max(0.f, PlayerState->ExactPing - PredictionFudgeFactor - MaxPredictionPing);
+}
 
 
 

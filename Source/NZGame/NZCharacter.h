@@ -97,6 +97,16 @@ public:
     bool bSpawnProtectionEligible;
 
     
+    
+    
+    
+    UPROPERTY()
+    UAnimMontage* CurrentEmote;
+    
+    /** Keep track of emote count so we can clear CurrentEmote */
+    UPROPERTY()
+    int32 EmoteCount;
+    
     /** Stored past position of this player. Used for bot aim error model, and for server side hit resolution */
     UPROPERTY()
     TArray<FSavedPosition> SavedPositions;
@@ -270,17 +280,41 @@ public:
     UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = FiringExtraUpdated, Category = Weapon)
     uint8 FlashExtra;
     
+    UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = FiringInfoReplicated, Category = Weapon)
+    FVector_NetQuantize FlashLocation;
+    
     UPROPERTY(BlueprintReadOnly, Category = Weapon)
     float LastWeaponFireTime;
     
-    /** Set when client is locally simulating FlashLocation so ignore any replicated value */
+    /** 595
+     Set when client is locally simulating FlashLocation so ignore any replicated value */
     bool bLocalFlashLoc;
     
+    /** 
+     * Set info for one instance of firing and plays firing effects;
+     * Assumed to be a valid shot - call ClearFiringInfo() if the weapon has stopped firing
+     * If a location is not needed (projectile) call IncrementFlashCount() instead
+     */
     UFUNCTION(BlueprintCallable, Category = Weapon)
     virtual void SetFlashLocation(const FVector& InFlashLoc, uint8 InFireMode);
     
+    /**
+     * Set info for one instance of firing and plays firing effects;
+     * Assumed to be a valid shot - call ClearFiringInfo() if the weapon has stopped firing
+     * If a location is needed (instant hit, beam, etc) call SetFlashLocation() instead
+     */
     UFUNCTION(BlueprintCallable, Category = Weapon)
     virtual void IncrementFlashCount(uint8 InFireMode);
+    
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void SetFlashExtra(uint8 NewFlashExtra, uint8 InFireMode);
+    
+    /** Clears firing variables; i.e. because the weapon has stopped firing */
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void ClearFiringInfo();
+    
+    /** Called when firing variables are updated to trigger/stop effects */
+    virtual void FiringInfoUpdated();
     
     /** Called when FlashExtra is updated; routes call to weapon attachment */
     UFUNCTION()
@@ -305,6 +339,21 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = Pawn)
 	bool IsDead();
+    
+    /** Weapon firing */
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual void StartFire(uint8 FireModeNum);
+    
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual void StopFire(uint8 FireModeNum);
+    
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual void StopFiring();
+    
+    virtual void PawnStartFire(uint8 FireModeNum = 0) override
+    {
+        StartFire(FireModeNum);
+    }
 
     
     
@@ -377,11 +426,11 @@ public:
     
     
     
-    UPROPERTY(ReplicatedUsing = OnRepDrivenVehicle)
+    UPROPERTY(ReplicatedUsing = OnRep_DrivenVehicle)
     APawn* DrivenVehicle;
     
     UFUNCTION()
-    virtual void OnRepDrivenVehicle();
+    virtual void OnRep_DrivenVehicle();
     
     virtual void StartDriving(APawn* Vehicle);
     virtual void StopDriving(APawn* Vehicle);
@@ -438,11 +487,16 @@ public:
     
     
     
-    /** Local player currently viewing this character */
+    /** 1847
+     Local player currently viewing this character */
     UPROPERTY()
     class ANZPlayerController* CurrentViewerPC;
     
     virtual class ANZPlayerController* GetLocalViewer();
+    
+    /** Previous actor location Z when last updated eye offset */
+    UPROPERTY()
+    float OldZ;
     
     
 };

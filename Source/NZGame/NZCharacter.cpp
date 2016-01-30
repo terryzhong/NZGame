@@ -564,6 +564,7 @@ void ANZCharacter::WeaponChanged(float OverflowTime)
     }*/
 }
 
+
 void ANZCharacter::SwitchToBestWeapon()
 {
 	if (IsLocallyControlled())
@@ -575,6 +576,73 @@ void ANZCharacter::SwitchToBestWeapon()
 		}
 	}
 }
+
+void ANZCharacter::SetFlashLocation(const FVector& InFlashLoc, uint8 InFireMode)
+{
+    bLocalFlashLoc = IsLocallyControlled();
+    // Make sure two consecutive shots don't set the same FlashLocation as that will prevent replication and thus clients won't see the shot
+    FlashLocation = ((FlashLocation - InFlashLoc).SizeSquared() >= 1.0f) ? InFlashLoc : (InFlashLoc + FVector(0.0f, 0.0f, 1.0f));
+    // We reserve the zero vector to stop firing, so make sure we aren't setting a value that would replicate that way
+    if (FlashLocation.IsNearlyZero(1.0f))
+    {
+        FlashLocation.Z += 1.1f;
+    }
+    FireMode = InFireMode;
+    FiringInfoUpdated();    
+}
+
+void ANZCharacter::IncrementFlashCount(uint8 InFireMode)
+{
+    FlashCount++;
+    // We reserve zero for not firing; make sure we don't set that
+    if ((FlashCount & 0xF) == 0)
+    {
+        FlashCount++;
+    }
+    FireMode = InFireMode;
+    
+    // Pack the Firemode in top 4 bits to prevent misfires when alternating projectile shots
+    // eg pri shot, FC = 1 -> alt shot, FC = 0 (stop fire) -> FC = 1 (FC is still 1 so no rep)
+    FlashCount = (FlashCount & 0x0F) | FireMode << 4;
+    FiringInfoUpdated();
+}
+
+void ANZCharacter::SetFlashExtra(uint8 NewFlashExtra, uint8 InFireMode)
+{
+    FlashExtra = NewFlashExtra;
+    FireMode = InFireMode;
+    FiringExtraUpdated();    
+}
+
+void ANZCharacter::ClearFiringInfo()
+{
+    bLocalFlashLoc = false;
+    FlashLocation = FVector::ZeroVector;
+    FlashCount = 0;
+    FlashExtra = 0;
+    FiringInfoUpdated();    
+}
+
+void ANZCharacter::FiringInfoUpdated()
+{
+    // todo:
+    check(false);
+}
+
+void ANZCharacter::FiringExtraUpdated()
+{
+    // todo:
+    check(false);
+}
+
+void ANZCharacter::FiringInfoReplicated()
+{
+    if (!bLocalFlashLoc)
+    {
+        FiringInfoUpdated();
+    }
+}
+
 
 void ANZCharacter::UpdateWeaponAttachment()
 {
@@ -610,6 +678,58 @@ bool ANZCharacter::IsDead()
 {
 	return bTearOff || IsPendingKillPending();
 }
+
+void ANZCharacter::StartFire(uint8 FireModeNum)
+{
+    //UE_LOG(LogNZCharacter, Verbose, TEXT("StartFire %d"), FireModeNum);
+
+    if (!IsLocallyControlled())
+    {
+        //UE_LOG(LogNZCharacter, Warning, TEXT("StartFire() can only be called on the owning client"));
+    }
+/*    else if (bFeigningDeath)
+    {
+        FeignDeath();
+    }*/
+    else if (Weapon != NULL && EmoteCount == 0)
+    {
+        Weapon->StartFire(FireModeNum);
+    }
+    
+    // todo:
+}
+
+void ANZCharacter::StopFire(uint8 FireModeNum)
+{
+    if (DrivenVehicle ? !DrivenVehicle->IsLocallyControlled() : !IsLocallyControlled())
+    {
+        //UE_LOG(LogNZCharacter, Warning, TEXT("StopFire() can only be called on the owning client"));
+    }
+    else if (Weapon != NULL)
+    {
+        Weapon->StopFire(FireModeNum);
+    }
+    else
+    {
+        SetPendingFire(FireModeNum, false);
+    }
+    
+    // todo:
+}
+
+void ANZCharacter::StopFiring()
+{
+    for (int32 i = 0; i < PendingFire.Num(); i++)
+    {
+        if (PendingFire[i])
+        {
+            StopFire(i);
+        }
+    }
+}
+
+
+
 
 
 void ANZCharacter::MoveForward(float Value)
@@ -667,6 +787,34 @@ void ANZCharacter::FireRateChanged()
     }
 }
 
+void ANZCharacter::OnRep_DrivenVehicle()
+{
+    if (DrivenVehicle)
+    {
+        StartDriving(DrivenVehicle);
+    }    
+}
+
+void ANZCharacter::StartDriving(APawn* Vehicle)
+{
+    DrivenVehicle = Vehicle;
+    StopFiring();
+    if (GetCharacterMovement() != NULL)
+    {
+        GetCharacterMovement()->StopActiveMovement();
+    }
+}
+
+void ANZCharacter::StopDriving(APawn* Vehicle)
+{
+    if (DrivenVehicle == Vehicle)
+    {
+        DrivenVehicle = NULL;
+    }
+}
+
+
+
 
 
 
@@ -674,4 +822,23 @@ FVector ANZCharacter::GetLocationCenterOffset() const
 {
     return (!IsRagdoll() || RootComponent != GetMesh()) ? FVector::ZeroVector : (GetMesh()->Bounds.Origin - GetMesh()->GetComponentLocation());
 }
+
+ANZPlayerController* ANZCharacter::GetLocalViewer()
+{
+    if (CurrentViewerPC && ((Controller == CurrentViewerPC) || (CurrentViewerPC->GetViewTarget() == this)))
+    {
+        return CurrentViewerPC;
+    }
+    CurrentViewerPC = NULL;
+    for (FLocalPlayerIterator It(GEngine, GetWorld()); It; ++It)
+    {
+        if (It->PlayerController != NULL && It->PlayerController->GetViewTarget() == this)
+        {
+            CurrentViewerPC = Cast<ANZPlayerController>(It->PlayerController);
+            break;
+        }
+    }
+    return CurrentViewerPC;
+}
+
 

@@ -6,3 +6,9 @@
 
 
 
+bool ANZGameState::OnSameTeam(const AActor* Actor1, const AActor* Actor2)
+{
+    // todo:
+    check(false);
+    return false;
+}

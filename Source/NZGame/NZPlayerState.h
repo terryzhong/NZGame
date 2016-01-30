@@ -64,7 +64,13 @@ public:
     TArray<class ANZReplicatedLoadoutInfo*> Loadout;
     
     
+private:
+    /** 633
+     Map of additional stats used for scoring display */
+    TMap<FName, float> StatsData;
+    
 public:
+    /** Last time StatsData was updated - used when replicating the data */
     UPROPERTY()
     float LastScoreStatsUpdateTime;
     

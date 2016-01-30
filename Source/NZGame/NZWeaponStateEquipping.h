@@ -14,6 +14,7 @@ class NZGAME_API UNZWeaponStateEquipping : public UNZWeaponState
 	GENERATED_BODY()
 	
 public:
+    /** Set to amount of equip time that elapsed when exiting early, i.e. to go back down */
     float PartialEquipTime;
     
     float EquipTime;

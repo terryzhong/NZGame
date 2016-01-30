@@ -13,9 +13,49 @@
 #include "NZWeaponStateFiring.h"
 #include "NZHUDWidget.h"
 #include "NZHUD.h"
+#include "NZWeaponStateInactive.h"
 #include "NZWeaponStateEquipping.h"
 
 
+
+ANZWeapon::ANZWeapon()
+{
+    AmmoCost.Add(1);
+    AmmoCost.Add(1);
+    
+    PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
+    PrimaryActorTick.bAllowTickOnDedicatedServer = true;
+    
+    bWeaponStay = true;
+    bCanThrowWeapon = true;
+    
+    Ammo = 20;
+    MaxAmmo = 50;
+    
+    Group = -1;
+    BringUpTime = 0.37f;
+    PutDownTime = 0.3f;
+    RefirePutDownTimePercent = 1.0f;
+    WeaponBobScaling = 1.f;
+    FiringViewKickback = -20.0f;
+    bNetDelayedShot = false;
+    
+    bFPFireFromCenter = true;
+    bFPIgnoreInstantHitFireOffset = true;
+    FireOffset = FVector(75.0f, 0.0f, 0.0f);
+    FriendlyMomentumScaling = 1.f;
+    FireEffectInterval = 1;
+    FireEffectCount = 0;
+    FireZOffset = 0.f;
+    FireZOffsetTime = 0.f;
+    MaxTracerDist = 5000.f;
+    
+    InactiveState = CreateDefaultSubobject<UNZWeaponStateInactive>(TEXT("StateInactive"));
+    ActiveState = CreateDefaultSubobject<UNZWeaponStateActive>(TEXT("StateActive");
+    
+    
+}
 
 void ANZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -1074,6 +1114,23 @@ void ANZWeapon::InstanceMuzzleFlashArray(AActor* Weap, TArray<UParticleSystemCom
     }
 }
 
+void ANZWeapon::NotifyKillWhileHolding_Implementation(TSubclassOf<UDamageType> DmgType)
+{
+    
+}
+
+bool ANZWeapon::NeedsAmmoDisplay_Implementation() const
+{
+    for (int32 i = GetNumFireModes() - 1; i >= 0; i--)
+    {
+        if (AmmoCost[i] > 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 FLinearColor ANZWeapon::GetCrosshairColor(class UNZHUDWidget* WeaponHudWidget) const
 {
     FLinearColor CrosshairColor = FLinearColor::White;
@@ -1121,7 +1178,7 @@ float ANZWeapon::GetCrosshairScale(class ANZHUD* HUD)
     return HUD->GetCrosshairScale();
 }
 
-void ANZWeapon::DrawWeaponCrosshair(UNZHUDWidget* WeaponHudWidget, float RenderDelta)
+void ANZWeapon::DrawWeaponCrosshair_Implementation(UNZHUDWidget* WeaponHudWidget, float RenderDelta)
 {
     // todo:
     check(false);
@@ -1312,6 +1369,18 @@ void ANZWeapon::GotoEquippingState(float OverflowTime)
     }
 }
 
+float ANZWeapon::GetDamageRadius_Implementation(uint8 TestMode) const
+{
+    if (ProjClass.IsValidIndex(TestMode) && ProjClass[TestMode] != NULL)
+    {
+        return ProjClass[TestMode].GetDefaultObject()->DamageParams.OuterRadius;
+    }
+    else
+    {
+        return 0.0f;
+    }
+}
+
 float ANZWeapon::BotDesireability_Implementation(APawn* Asker, AActor* Pickup, float PathDistance) const
 {
     // todo:
@@ -1391,7 +1460,7 @@ bool ANZWeapon::CanAttack_Implementation(AActor* Target, const FVector& TargetLo
     }
 }
 
-TArray<UMeshComponent*> ANZWeapon::Get1PMeshes() const
+TArray<UMeshComponent*> ANZWeapon::Get1PMeshes_Implementation() const
 {
     TArray<UMeshComponent*> Result;
     Result.Add(Mesh);
@@ -1460,7 +1529,7 @@ void ANZWeapon::FiringExtraUpdated_Implementation(uint8 NewFlashExtra, uint8 InF
     
 }
 
-void ANZWeapon::FiringEffectsUpdated(uint8 InFireMode, FVector InFlashLocation)
+void ANZWeapon::FiringEffectsUpdated_Implementation(uint8 InFireMode, FVector InFlashLocation)
 {
     FVector SpawnLocation;
     FRotator SpawnRotation;

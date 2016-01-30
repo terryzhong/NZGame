@@ -2,6 +2,7 @@
 
 #include "NZGame.h"
 #include "NZProjectile.h"
+#include "NZPlayerController.h"
 
 
 // Sets default values
@@ -24,5 +25,14 @@ void ANZProjectile::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 
+}
+
+void ANZProjectile::InitFakeProjectile(class ANZPlayerController* OwningPlayer)
+{
+    bFakeClientProjectile = true;
+    if (OwningPlayer)
+    {
+        OwningPlayer->FakeProjectiles.Add(this);
+    }
 }
 

@@ -156,43 +156,49 @@ class NZGAME_API ANZWeapon : public ANZInventory
     friend class UNZWeaponStateUnequipping;
     
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_AttachmentType, Category = Weapon)
+    ANZWeapon();
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_AttachmentType, Category = "Weapon")
     TSubclassOf<class ANZWeaponAttachment> AttachmentType;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_Ammo, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_Ammo, Category = "Weapon")
     int32 Ammo;
     
     UFUNCTION()
     virtual void OnRep_AttachmentType();
     
+    /**
+     * Handles weapon switch when out of ammo, etc
+     * NOTE: called on server if owner is locally controlled, on client only when owner is remote
+     */
     UFUNCTION()
     virtual void OnRep_Ammo();
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Weapon")
     int32 MaxAmmo;
     
     /** Ammo cost for one shot of each fire mode */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<int32> AmmoCost;
     
     /** Projectile class for fire mode (if applicable) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<TSubclassOf<class ANZProjectile> > ProjClass;
     
     /** Instant hit data for fire mode (if applicable) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<FInstantHitDamageInfo> InstantHitInfo;
     
     /** Firing state for mode, contains core firing sequence and directs to appropriate global firing functions */
-    UPROPERTY(Instanced, EditAnywhere, EditFixedSize, BlueprintReadWrite, Category = Weapon, NoClear)
+    UPROPERTY(Instanced, EditAnywhere, EditFixedSize, BlueprintReadWrite, Category = "Weapon", NoClear)
     TArray<class UNZWeaponStateFiring*> FiringState;
     
     /** True for melee weapons affected by "stopping power" (momentum added for weapons that don't normally impart much momentum */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     bool bAffectedByStoppingPower;
     
     /** Custom momentum scaling for friendly hitscanned pawns */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     float FriendlyMomentumScaling;
     
     virtual float GetImpartedMomentumMag(AActor* HitActor);
@@ -210,39 +216,39 @@ public:
     virtual void NetSynchRandomSeed();
     
     /** Socket to attach weapon to hands; If None, then the hands are hidden */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
     FName HandsAttachSocket;
     
     /** Time between shots, trigger checks, etc */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon, meta = (ClampMin = "0.1"))
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "0.1"))
     TArray<float> FireInterval;
     
     /** Firing spread (random angle added to shots) */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<float> Spread;
     
     /** Sound to play each time we fire */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<USoundBase*> FireSound;
     
     /** Sound to play on shooter when weapon is fired. This sound starts at the same time as the FireSound */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<USoundBase*> ReloadSound;
     
     /** Looping (ambient) sound to set on owner while firing */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<USoundBase*> FireLoopingSound;
     
     /** AnimMontage to play each time we fire */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<UAnimMontage*> FireAnimation;
     
     /** AnimMontage to play on hands each time we fire */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<UAnimMontage*> FireAnimationHands;
     
     /** Particle component for muzzle flash */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     TArray<UParticleSystemComponent*> MuzzleFlash;
     
     /** Saved transform of MuzzleFlash components used for UpdateWeaponHand() to know original values from the blueprint */
@@ -257,51 +263,51 @@ public:
      * Particle system for firing effects (instant hit beam and such)
      * Particle will be sourced at FireOffset and a parameter HitLocation will be set for the target, if applicable
      */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     TArray<UParticleSystem*> FireEffect;
     
     /** Max distance to stretch weapon tracer */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     float MaxTracerDist;
     
     /** Fire effect happens once every FireEffectInterval shots */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     int32 FireEffectInterval;
     
     /** Shots since last fire effect */
-    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(BlueprintReadWrite, Category = "Weapon")
     int32 FireEffectCount;
     
     /** Optional effect for instant hit endpoint */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     TArray<TSubclassOf<class ANZImpactEffect> > ImpactEffect;
     
     /** Throttling for impact effects - don't spawn another unless last effect is farther than this away or longer ago than MaxImpactEffectSkipTime */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     float ImpactEffectSkipDistance;
     
     /** Throttling for impact effects - don't spawn another unless last effect is farther than ImpactEffectSkipDistance away or longer ago than this */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     float MaxImpactEffectSkipTime;
     
     /** FlashLocation for last played impact effect */
-    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(BlueprintReadWrite, Category = "Weapon")
     FVector LastImpactEffectLocation;
     
     /** Last time an impact effect was played */
-    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(BlueprintReadWrite, Category = "Weapon")
     float LastImpactEffectTime;
     
     /** Materials on weapon mesh first time we change its skin, used to preserve any runtime blueprint changes */
-    UPROPERTY(BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(BlueprintReadWrite, Category = "Weapon")
     TArray<UMaterialInterface*> SavedMeshMaterials;
     
     /** It true, weapon is visibly holstered when not active. There can only be one holstered weapon in inventory at a time */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
     bool bMustBeHolstered;
     
     /** If true, weapon can be thrown */
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Weapon)
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Weapon")
     bool bCanThrowWeapon;
     
     /** If true, don't display in menus like the weapon priority menu (generally because the weapon's use is outside the user's control, e.g. instagib */
@@ -313,7 +319,7 @@ public:
     bool bHideInCrosshairMenu;
     
     /** Hack for adjusting first person weapon mesh at different FOVs (until we have separate render pass for first person weapon) */
-    UPROPERTY(EditDefaultsOnly, Category = Weapon)
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon")
     FVector FOVOffset;
     
     //UPROPERTY()
@@ -333,7 +339,7 @@ public:
     virtual bool ShouldDropOnDeath();
     
     /** First person mesh */
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon)
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Weapon")
     USkeletalMeshComponent* Mesh;
     
     USkeletalMeshComponent* GetMesh() const { return Mesh; }
@@ -342,18 +348,18 @@ public:
      * Causes weapons fire to originate from the center of the player's view when in first person mode (and human controlled)
      * In other cases the fire start point defaults to the weapon's world position
      */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     bool bFPFireFromCenter;
     
     /** If set ignore FireOffset for instant hit fire modes when in first person mode */
-    UPROPERTY(EditAnywhere, Category = Weapon)
+    UPROPERTY(EditAnywhere, Category = "Weapon")
     bool bFPIgnoreInstantHitFireOffset;
     
     /**
      * Firing offset from weapon for weapons fire.
      * If bFPFireFromCenter is true and it's a player in first person mode, this is from the camera center
      */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     FVector FireOffset;
     
     /** If true (on server), use the last bSpawnedShot saved position as starting point for this shot to synch with client firing position */
@@ -415,38 +421,38 @@ public:
     virtual void SpawnDelayedFakeProjectile();
     
     /** Time to bring up the weapon */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     float BringUpTime;
     
     /** Time to put down the weapon */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     float PutDownTime;
     
     /** Scales refire put down time for the weapon */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     float RefirePutDownTimePercent;
     
     /** Earliest time can fire again (failsafe for weapon swapping) */
     UPROPERTY()
     float EarliestFireTime;
     
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual float GetBringUpTime();
     
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual float GetPutDownTime();
     
     /** Equip anims */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     UAnimMontage* BringUpAnim;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     UAnimMontage* BringUpAnimHands;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     UAnimMontage* PutDownAnim;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     UAnimMontage* PutDownAnimHands;
     
     /**
@@ -484,7 +490,7 @@ public:
      * Whether this weapon stays around by default when someone picks it up
      * (i.e. multiple people can pick up from the same spot without waiting for respawn time)
      */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
     bool bWeaponStay;
     
     /** Base offset of first person mesh, cached from offset set up in blueprint */
@@ -496,11 +502,11 @@ public:
     FRotator FirstPMeshRotation;
     
     /** Scaling for 1st person weapon bob */
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "WeaponBob")
     float WeaponBobScaling;
     
     /** Scaling for 1st person firing view kickback */
-    UPROPERTY(EditAnywhere, BLueprintReadWrite, Category = WeaponBob)
+    UPROPERTY(EditAnywhere, BLueprintReadWrite, Category = "WeaponBob")
     float FiringViewKickback;
     
     virtual void UpdateViewBob(float DeltaTime);
@@ -630,7 +636,7 @@ public:
     virtual void ClientRemoved_Implementation() override;
     
 	/** Fires a shot and consumes ammo */
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual void FireShot();
     
 	/**
@@ -643,29 +649,29 @@ public:
 	/**
 	 * Plays an anim on the weapon and optionally hands antomatically handles fire rate modifiers by default, overridden if RateOverride is > 0.0
 	 */
-	UFUNCTION(BlueprintCallable, Category = Weapon)
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void PlayWeaponAnim(UAnimMontage* WeaponAnim, UAnimMontage* HandsAnim = NULL, float RateOverride = 0.0f);
     
 	/** Returns montage to play on the weapon for the specified firing mode */
-	UFUNCTION(BlueprintCallable, Category = Weapon)
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual UAnimMontage* GetFiringAnim(uint8 FireMode, bool bOnHands = false) const;
 
 	/** Play firing effects not associated with the shot's results (e.g. muzzle flash but generally NOT emitter to target) */
-	UFUNCTION(BlueprintCallable, Category = Weapon)
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void PlayFiringEffects();
 
-	UFUNCTION(BlueprintCallable, Category = Weapon)
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void StopFiringEffects();
 
 	/** Blueprint hook to modify spawned instance of FireEffect (e.g. tracer or beam) */
-	UFUNCTION(BlueprintImplementableEvent, Category = Weapon)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Weapon")
 	void ModifyFireEffect(UParticleSystemComponent* Effect);
 
-	UFUNCTION(BlueprintCallable, Category = Weapon)
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void GetImpactSpawnPosition(const FVector& TragetLoc, FVector& SpawnLocation, FRotator& SpawnRotation);
 
 	/** It true, don't spawn impact effect. Used for hitscan hits, skips by default for pawn and projectile hits */
-	UFUNCTION(BlueprintCallable, Category = Weapon)
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual bool CancelImpactEffect(const FHitResult& ImpactHit);
 
 	virtual void PlayImpactEffects(const FVector& TargetLoc, uint8 FireMode, const FVector& SpawnLocation, const FRotator& SpawnRotation);
@@ -674,28 +680,28 @@ public:
 	static FHitResult GetImpactEffectHit(APawn* Shooter, const FVector& StartLoc, const FVector& TargetLoc);
 
     /** Return start point for weapons fire */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = Weapon)
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Weapon")
     virtual FVector GetFireStartLoc(uint8 FireMode = 255);
     
     /** Return base fire direction for weapons fire (i.e. direction player's weapon is pointing) */
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = Weapon)
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Weapon")
     virtual FRotator GetBaseFireRotation();
     
     /** 
      * Return adjusted fire rotation after accounting for spread, aim help, and any other secondary factors affecting aim direction
      * (may include randomized components)
      */
-    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category = Weapon)
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintPure, Category = "Weapon")
     FRotator GetAdjustedAim(FVector StartFireLoc);
     
     /** If owned by a human, set ANZPlayerController::LastShotTargetGuess to closest target to player's aim */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = AI)
     void GuessPlayerTarget(const FVector& StartFireLoc, const FVector& FireDir);
     
-    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Weapon)
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Weapon")
     virtual void AddAmmo(int32 Amount);
     
-    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Weapon)
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "Weapon")
     virtual void ConsumeAmmo(uint8 FireModeNum);
     
     virtual void FireInstantHit(bool bDealDamage = true, FHitResult* OutHit = NULL);
@@ -713,15 +719,15 @@ public:
     virtual ANZProjectile* SpawnNetPredictedProjectile(TSubclassOf<ANZProjectile> ProjectileClass, FVector SpawnLocation, FRotator SpawnRotation);
     
     /** Returns whether we can meet AmmoCost for the given fire mode */
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual bool HasAmmo(uint8 FireModeNum);
     
     /** Returns whether we have ammo for any fire mode */
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual bool HasAnyAmmo();
     
     /** Get interval between shots, including any fire rate modifiers */
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual float GetRefireTime(uint8 FireModeNum);
     
     inline uint8 GetCurrentFireMode()
@@ -736,7 +742,7 @@ public:
     
     virtual void GotoFireMode(uint8 NewFireMode);
     
-    UFUNCTION(Blueprintcallable, Category = Weapon)
+    UFUNCTION(Blueprintcallable, Category = "Weapon")
     bool IsFiring() const;
     
     virtual bool StackPickup_Implementation(ANZInventory* ContainedInv) override;
@@ -772,7 +778,7 @@ public:
     bool NeedsAmmoDisplay() const;
     
     /** Returns crosshair color taking into account user settings, red flash on hit, etc */
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     FLinearColor GetCrosshairColor(class UNZHUDWidget* WeaponHudWidget) const;
     
     /** The player state of the player currently under the crosshair */
@@ -783,11 +789,11 @@ public:
     float TargetLastSeenTime;
     
     /** Returns whether we should draw the friendly fire indicator on the crosshair */
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual bool ShouldDrawFFIndicator(APlayerController* Viewer, ANZPlayerState*& HitPlayerState) const;
     
     /** Returns desired crosshair scale (affected by recent pickups) */
-    UFUNCTION(BlueprintCallable, Category = Weapon)
+    UFUNCTION(BlueprintCallable, Category = "Weapon")
     virtual float GetCrosshairScale(class ANZHUD* HUD);
     
     UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = HUD)
@@ -862,7 +868,7 @@ public:
     
     virtual void GotoEquippingState(float OverflowTime);
     
-    UFUNCTION(BlueprintCallable, BlueprintPure, Category = Weapon)
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Weapon")
     virtual bool IsUnEquipping() { return GetCurrentState() == UnequippingState; }
     
     /** Informational function that returns the damage radius that a given fire mode has (used by e.g. bots) */
@@ -940,10 +946,10 @@ public:
     TArray<UMeshComponent*> Get1PMeshes() const;
     
 protected:
-    UPROPERTY(BlueprintReadOnly, Category = Weapon)
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
     UNZWeaponState* CurrentState;
     
-    UPROPERTY(BlueprintReadOnly, Category = Weapon)
+    UPROPERTY(BlueprintReadOnly, Category = "Weapon")
     uint8 CurrentFireMode;
     
     UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
@@ -1008,14 +1014,14 @@ public:
     void TestWeaponScale(float X, float Y, float Z);
     
     /** Blueprint hook to modify team color materials */
-    UFUNCTION(BlueprintImplementableEvent, Category = Weapon)
+    UFUNCTION(BlueprintImplementableEvent, Category = "Weapon")
     void NotifyTeamChanged();
     
-    UFUNCTION(BlueprintNativeEvent, Category = Weapon)
+    UFUNCTION(BlueprintNativeEvent, Category = "Weapon")
     void FiringInfoUpdated(uint8 InFireMode, uint8 FlashCount, FVector InFlashLocation);
-    UFUNCTION(BlueprintNativeEvent, Category = Weapon)
+    UFUNCTION(BlueprintNativeEvent, Category = "Weapon")
     void FiringExtraUpdated(uint8 NewFlashExtra, uint8 InFireMode);
-    UFUNCTION(BlueprintNativeEvent, Category = Weapon)
+    UFUNCTION(BlueprintNativeEvent, Category = "Weapon")
     void FiringEffectsUpdated(uint8 InFireMode, FVector InFlashLocation);
     
     /** Used to reset the ZoomTime */

@@ -11,3 +11,8 @@ void ANZBot::SwitchToBestWeapon()
     check(false);
 }
 
+void ANZBot::ReceiveInstantWarning(ANZCharacter* Shooter, const FVector& FireDir)
+{
+    // todo:
+    check(false);
+}
