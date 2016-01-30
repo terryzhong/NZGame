@@ -13,7 +13,6 @@ class NZGAME_API ANZInventory : public AActor
     
     friend bool ANZCharacter::AddInventory(ANZInventory*, bool);
     friend void ANZCharacter::RemoveInventory(ANZInventory*);
-    
     template<typename> friend class TInventoryIterator;
 	
 public:	
@@ -25,6 +24,9 @@ public:
 	
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
+
+	virtual void PostInitProperties() override;
+	virtual void PreInitializeComponents() override;
 
 protected:
     UPROPERTY(BlueprintReadOnly, Replicated, Category = Inventory)
@@ -87,13 +89,44 @@ public:
     virtual void DropFrom(const FVector& StartLocation, const FVector& TossVelocity);
     virtual void Destroyed() override;
     
+	/** Initialized dropped pickup holding this inventory item */
     virtual void InitializeDroppedPickup(class ANZDroppedPickup* Pickup);
     
     /** Return a component that can be instanced to be applied to pickups */
     UFUNCTION(BlueprintNativeEvent)
     UMeshComponent* GetPickupMeshTemplate(FVector& OverrideScale) const;
     
+	UFUNCTION(BlueprintNativeEvent)
+	void AddOverlayMaterials(ANZGameState* GameState) const;
+
+	/** Human readable localized name for the item */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup")
+	FText DisplayName;
     
+	/** Respawn time for level placed pickups of this type */
+	UPROPERTY(EditDefaultsOnly, Category = Pickup)
+	float RespawnTime;
+
+	/** If set, item starts off not being avaliable when placed in the level (must wait RespawnTime from start of match) */
+	UPROPERTY(EditDefaultsOnly, Category = Pickup)
+	bool bDelayedSpawn;
+
+	/** If set, item is always dropped when its holder dies if uses/charges/etc remain */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
+	bool bAlwaysDropOnDeath;
+
+	UPROPERTY(EditDefaultsOnly, Category = Pickup)
+	UParticleSystem* PickupEffect;
+
+	UPROPERTY(EditDefaultsOnly, Category = Pickup)
+	USoundBase* PickupSound;
+
+	UPROPERTY(EditDefaultsOnly, Category = Damage)
+	USoundBase* ReceivedDamageSound;
+
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pickup)
+	//TSubclassOf<class ANZDroppedPickup> DroppedPickupClass;
+
     
     UFUNCTION(BlueprintNativeEvent)
     bool StackPickup(ANZInventory* ContainedInv);

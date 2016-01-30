@@ -9,13 +9,14 @@
 #include "NZCharacter.h"
 #include "NZProjectile.h"
 #include "NZGameMode.h"
-#include "NZPlayerState.h"
-#include "NZWeaponStateFiring.h"
 #include "NZHUDWidget.h"
 #include "NZHUD.h"
+#include "NZPlayerState.h"
+#include "NZWeaponStateActive.h"
 #include "NZWeaponStateInactive.h"
+#include "NZWeaponStateFiring.h"
 #include "NZWeaponStateEquipping.h"
-
+#include "NZWeaponStateUnequipping.h"
 
 
 ANZWeapon::ANZWeapon()
@@ -52,9 +53,43 @@ ANZWeapon::ANZWeapon()
     MaxTracerDist = 5000.f;
     
     InactiveState = CreateDefaultSubobject<UNZWeaponStateInactive>(TEXT("StateInactive"));
-    ActiveState = CreateDefaultSubobject<UNZWeaponStateActive>(TEXT("StateActive");
+	ActiveState = CreateDefaultSubobject<UNZWeaponStateActive>(TEXT("StateActive"));
+	EquippingState = CreateDefaultSubobject<UNZWeaponStateEquipping>(TEXT("StateEquipping"));
+	UnequippingStateDefault = CreateDefaultSubobject<UNZWeaponStateUnequipping>(TEXT("StateUnequipping"));
+	UnequippingState = UnequippingStateDefault;
+
+	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
+	Mesh->SetOnlyOwnerSee(true);
+	Mesh->AttachParent = RootComponent;
+	Mesh->bSelfShadowOnly = true;
+	Mesh->bReceivesDecals = false;
+	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+	FirstPMeshOffset = FVector(0.f);
+	FirstPMeshRotation = FRotator(0.f, 0.f, 0.f);
+
+	for (int32 i = 0; i < 2; i++)
+	{
+		UNZWeaponStateFiring* NewState = CreateDefaultSubobject<UNZWeaponStateFiring, UNZWeaponStateFiring>(FName(*FString::Printf(TEXT("FiringState%i"), i)), false);
+		if (NewState != NULL)
+		{
+			FiringState.Add(NewState);
+			FireInterval.Add(1.0f);
+		}
+	}
+
+	RotChgSpeed = 3.f;
+	ReturnChgSpeed = 3.f;
+	MaxYawLag = 4.4f;
+	MaxPitchLag = 3.3f;
+	FOVOffset = FVector(1.f);
+	bProceduralLagRotation = true;
     
-    
+	//static ConstructorHelpers::FObjectFinder<UTexture> WeaponTexture(TEXT("Texture2D''"));
+	//HUDIcon.Texture = WeaponTexture.Object;
+
+	//BaseAISelectRating = 0.55f;
+	//DisplayName = NSLOCTEXT("PickupMessage", "WeaponPickedUp", "Weapon");
+	//bShowPowerupTimer = false;
 }
 
 void ANZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

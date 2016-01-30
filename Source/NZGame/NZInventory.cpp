@@ -32,12 +32,26 @@ void ANZInventory::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 }
 
-void ANZInventory::GivenTo(ANZCharacter* NewOwner, bool bAutoActivate)
+void ANZInventory::PostInitProperties()
 {
+	Super::PostInitProperties();
+
 }
 
-void ANZInventory::Removed()
+void ANZInventory::PreInitializeComponents()
 {
+	Super::PreInitializeComponents();
+
+}
+
+void ANZInventory::GivenTo(ANZCharacter* NewOwner, bool bAutoActivate)
+{
+	Instigator = NewOwner;
+	SetOwner(NewOwner);
+	NZOwner = NewOwner;
+	PrimaryActorTick.AddPrerequisite(NZOwner, NZOwner->PrimaryActorTick);
+	eventGivenTo(NewOwner, bAutoActivate);
+	ClientGivenTo(Instigator, bAutoActivate);
 }
 
 void ANZInventory::ClientGivenTo_Implementation(APawn* NewInstigator, bool bAutoActivate)
@@ -45,6 +59,10 @@ void ANZInventory::ClientGivenTo_Implementation(APawn* NewInstigator, bool bAuto
 }
 
 void ANZInventory::ClientGivenTo_Internal(bool bAutoActivate)
+{
+}
+
+void ANZInventory::Removed()
 {
 }
 
@@ -76,6 +94,11 @@ UMeshComponent* ANZInventory::GetPickupMeshTemplate_Implementation(FVector& Over
 {
     // todo:
     return NULL;
+}
+
+void ANZInventory::AddOverlayMaterials_Implementation(ANZGameState* GameState) const
+{
+
 }
 
 bool ANZInventory::StackPickup_Implementation(ANZInventory* ContainedInv)
