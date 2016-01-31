@@ -165,60 +165,125 @@ void ANZWeapon::DetachFromHolster()
 
 void ANZWeapon::DropFrom(const FVector& StartLocation, const FVector& TossVelocity)
 {
-    // todo:
-    check(false);
+    if (Role == ROLE_Authority)
+    {
+        if (NZOwner != NULL && bMustBeHolstered)
+        {
+            DetachFromHolster();
+        }
+        
+        if (!HasAnyAmmo())
+        {
+            Destroy();
+        }
+        else
+        {
+            Super::DropFrom(StartLocation, TossVelocity);
+            if (NZOwner == NULL && CurrentState != InactiveState)
+            {
+                //UE_LOG(NZ, Warning, TEXT("Weapon %s wasn't properly sent to Inactive state after being dropped!"), *GetName());
+                GotoState(InactiveState);
+            }
+        }
+    }
 }
 
 void ANZWeapon::InitializeDroppedPickup(class ANZDroppedPickup* Pickup)
 {
-    // todo:
-    check(false);
+    Super::InitializeDroppedPickup(Pickup);
+    
+/*    if (Pickup != NULL)
+    {
+        Pickup->SetWeaponSkin(WeaponSkin);
+    }*/
 }
 
 bool ANZWeapon::ShouldDropOnDeath()
 {
-    // todo:
-    check(false);
-    return false;    
+    return (DroppedPickupClass != NULL) && HasAnyAmmo();
 }
 
 bool ANZWeapon::ShouldPlay1PVisuals() const
 {
-    // todo:
-    check(false);
-    return false;
+    if (GetNetMode() == NM_DedicatedServer)
+    {
+        return false;
+    }
+    else
+    {
+        // Note we can't check Mesh->LastRenderTime here because of the hidden weapon setting
+        return NZOwner && NZOwner->GetLocalViewer() && !NZOwner->GetLocalViewer()->IsBehindView();
+    }
 }
 
 void ANZWeapon::PlayPredictedImpactEffects(FVector ImpactLoc)
 {
-    // todo:
-    check(false);
+    if (!NZOwner)
+    {
+        return;
+    }
+    
+    ANZPlayerController* NZPC = Cast<ANZPlayerController>(NZOwner->Controller);
+    float SleepTime = NZPC ? NZPC->GetProjectileSleepTime() : 0.f;
+    if (SleepTime > 0.f)
+    {
+        if (GetWorldTimerManager().IsTimerActive(PlayDelayedImpactEffectsHandle))
+        {
+            // Play the delayed effect now, since we are about to replace it
+            PlayDelayedImpactEffects();
+        }
+        FVector SpawnLocation;
+        FRotator SpawnRotation;
+        GetImpactSpawnPosition(ImpactLoc, SpawnLocation, SpawnRotation);
+        DelayedHitScan.ImpactLocation = ImpactLoc;
+        DelayedHitScan.FireMode = CurrentFireMode;
+        DelayedHitScan.SpawnLocation = SpawnLocation;
+        DelayedHitScan.SpawnRotation = SpawnRotation;
+        GetWorldTimerManager().SetTimer(PlayDelayedImpactEffectsHandle, this, &ANZWeapon::PlayDelayedImpactEffects, SleepTime, false);
+    }
+    else
+    {
+        FVector SpawnLocation;
+        FRotator SpawnRotation;
+        GetImpactSpawnPosition(ImpactLoc, SpawnLocation, SpawnRotation);
+        NZOwner->SetFlashLocation(ImpactLoc, CurrentFireMode);
+    }
 }
 
 void ANZWeapon::PlayDelayedImpactEffects()
 {
-    // todo:
-    check(false);
+    if (NZOwner)
+    {
+        NZOwner->SetFlashLocation(DelayedHitScan.ImpactLocation, DelayedHitScan.FireMode);
+    }
 }
 
 void ANZWeapon::SpawnDelayedFakeProjectile()
 {
-    // todo:
-    check(false);    
+    ANZPlayerController* OwningPlayer = NZOwner ? Cast<ANZPlayerController>(NZOwner->GetController()) : NULL;
+    if (OwningPlayer)
+    {
+        FActorSpawnParameters Params;
+        Params.Instigator = NZOwner;
+        Params.Owner = NZOwner;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        ANZProjectile* NewProjectile = GetWorld()->SpawnActor<ANZProjectile>(DelayedProjectile.ProjectileClass, DelayedProjectile.SpawnLocation, DelayedProjectile.SpawnRotation, Params);
+        if (NewProjectile)
+        {
+            NewProjectile->InitFakeProjectile(OwningPlayer);
+            NewProjectile->SetLifeSpan(FMath::Min(NewProjectile->GetLifeSpan(), 0.002f * FMath::Max(0.f, OwningPlayer->MaxPredictionPing + OwningPlayer->PredictionFudgeFactor)));
+        }
+    }
 }
 
 float ANZWeapon::GetBringUpTime()
 {
-    // todo:
-    check(false);
-    return 0.0f;
+    return BringUpTime;
 }
 
 float ANZWeapon::GetPutDownTime()
 {
-    // todo:
-    check(false);
-    return 0.0f;    
+    return PutDownTime;
 }
 
 bool ANZWeapon::FollowsInList(ANZWeapon* OtherWeapon)
@@ -234,35 +299,123 @@ bool ANZWeapon::FollowsInList(ANZWeapon* OtherWeapon)
 
 void ANZWeapon::DeactivateSpawnProtection()
 {
-    // todo:
-    check(false);
+    if (NZOwner)
+    {
+        NZOwner->DeactivateSpawnProtection();
+    }
 }
 
 void ANZWeapon::UpdateViewBob(float DeltaTime)
 {
-    // todo:
-    check(false);
+    ANZPlayerController* MyPC = NZOwner ? NZOwner->GetLocalViewer() : NULL;
+    if (MyPC != NULL && Mesh != NULL && NZOwner->GetWeapon() == this && ShouldPlay1PVisuals())
+    {
+        // If weapon is up in first person, view bob with movement
+        if (GetWeaponHand() != HAND_Hidden)
+        {
+            USkeletalMeshComponent* BobbedMesh = (HandsAttachSocket != NAME_None) ? NZOwner->FirstPersonMesh : Mesh;
+            if (FirstPMeshOffset.IsZero())
+            {
+                FirstPMeshOffset = BobbedMesh->GetRelativeTransform().GetLocation();
+                FirstPMeshRotation = BobbedMesh->GetRelativeTransform().Rotator();
+            }
+            FVector ScaledMeshOffset = FirstPMeshOffset;
+            const float FOVScaling = (MyPC != NULL) ? ((MyPC->PlayerCameraManager->GetFOVAngle() - 100.f) * 0.05f) : 1.0f;
+            if (FOVScaling > 0.f)
+            {
+                ScaledMeshOffset.X *= (1.f + (FOVOffset.X - 1.f) * FOVScaling);
+                ScaledMeshOffset.Y *= (1.f + (FOVOffset.Y - 1.f) * FOVScaling);
+                ScaledMeshOffset.Z *= (1.f + (FOVOffset.Z - 1.f) * FOVScaling);
+            }
+            
+            BobbedMesh->SetRelativeLocation(ScaledMeshOffset);
+            FVector BobOffset = NZOwner->GetWeaponBobOffset(DeltaTime, this);
+            BobbedMesh->SetWorldLocation(BobbedMesh->GetComponentLocation() + BobOffset);
+            
+            FRotator NewRotation = NZOwner ? NZOwner->GetControlRotation() : FRotator(0.f, 0.f, 0.f);
+            FRotator FinalRotation = NewRotation;
+            
+            // Add some rotation leading
+            if (NZOwner && NZOwner->Controller)
+            {
+                FinalRotation.Yaw = LagWeaponRotation(NewRotation.Yaw, LastRotation.Yaw, DeltaTime, MaxYawLag, 0);
+                FinalRotation.Pitch = LagWeaponRotation(NewRotation.Pitch, LastRotation.Pitch, DeltaTime, MaxPitchLag, 1);
+                FinalRotation.Roll = NewRotation.Roll;
+            }
+            LastRotation = NewRotation;
+            BobbedMesh->SetRelativeRotation(FinalRotation + FirstPMeshRotation);
+        }
+        else
+        {
+            // For first person footsteps
+            NZOwner->GetWeaponBobOffset(DeltaTime, this);
+        }
+    }
 }
 
 void ANZWeapon::PostInitProperties()
 {
     Super::PostInitProperties();
     
-    // todo:
+    if (Group == -1)
+    {
+        Group = DefaultGroup;
+    }
+    WeaponBarScale = 0.0f;
+    
+    if (DisplayName.IsEmpty() ||
+        (GetClass() != ANZWeapon::StaticClass() && DisplayName.EqualTo(GetClass()->GetSuperClass()->GetDefaultObject<ANZWeapon>()->DisplayName) &&
+         GetClass()->GetSuperClass()->GetDefaultObject<ANZWeapon>()->DisplayName.EqualTo(FText::FromName(GetClass()->GetSuperClass()->GetFName()))))
+    {
+        DisplayName = FText::FromName(GetClass()->GetFName());
+    }
 }
 
 void ANZWeapon::BeginPlay()
 {
     Super::BeginPlay();
     
-    // todo:
+    InstanceMuzzleFlashArray(this, MuzzleFlash);
+    
+    // Sanity check some settings
+    for (int32 i = 0; i < MuzzleFlash.Num(); i++)
+    {
+        if (MuzzleFlash[i] != NULL)
+        {
+            if (RootComponent == NULL && MuzzleFlash[i]->IsRegistered())
+            {
+                MuzzleFlash[i]->DeactivateSystem();
+                MuzzleFlash[i]->KillParticlesForced();
+                MuzzleFlash[i]->UnregisterComponent();  // SCS components were registered without out permission
+                MuzzleFlash[i]->bWasActive = false;
+            }
+            MuzzleFlash[i]->bAutoActivate = false;
+            MuzzleFlash[i]->SecondsBeforeInactive = 0.0f;
+            MuzzleFlash[i]->SetOnlyOwnerSee(false);     // We handle this in ANZPlayerController::UpdateHiddenComponents() instead
+            MuzzleFlash[i]->bUseAttachParentBound = true;
+        }
+    }
+    
+    // Might have already been activated if at startup, see ClientGivenTo_Internal()
+    if (CurrentState == NULL)
+    {
+        GotoState(InactiveState);
+    }
+    
+    checkSlow(CurrentState != NULL);
 }
 
 UMeshComponent* ANZWeapon::GetPickupMeshTemplate_Implementation(FVector& OverrideScale) const
 {
-    // todo:
-    check(false);
-    return NULL;
+    if (AttachmentType != NULL)
+    {
+        OverrideScale = AttachmentType.GetDefaultObject()->PickupScaleOverride;
+        return AttachmentType.GetDefaultObject()->Mesh;
+    }
+    else
+    {
+        return Super::GetPickupMeshTemplate_Implementation(OverrideScale);
+    }
 }
 
 void ANZWeapon::GotoState(class UNZWeaponState* NewState)
@@ -292,20 +445,41 @@ void ANZWeapon::GotoState(class UNZWeaponState* NewState)
 
 void ANZWeapon::StartFire(uint8 FireModeNum)
 {
-    // todo:
-    check(false);
+    if (!NZOwner->IsFiringDisabled())
+    {
+        bool bClientFired = BeginFiringSequence(FireModeNum, false);
+        if (Role < ROLE_Authority)
+        {
+            if (NZOwner)
+            {
+                float ZOffset = uint8(FMath::Clamp(NZOwner->GetPawnViewLocation().Z - NZOwner->GetActorLocation().Z + 127.5f, 0.f, 255.f));
+                if (ZOffset != uint8(FMath::Clamp(NZOwner->BaseEyeHeight + 127.5f, 0.f, 255.f)))
+                {
+                    ServerStartFireOffset(FireModeNum, ZOffset, bClientFired);
+                    return;
+                }
+            }
+            ServerStartFire(FireModeNum, bClientFired);
+        }
+    }
 }
 
 void ANZWeapon::StopFire(uint8 FireModeNum)
 {
-    // todo:
-    check(false);
+    EndFiringSequence(FireModeNum);
+    if (Role < ROLE_Authority)
+    {
+        ServerStopFire(FireModeNum);
+    }
 }
 
 void ANZWeapon::ServerStartFire_Implementation(uint8 FireModeNum, bool bClientFired)
 {
-    // todo:
-    check(false);
+    if (NZOwner && !NZOwner->IsFiringDisabled())
+    {
+        FireZOffsetTime = 0.f;
+        BeginFiringSequence(FireModeNum, bClientFired);
+    }
 }
 
 bool ANZWeapon::ServerStartFire_Validate(uint8 FireModeNum, bool bClientFired)
@@ -315,8 +489,12 @@ bool ANZWeapon::ServerStartFire_Validate(uint8 FireModeNum, bool bClientFired)
 
 void ANZWeapon::ServerStartFireOffset_Implementation(uint8 FireModeNum, uint8 ZOffset, bool bClientFired)
 {
-    // todo:
-    check(false);
+    if (NZOwner && !NZOwner->IsFiringDisabled())
+    {
+        FireZOffset = ZOffset - 127;
+        FireZOffsetTime = GetWorld()->GetTimeSeconds();
+        BeginFiringSequence(FireModeNum, bClientFired);
+    }
 }
 
 bool ANZWeapon::ServerStartFireOffset_Validate(uint8 FireModeNum, uint8 ZOffset, bool bClientFired)
@@ -326,8 +504,7 @@ bool ANZWeapon::ServerStartFireOffset_Validate(uint8 FireModeNum, uint8 ZOffset,
 
 void ANZWeapon::ServerStopFire_Implementation(uint8 FireModeNum)
 {
-    // todo:
-    check(false);
+    EndFiringSequence(FireModeNum);
 }
 
 bool ANZWeapon::ServerStopFire_Validate(uint8 FireModeNum)
@@ -337,91 +514,180 @@ bool ANZWeapon::ServerStopFire_Validate(uint8 FireModeNum)
 
 bool ANZWeapon::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
 {
-    // todo:
-    check(false);
+    if (NZOwner)
+    {
+        NZOwner->SetPendingFire(FireModeNum, true);
+        if (FiringState.IsValidIndex(FireModeNum) && CurrentState != EquippingState && CurrentState != UnequippingState)
+        {
+            FiringState[FireModeNum]->PendingFireStarted();
+        }
+        bool bResult = CurrentState->BeginFiringSequence(FireModeNum, bClientFired);
+        if (CurrentState->IsFiring() && CurrentFireMode != FireModeNum)
+        {
+            OnMultiPress(FireModeNum);
+        }
+        return bResult;
+    }
     return false;
 }
 
 void ANZWeapon::EndFiringSequence(uint8 FireModeNum)
 {
-    // todo:
-    check(false);
+    if (NZOwner)
+    {
+        NZOwner->SetPendingFire(FireModeNum, false);
+    }
+    if (FiringState.IsValidIndex(FireModeNum) && CurrentState != EquippingState && CurrentState != UnequippingState)
+    {
+        FiringState[FireModeNum]->PendingFireStopped();
+    }
+    CurrentState->EndFiringSequence(FireModeNum);
 }
 
 bool ANZWeapon::WillSpawnShot(float DeltaTime)
 {
-    // todo:
-    check(false);
-    return false;
+    return (CurrentState != NULL) && CanFireAgain() && CurrentState->WillSpawnShot(DeltaTime);
 }
 
 bool ANZWeapon::CanFireAgain()
 {
-    // todo:
-    check(false);
-    return false;
+    return (GetNZOwner() && (GetNZOwner()->GetPendingWeapon() == NULL) && HasAmmo(GetCurrentFireMode()));
 }
 
 void ANZWeapon::OnStartedFiring_Implementation()
 {
-    // todo:
-    check(false);
 }
 
 void ANZWeapon::OnStoppedFiring_Implementation()
 {
-    // todo:
-    check(false);
 }
 
 bool ANZWeapon::HandleContinuedFiring()
 {
-    // todo:
-    check(false);
-    return false;
+    if (!CanFireAgain() || !GetNZOwner()->IsPendingFire(GetCurrentFireMode()))
+    {
+        GotoActiveState();
+        return false;
+    }
+    
+    OnContinuedFiring();
+    return true;
 }
 
 void ANZWeapon::OnContinuedFiring_Implementation()
 {
-    // todo:
-    check(false);
 }
 
 void ANZWeapon::OnMultiPress_Implementation(uint8 OtherFireMode)
 {
-    // todo:
-    check(false);
 }
 
 void ANZWeapon::BringUp(float OverflowTime)
 {
-    // todo:
-    check(false);    
+    AttachToOwner();
+    OnBringUp();
+    if (CurrentState)
+    {
+        CurrentState->BringUp(OverflowTime);
+    }
 }
 
 bool ANZWeapon::PutDown()
 {
-    // todo:
-    check(false);
-    return false;
+    if (eventPreventPutDown())
+    {
+        return false;
+    }
+    else
+    {
+        SetZoomState(EZoomState::EZS_NotZoomed);
+        CurrentState->PutDown();
+        return true;
+    }
 }
 
 void ANZWeapon::AttachToOwner_Implementation()
 {
-    // todo:
-    check(false);
+    if (NZOwner == NULL)
+    {
+        return;
+    }
+    
+    if (bMustBeHolstered)
+    {
+        // Detach from holster if becoming held
+        DetachFromHolster();
+    }
+    
+    // Attach
+    if (Mesh != NULL && Mesh->SkeletalMesh != NULL)
+    {
+        UpdateWeaponHand();
+        Mesh->AttachTo(NZOwner->FirstPersonMesh, (GetWeaponHand() != HAND_Hidden) ? HandsAttachSocket : NAME_None);
+        if (ShouldPlay1PVisuals())
+        {
+            Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPose;
+            Mesh->LastRenderTime = GetWorld()->TimeSeconds;
+            Mesh->bRecentlyRendered = true;
+            if (OverlayMesh != NULL)
+            {
+                OverlayMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPose;
+                OverlayMesh->LastRenderTime = GetWorld()->TimeSeconds;
+                OverlayMesh->bRecentlyRendered = true;
+            }
+            UpdateViewBob(0.0f);
+        }
+    }
+    
+    // Register components now
+    Super::RegisterAllComponents();
+    RegisterAllActorTickFunctions(true, true);
+    if (GetNetMode() != NM_DedicatedServer)
+    {
+        UpdateOverlays();
+        SetSkin(NZOwner->GetSkin());
+    }
 }
 
 void ANZWeapon::DetachFromOwner_Implementation()
 {
-    // todo:
-    check(false);
+    StopFiringEffects();
+    
+    for (int32 i = 0; i < MuzzleFlash.Num(); i++)
+    {
+        if (MuzzleFlash[i] != NULL)
+        {
+            UParticleSystem* SavedTemplate = MuzzleFlash[i]->Template;
+            MuzzleFlash[i]->DeactivateSystem();
+            MuzzleFlash[i]->KillParticlesForced();
+            // FIXME: KillParticlesForced() doesn't kill particles immediately for GPU particles, but the below does...
+            MuzzleFlash[i]->SetTemplate(NULL);
+            MuzzleFlash[i]->SetTemplate(SavedTemplate);
+        }
+    }
+    
+    if (Mesh != NULL && Mesh->SkeletalMesh != NULL)
+    {
+        Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+        Mesh->DetachFromParent();
+        if (OverlayMesh != NULL)
+        {
+            OverlayMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
+        }
+    }
+    
+    // Unregister components so they go away
+    UnregisterAllComponents();
+    
+    if (bMustBeHolstered && HasAnyAmmo() && NZOwner && !NZOwner->IsDead() && !IsPendingKillPending())
+    {
+        AttachToHolster();
+    }
 }
 
 bool ANZWeapon::IsChargedFireMode(uint8 TestMode) const
 {
-    // todo:
-    check(false);
+    //return FiringState.IsValidIndex(TestMode) && Cast<UNZWeaponStateFiringCharged>(FiringState[TestMode]) != NULL;
     return false;
 }
 

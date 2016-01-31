@@ -77,7 +77,8 @@ public:
     virtual void PawnPendingDestroy(APawn* InPawn) override;
     
     
-    
+    /** 179
+     Attempts to restart this player, generally called from the client upon respawn request */
     UFUNCTION(Server, Reliable, WithValidation)
     void ServerRestartPlayerAltFire();
     
@@ -86,6 +87,13 @@ public:
     virtual void ServerSwitchTeam();
     
     
+    UFUNCTION(exec)
+    virtual void BehindView(bool bWantBehindView);
+    
+    virtual bool IsBehindView();
+    virtual void SetCameraMode(FName NewCamMode);
+    virtual void ClientSetCameraMode_Implementation(FName NewCamMode) override;
+    virtual void ClientGameEnded_Implementation(AActor* EndGameFocus, bool bIsWinner) override;
     
     
     virtual void SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams()) override;
@@ -197,6 +205,20 @@ public:
     
 
     // Perceived latency reduction
+    
+    /** 518
+     Used to correct prediction error */
+    UPROPERTY(EditAnywhere, Replicated, GlobalCOnfig, Category = Network)
+    float PredictionFudgeFactor;
+    
+    /** Negotiated max amount of ping to predict ahead for */
+    UPROPERTY(BlueprintReadOnly, Replicated, Category = Network)
+    float MaxPredictionPing;
+    
+    /** User configurable desired prediction ping (will be negotiated with server) */
+    UPROPERTY(BlueprintReadOnly, GLobalConfig, Category = Network)
+    float DesiredPredictionPing;
+    
     
     /** Return amount of time to tick or simulate to make up for network lag */
     virtual float GetPredictionTime();

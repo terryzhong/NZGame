@@ -38,4 +38,11 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Game)
     bool bAmmoIsLimited;
     
+    
+    /** 606
+     * When pawn wants to pickup something, mutators are given a chance to modify it.
+     * If this function returns true, bAllowPickup will determine if the object can be picked up.
+     */
+    UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
+    bool OverridePickupQuery(APawn* Other, TSubclassOf<ANZInventory> ItemClass, AActor* Pickup, bool& bAllowPickup);
 };

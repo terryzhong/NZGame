@@ -19,4 +19,8 @@ public:
     virtual bool OnSameTeam(const AActor* Actor1, const AActor* Actor2);
 	
 	
+    /** 77
+     Amount of time after a player spawns where they are immune to damage from enemies */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = GameState)
+    float SpawnProtectionTime;
 };

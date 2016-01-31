@@ -14,6 +14,11 @@ class NZGAME_API UNZWeaponStateFiring : public UNZWeaponState
 	GENERATED_BODY()
 	
 	
+public:
+    
+    /** 66
+     */
+    virtual void PendingFireStarted() {}
 	
-	
+    virtual void PendingFireStopped() {}
 };

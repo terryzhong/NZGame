@@ -9,6 +9,7 @@
 #include "NZPlayerState.h"
 #include "NZPlayerController.h"
 #include "NZWeaponAttachment.h"
+#include "NZGameState.h"
 
 
 // Sets default values
@@ -147,6 +148,22 @@ void ANZCharacter::Destroyed()
     
 
 }
+
+
+
+bool ANZCharacter::IsSpawnProtected()
+{
+    if (!bSpawnProtectionEligible)
+    {
+        return false;
+    }
+    else
+    {
+        ANZGameState* GameState = GetWorld()->GetGameState<ANZGameState>();
+        return (GameState != NULL && GameState->SpawnProtectionTime > 0.0f && GetWorld()->TimeSeconds - CreationTime < GameState->SpawnProtectionTime);
+    }
+}
+
 
 
 FVector ANZCharacter::GetRewindLocation(float PredictionTime)
@@ -813,6 +830,22 @@ void ANZCharacter::StopDriving(APawn* Vehicle)
     }
 }
 
+void ANZCharacter::PlayDying()
+{
+    
+}
+
+bool ANZCharacter::IsRecentlyDead()
+{
+    return IsDead() && (GetWorld()->GetTimeSeconds() - TimeOfDeath < 1.f);
+}
+
+void ANZCharacter::DeactivateSpawnProtection()
+{
+    bSpawnProtectionEligible = false;
+    // TODO: visual effect
+}
+
 
 
 
@@ -822,6 +855,28 @@ FVector ANZCharacter::GetLocationCenterOffset() const
 {
     return (!IsRagdoll() || RootComponent != GetMesh()) ? FVector::ZeroVector : (GetMesh()->Bounds.Origin - GetMesh()->GetComponentLocation());
 }
+
+
+void ANZCharacter::SetSkin(UMaterialInterface* NewSkin)
+{
+    
+}
+
+void ANZCharacter::UpdateSkin()
+{
+    
+}
+
+
+
+FVector ANZCharacter::GetWeaponBobOffset(float DeltaTime, ANZWeapon* MyWeapon)
+{
+    // todo:
+    check(false);
+    return FVector(0.f);
+}
+
+
 
 ANZPlayerController* ANZCharacter::GetLocalViewer()
 {

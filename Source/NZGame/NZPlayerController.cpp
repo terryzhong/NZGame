@@ -285,6 +285,43 @@ bool ANZPlayerController::ServerSwitchTeam_Validate()
     return true;
 }
 
+void ANZPlayerController::BehindView(bool bWantBehindView)
+{
+}
+
+bool ANZPlayerController::IsBehindView()
+{
+    if (PlayerCameraManager != NULL)
+    {
+/*        static FName NAME_FreeCam(TEXT("FreeCam"));
+        
+        ANZPlayerController* NZCam = Cast<ANZPlayerCameraManager>(PlayerCameraManager);
+        FName CameraStyle = (NZCam != NULL) ? NZCam->GetCameraStyleWithOverrides() : PlayerCameraManager->CameraStyle;
+        
+        return CameraStyle == NAME_FreeCam;*/
+        // todo:
+        return false;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void ANZPlayerController::SetCameraMode(FName NewCamMode)
+{
+}
+
+void ANZPlayerController::ClientSetCameraMode_Implementation(FName NewCamMode)
+{
+}
+
+void ANZPlayerController::ClientGameEnded_Implementation(AActor* EndGameFocus, bool bIsWinner)
+{
+    
+}
+
+
 
 void ANZPlayerController::SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
 {

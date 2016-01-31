@@ -563,7 +563,7 @@ public:
     virtual bool BeginFiringSequence(uint8 FireModeNum, bool bClientFired);
     virtual void EndFiringSequence(uint8 FireModeNum);
     
-    /** Returns true if weapon will true fire a shot this frame - used for network synchronization */
+    /** Returns true if weapon will fire a shot this frame - used for network synchronization */
     virtual bool WillSpawnShot(float DeltaTime);
     
     /** Returns true if weapon can fire again (fire button is pressed, weapon is held, has ammo, etc.) */

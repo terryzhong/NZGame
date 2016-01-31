@@ -4,7 +4,11 @@
 #include "NZGameState.h"
 
 
-
+void ANZGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    
+}
 
 bool ANZGameState::OnSameTeam(const AActor* Actor1, const AActor* Actor2)
 {

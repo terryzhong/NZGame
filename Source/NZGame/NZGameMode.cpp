@@ -25,3 +25,8 @@ bool ANZGameMode::PlayerCanAltRestart_Implementation(APlayerController* Player)
 {
     return PlayerCanRestart(Player);
 }
+
+bool ANZGameMode::OverridePickupQuery_Implementation(APawn* Other, TSubclassOf<ANZInventory> ItemClass, AActor* Pickup, bool& bAllowPickup)
+{
+    return true;
+}

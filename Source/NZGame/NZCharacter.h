@@ -93,9 +93,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
     float DefaultCrouchedEyeHeight;
     
+    /**
+     * Whether spawn protection may potentially be applied (still must meet time since spawn check in NZGameMode)
+     * Set to false after firing weapon or any other action that is considered offensive
+     */
     UPROPERTY(BlueprintReadOnly, Replicated, Category = Pawn)
     bool bSpawnProtectionEligible;
 
+    /** Returns whether spawn protection currently applies for this character (valid on client) */
+    UFUNCTION(BlueprintCallable, Category = Damage)
+    bool IsSpawnProtected();
     
     
     
@@ -337,8 +344,6 @@ public:
 
 
 
-	UFUNCTION(BlueprintCallable, Category = Pawn)
-	bool IsDead();
     
     /** Weapon firing */
     UFUNCTION(BlueprintCallable, Category = Pawn)
@@ -397,7 +402,8 @@ public:
 
 
     
-    /** */
+    /** 630
+     */
     UPROPERTY(BlueprintReadWrite, Replicated, Category = Pawn)
     int32 Health;
     
@@ -425,7 +431,8 @@ public:
     
     
     
-    
+    /** 743
+     */
     UPROPERTY(ReplicatedUsing = OnRep_DrivenVehicle)
     APawn* DrivenVehicle;
     
@@ -437,12 +444,26 @@ public:
     
     
     
-    /** Runtime material instance for setting body material parameters (team color, etc) */
-protected:
+    /** 897
+     Time Character died */
     UPROPERTY(BlueprintReadOnly, Category = Pawn)
-    TArray<UMaterialInstanceDynamic*> BodyMIs;
-public:
-    inline const TArray<UMaterialInstanceDynamic*>& GetBodyMIs() const { return BodyMIs; }
+    float TimeOfDeath;
+     
+    
+    /** 985
+     Plays death effects; use LastTakeHitInfo to do damage-specific death effects */
+    virtual void PlayDying();
+    virtual void TornOff() override
+    {
+        PlayDying();
+    }
+    
+    virtual bool IsRecentlyDead();
+    
+    virtual void DeactivateSpawnProtection();
+    
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    bool IsDead();
     
     
 protected:
@@ -459,7 +480,34 @@ public:
     }
     
     virtual FVector GetLocationCenterOffset() const;
-	
+    
+    
+    /** 1294
+     * Sets full body material override only one at a time
+     * Is allowed pass NULL to restore default skin
+     */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Effects)
+    virtual void SetSkin(UMaterialInterface* NewSkin);
+    
+    /** Replicated character material override */
+protected:
+    UPROPERTY(Replicated, ReplicatedUsing = UpdateSkin)
+    UMaterialInterface* ReplicatedBodyMaterial;
+public:
+    inline UMaterialInterface* GetSkin() { return ReplicatedBodyMaterial; }
+    
+    /** Apply skin in ReplicatedBodyMaterial or restore to default if it's NULL */
+    UFUNCTION()
+    virtual void UpdateSkin();
+
+    /** Runtime material instance for setting body material parameters (team color, etc) */
+protected:
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    TArray<UMaterialInstanceDynamic*> BodyMIs;
+public:
+    inline const TArray<UMaterialInstanceDynamic*>& GetBodyMIs() const { return BodyMIs; }
+    
+    
     
     // Weapon bob and eye offset
     
@@ -479,10 +527,17 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
     FVector CurrentJumpBob;
     
+    /** Returns offset to add to first person mesh for weapon bob */
+    virtual FVector GetWeaponBobOffset(float DeltaTime, ANZWeapon* MyWeapon);
+    
     
     UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
     FVector TargetEyeOffset;
     
+    /** 1512
+     Whether this pawn can obtain pickup items (NZPickup, NZDroppedPickup) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    bool bCanPickupItems;
     
     
     
