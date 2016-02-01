@@ -157,11 +157,18 @@ public:
     
     virtual void SwitchWeaponInSequence(bool bPrev);
     
+    /** Switches weapons using classic groups */
     UFUNCTION(Exec)
     virtual void SwitchWeapon(int32 Group);
     
+    /** Switches weapons using modern groups */
     UFUNCTION(Exec)
     virtual void SwitchWeaponGroup(int32 Group);
+    
+    virtual void CheckAutoWeaponSwitch(class ANZWeapon* TestWeapon);
+    
+    UPROPERTY(GlobalConfig, BlueprintReadOnly, Category = Weapon)
+    bool bAutoWeaponSwitch;
     
     /** Weapon fire input handling -- NOTE: Just forward to the pawn */
     virtual void OnFire();

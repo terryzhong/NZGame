@@ -567,6 +567,24 @@ void ANZPlayerController::SwitchWeaponGroup(int32 Group)
     }
 }
 
+void ANZPlayerController::CheckAutoWeaponSwitch(class ANZWeapon* TestWeapon)
+{
+    if (NZCharacter != NULL && IsLocalPlayerController())
+    {
+        ANZWeapon* CurWeapon = NZCharacter->GetPendingWeapon();
+        if (CurWeapon == NULL)
+        {
+            CurWeapon = NZCharacter->GetWeapon();
+        }
+        if (CurWeapon == NULL ||
+            (bAutoWeaponSwitch && !NZCharacter->IsPendingFire(CurWeapon->GetCurrentFireMode()) && TestWeapon->AutoSwitchPriority > CurWeapon->AutoSwitchPriority))
+        {
+            NZCharacter->SwitchWeapon(TestWeapon);
+        }
+    }
+}
+
+
 void ANZPlayerController::OnFire()
 {
     if (GetPawn() != NULL)
@@ -803,7 +821,15 @@ void ANZPlayerController::SetWeaponGroup(class ANZWeapon* InWeapon)
 {
 	if (Cast<UNZLocalPlayer>(Player))
 	{
-		UNZProfileSettings* ProfileSettings = Cast<
+        UNZProfileSettings* ProfileSettings = Cast<UNZLocalPlayer>(Player)->GetProfileSettings();
+        if (ProfileSettings)
+        {
+            FString WeaponClassName = GetNameSafe(InWeapon);
+            if (ProfileSettings->WeaponGroupLookup.Contains(WeaponClassName))
+            {
+                InWeapon->Group = ProfileSettings->WeaponGroupLookup[WeaponClassName].Group;
+            }
+        }
 	}
 }
 

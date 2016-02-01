@@ -581,6 +581,38 @@ void ANZCharacter::WeaponChanged(float OverflowTime)
     }*/
 }
 
+void ANZCharacter::ClientWeaponLost_Implementation(ANZWeapon* LostWeapon)
+{
+    if (IsLocallyControlled())
+    {
+        if (Weapon == LostWeapon)
+        {
+            Weapon = NULL;
+            if (!IsDead())
+            {
+                if (PendingWeapon == NULL)
+                {
+                    SwitchToBestWeapon();
+                }
+                if (PendingWeapon != NULL)
+                {
+                    WeaponChanged();
+                }
+                else
+                {
+                    WeaponClass = NULL;
+                    WeaponAttachmentClass = NULL;
+                    UpdateWeaponAttachment();
+                }
+            }
+        }
+        else if (PendingWeapon == LostWeapon)
+        {
+            PendingWeapon = NULL;
+            WeaponChanged();
+        }
+    }
+}
 
 void ANZCharacter::SwitchToBestWeapon()
 {
@@ -690,6 +722,12 @@ void ANZCharacter::UpdateWeaponAttachment()
         //UpdateWeaponSkin();
     }
 }
+
+void ANZCharacter::UpdateHolsteredWeaponAttachment()
+{
+    
+}
+
 
 bool ANZCharacter::IsDead()
 {
@@ -854,6 +892,18 @@ void ANZCharacter::DeactivateSpawnProtection()
 FVector ANZCharacter::GetLocationCenterOffset() const
 {
     return (!IsRagdoll() || RootComponent != GetMesh()) ? FVector::ZeroVector : (GetMesh()->Bounds.Origin - GetMesh()->GetComponentLocation());
+}
+
+
+
+void ANZCharacter::SetWeaponAttachmentClass(TSubclassOf<class ANZWeaponAttachment> NewWeaponAttachmentClass)
+{
+    
+}
+
+void ANZCharacter::SetHolsteredWeaponAttachmentClass(TSubclassOf<class ANZWeaponAttachment> NewWeaponAttachmentClass)
+{
+    
 }
 
 

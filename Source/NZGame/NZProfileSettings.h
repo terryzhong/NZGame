@@ -8,7 +8,7 @@
 USTRUCT()
 struct FStoredWeaponPriority
 {
-	GENERATED_BODY()
+	GENERATED_USTRUCT_BODY()
 
 	UPROPERTY()
 	FString WeaponClassName;
@@ -29,6 +29,30 @@ struct FStoredWeaponPriority
 	}
 };
 
+USTRUCT()
+struct FStoredWeaponGroupInfo
+{
+    GENERATED_USTRUCT_BODY()
+    
+    UPROPERTY()
+    FString WeaponClassName;
+    
+    UPROPERTY()
+    int32 Group;
+    
+    FStoredWeaponGroupInfo()
+        : WeaponClassName(TEXT(""))
+        , Group(0)
+    {
+    }
+    
+    FStoredWeaponGroupInfo(FString InWeaponClassName, int32 InGroup)
+        : WeaponClassName(InWeaponClassName)
+        , Group(InGroup)
+    {
+    }
+};
+
 /**
  * 
  */
@@ -37,10 +61,26 @@ class NZGAME_API UNZProfileSettings : public UObject
 {
 	GENERATED_BODY()
 
+public:
 	void ClearWeaponPriorities();
 	void SetWeaponPriority(FString WeaponClassName, float NewPriority);
 	float GetWeaponPriority(FString WeaponClassName, float DefaultPriority);
 
+    UPROPERTY()
+    uint32 SettingsRevisionNum;
+    
+    UPROPERTY()
+    FString CharacterPath;
+    
+    
+    UPROPERTY()
+    TArray<FName> Achievements;
+
+    UPROPERTY()
+    TArray<FStoredWeaponGroupInfo> WeaponGroups;
+    
+    TMap<FString, FStoredWeaponGroupInfo> WeaponGroupLookup;
+    
 
 protected:
 	UPROPERTY()

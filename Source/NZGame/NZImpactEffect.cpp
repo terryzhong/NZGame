@@ -4,6 +4,21 @@
 #include "NZImpactEffect.h"
 
 
+FImpactEffectNamedParameters::FImpactEffectNamedParameters(float DamageRadius)
+{
+    static FName NAME_DamageRadiusScalar(TEXT("DamageRadiusScalar"));
+    FParticleSysParam* Param = new(ParticleParams) FParticleSysParam;
+    Param->Name = NAME_DamageRadiusScalar;
+    Param->ParamType = EParticleSysParamType::PSPT_Scalar;
+    Param->Scalar = DamageRadius;
+    
+    static FName NAME_DamageRadiusVector(TEXT("DamageRadiusVector"));
+    Param = new(ParticleParams) FParticleSysParam;
+    Param->Name = NAME_DamageRadiusVector;
+    Param->ParamType = EParticleSysParamType::PSPT_Vector;
+    Param->Vector = FVector(DamageRadius, DamageRadius, DamageRadius);
+}
+
 // Sets default values
 ANZImpactEffect::ANZImpactEffect()
 {
@@ -24,5 +39,11 @@ void ANZImpactEffect::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
 
+}
+
+bool ANZImpactEffect::SpawnEffect_Implementation(UWorld* World, const FTransform& InTransform, UPrimitiveComponent* HitComp, AActor* SpawnedBy, AController* InstigatedBy, ESoundReplicationType SoundReplication, const FImpactEffectNamedParameters& EffectParams) const
+{
+    check(false);
+    return false;
 }
 

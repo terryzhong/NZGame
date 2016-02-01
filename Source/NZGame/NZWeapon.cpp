@@ -18,6 +18,11 @@
 #include "NZWeaponStateFiringCharged.h"
 #include "NZWeaponStateEquipping.h"
 #include "NZWeaponStateUnequipping.h"
+#include "NZWeaponAttachment.h"
+#include "NZTypes.h"
+#include "NZGameViewportClient.h"
+#include "NZImpactEffect.h"
+#include "UnrealNetwork.h"
 
 
 ANZWeapon::ANZWeapon()
@@ -88,15 +93,23 @@ ANZWeapon::ANZWeapon()
 	//static ConstructorHelpers::FObjectFinder<UTexture> WeaponTexture(TEXT("Texture2D''"));
 	//HUDIcon.Texture = WeaponTexture.Object;
 
-	//BaseAISelectRating = 0.55f;
-	//DisplayName = NSLOCTEXT("PickupMessage", "WeaponPickedUp", "Weapon");
-	//bShowPowerupTimer = false;
+	BaseAISelectRating = 0.55f;
+	DisplayName = NSLOCTEXT("PickupMessage", "WeaponPickedUp", "Weapon");
+	bShowPowerupTimer = false;
 }
 
 void ANZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     
+    DOREPLIFETIME_CONDITION(ANZWeapon, Ammo, COND_None);
+    DOREPLIFETIME_CONDITION(ANZWeapon, MaxAmmo, COND_None);
+    DOREPLIFETIME(ANZWeapon, AttachmentType);
+    
+    DOREPLIFETIME_CONDITION(ANZWeapon, ZoomCount, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(ANZWeapon, ZoomState, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(ANZWeapon, CurrentZoomMode, COND_SkipOwner);
+    DOREPLIFETIME_CONDITION(ANZWeapon, ZoomTime, COND_InitialOnly);
 }
 
 void ANZWeapon::OnRep_AttachmentType()
@@ -154,14 +167,20 @@ void ANZWeapon::NetSynchRandomSeed()
 
 void ANZWeapon::AttachToHolster()
 {
-    // todo:
-    check(false);
+    if (NZOwner != NULL)
+    {
+        NZOwner->SetHolsteredWeaponAttachmentClass(AttachmentType);
+        NZOwner->UpdateHolsteredWeaponAttachment();
+    }
 }
 
 void ANZWeapon::DetachFromHolster()
 {
-    // todo:
-    check(false);
+    if (NZOwner != NULL)
+    {
+        NZOwner->SetHolsteredWeaponAttachmentClass(NULL);
+        NZOwner->UpdateHolsteredWeaponAttachment();
+    }
 }
 
 void ANZWeapon::DropFrom(const FVector& StartLocation, const FVector& TossVelocity)
@@ -730,25 +749,85 @@ void ANZWeapon::ClientGivenTo_Internal(bool bAutoActivate)
 		NZPC->SetWeaponGroup(this);
 	}
 
+    // Assign GroupSlot it required
+    int32 MaxGroupSlot = 0;
+    bool bDuplicateSlot = false;
+    for (TInventoryIterator<ANZWeapon> It(NZOwner); It; ++It)
+    {
+        if (*It != this && It->Group == Group)
+        {
+            MaxGroupSlot = FMath::Max<int32>(MaxGroupSlot, It->GroupSlot);
+            bDuplicateSlot = bDuplicateSlot || (GroupSlot == It->GroupSlot);
+        }
+    }
 
+    if (bDuplicateSlot)
+    {
+        GroupSlot = MaxGroupSlot + 1;
+    }
+    
+    if (bAutoActivate && NZPC != NULL)
+    {
+        NZPC->CheckAutoWeaponSwitch(this);
+    }
 }
 
 void ANZWeapon::Removed()
 {
-    // todo:
-    check(false);
+    GotoState(InactiveState);
+    DetachFromOwner();
+    if (bMustBeHolstered)
+    {
+        DetachFromHolster();
+    }
+    
+    Super::Removed();
 }
 
 void ANZWeapon::ClientRemoved_Implementation()
 {
-    // todo:
-    check(false);
+    GotoState(InactiveState);
+    if (Role < ROLE_Authority)
+    {
+        DetachFromOwner();
+        if (bMustBeHolstered)
+        {
+            DetachFromHolster();
+        }
+    }
+    
+    ANZCharacter* OldOwner = NZOwner;
+    
+    Super::ClientRemoved_Implementation();
+    
+    if (OldOwner != NULL && (OldOwner->GetWeapon() == this || OldOwner->GetPendingWeapon() == this))
+    {
+        OldOwner->ClientWeaponLost(this);
+    }
 }
 
 void ANZWeapon::FireShot()
 {
-    // todo:
-    check(false);
+    NZOwner->DeactivateSpawnProtection();
+    ConsumeAmmo(CurrentFireMode);
+    
+    if (!FireShotOverride() && GetNZOwner() != NULL)    // Script event may kill user
+    {
+        if (ProjClass.IsValidIndex(CurrentFireMode) && ProjClass[CurrentFireMode] != NULL)
+        {
+            FireProjectile();
+        }
+        else if (InstantHitInfo.IsValidIndex(CurrentFireMode) && InstantHitInfo[CurrentFireMode].DamageType != NULL)
+        {
+            FireInstantHit();
+        }
+        PlayFiringEffects();
+    }
+    if (GetNZOwner() != NULL)
+    {
+        GetNZOwner()->InventoryEvent(InventoryEventName::FiredWeapon);
+    }
+    FireZOffsetTime = 0.f;
 }
 
 void ANZWeapon::PlayWeaponAnim(UAnimMontage* WeaponAnim, UAnimMontage* HandsAnim, float RateOverride)
@@ -849,8 +928,63 @@ bool ANZWeapon::CancelImpactEffect(const FHitResult& ImpactHit)
 
 void ANZWeapon::PlayImpactEffects(const FVector& TargetLoc, uint8 FireMode, const FVector& SpawnLocation, const FRotator& SpawnRotation)
 {
-    // todo:
-    check(false);
+    if (GetNetMode() != NM_DedicatedServer)
+    {
+        // Fire effects
+        static FName NAME_HitLocation(TEXT("HitLocation"));
+        static FName NAME_LocalHitLocation(TEXT("LocalHitLocation"));
+        FireEffectCount++;
+        if (FireEffect.IsValidIndex(FireMode) && (FireEffect[FireMode] != NULL) && (FireEffectCount >= FireEffectInterval))
+        {
+            FVector AdjustedSpawnLocation = SpawnLocation;
+            // Panini project the location, if necessary
+            if (Mesh != NULL)
+            {
+                for (FLocalPlayerIterator It(GEngine, GetWorld()); It; ++It)
+                {
+                    if (It->PlayerController != NULL && It->PlayerController->GetViewTarget() == NZOwner)
+                    {
+                        UNZGameViewportClient* NZViewport = Cast<UNZGameViewportClient>(It->ViewportClient);
+                        if (NZViewport != NULL)
+                        {
+                            AdjustedSpawnLocation = NZViewport->PaniniProjectLocationForPlayer(*It, SpawnLocation, Mesh->GetMaterial(0));
+                            break;
+                        }
+                    }
+                }
+            }
+            FireEffectCount = 0;
+            UParticleSystemComponent* PSC = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FireEffect[FireMode], AdjustedSpawnLocation, SpawnRotation, true);
+            
+            // Limit dist to target
+            FVector AdjustedTargetLoc = ((TargetLoc - AdjustedSpawnLocation).SizeSquared() > 4000000.f) ? AdjustedSpawnLocation + MaxTracerDist * (TargetLoc - AdjustedSpawnLocation).GetSafeNormal() : TargetLoc;
+            PSC->SetVectorParameter(NAME_HitLocation, AdjustedTargetLoc);
+            PSC->SetVectorParameter(NAME_LocalHitLocation, PSC->ComponentToWorld.InverseTransformPosition(AdjustedTargetLoc));
+            ModifyFireEffect(PSC);
+        }
+        // Perhaps the muzzle flash also contains hit effect (constant beam, etc) so set the parameter on it instead
+        else if (MuzzleFlash.IsValidIndex(FireMode) && MuzzleFlash[FireMode] != NULL)
+        {
+            MuzzleFlash[FireMode]->SetVectorParameter(NAME_HitLocation, TargetLoc);
+            MuzzleFlash[FireMode]->SetVectorParameter(NAME_LocalHitLocation, MuzzleFlash[FireMode]->ComponentToWorld.InverseTransformPositionNoScale(TargetLoc));
+        }
+        
+        // Always spawn effects instigated by local player unless beyond cull distance
+        if ((TargetLoc - LastImpactEffectLocation).Size() >= ImpactEffectSkipDistance ||
+            GetWorld()->TimeSeconds - LastImpactEffectTime >= MaxImpactEffectSkipTime)
+        {
+            if (ImpactEffect.IsValidIndex(FireMode) && ImpactEffect[FireMode] != NULL)
+            {
+                FHitResult ImpactHit = GetImpactEffectHit(NZOwner, SpawnLocation, TargetLoc);
+                if (ImpactHit.Component.IsValid() && !CancelImpactEffect(ImpactHit))
+                {
+                    ImpactEffect[FireMode].GetDefaultObject()->SpawnEffect(GetWorld(), FTransform(ImpactHit.Normal.Rotation(), ImpactHit.Location), ImpactHit.Component.Get(), NULL, NZOwner->Controller);
+                }
+            }
+            LastImpactEffectLocation = TargetLoc;
+            LastImpactEffectTime = GetWorld()->TimeSeconds;
+        }
+    }
 }
 
 FHitResult ANZWeapon::GetImpactEffectHit(APawn* Shooter, const FVector& StartLoc, const FVector& TargetLoc)
@@ -1801,30 +1935,46 @@ TArray<UMeshComponent*> ANZWeapon::Get1PMeshes_Implementation() const
 
 int32 ANZWeapon::GetWeaponKillStats(ANZPlayerState* PS) const
 {
-    // todo:
-    check(false);
-    return 0;
+    int32 KillCount = 0;
+    if (PS)
+    {
+        if (KillStatsName != NAME_None)
+        {
+            KillCount += PS->GetStatsValue(KillStatsName);
+        }
+        if (AltKillStatsName != NAME_None)
+        {
+            KillCount += PS->GetStatsValue(AltKillStatsName);
+        }
+    }
+    return KillCount;
 }
 
 int32 ANZWeapon::GetWeaponDeathStats(ANZPlayerState* PS) const
 {
-    // todo:
-    check(false);
-    return 0;
+    int32 DeathCount = 0;
+    if (PS)
+    {
+        if (DeathStatsName != NAME_None)
+        {
+            DeathCount += PS->GetStatsValue(DeathStatsName);
+        }
+        if (AltDeathStatsName != NAME_None)
+        {
+            DeathCount += PS->GetStatsValue(AltDeathStatsName);
+        }
+    }
+    return DeathCount;
 }
 
 float ANZWeapon::GetWeaponShotsStats(ANZPlayerState* PS) const
 {
-    // todo:
-    check(false);
-    return 0.f;
+    return (PS && (ShotsStatsName != NAME_None)) ? PS->GetStatsValue(ShotsStatsName) : 0.f;
 }
 
 float ANZWeapon::GetWeaponHitsStats(ANZPlayerState* PS) const
 {
-    // todo:
-    check(false);
-    return 0.f;
+    return (PS && (HitsStatsName != NAME_None)) ? PS->GetStatsValue(HitsStatsName) : 0.f;
 }
 
 void ANZWeapon::TestWeaponLoc(float X, float Y, float Z)

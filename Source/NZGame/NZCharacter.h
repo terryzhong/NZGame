@@ -276,6 +276,9 @@ public:
      */
     virtual void WeaponChanged(float OverflowTime = 0.0f);
     
+    /** Called when the client's current weapon has been invalidated (removed from inventory, etc) */
+    UFUNCTION(Client, Reliable)
+    void ClientWeaponLost(ANZWeapon* LostWeapon);
     
     /** Replicated weapon firing info */
     UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = FiringInfoReplicated, Category = Weapon)
@@ -336,11 +339,14 @@ public:
 
 
 
+    /** 1596
+     Spawn/Destroy/Replace the current weapon attachment to represent the equipped weapon (through WeaponClass) */
     UFUNCTION()
     virtual void UpdateWeaponAttachment();
     
-
-    
+    /** Spawn/Destroy/Replace the current holstered weapon attachment to represent the equipped weapon (through WeaponClass) */
+    UFUNCTION()
+    virtual void UpdateHolsteredWeaponAttachment();
 
 
 
@@ -480,6 +486,15 @@ public:
     }
     
     virtual FVector GetLocationCenterOffset() const;
+    
+    
+    
+    /** 1271 */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Effects)
+    virtual void SetWeaponAttachmentClass(TSubclassOf<class ANZWeaponAttachment> NewWeaponAttachmentClass);
+    
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Effects)
+    virtual void SetHolsteredWeaponAttachmentClass(TSubclassOf<class ANZWeaponAttachment> NewWeaponAttachmentClass);
     
     
     /** 1294
