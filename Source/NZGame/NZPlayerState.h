@@ -23,6 +23,17 @@ protected:
 public:
     UFUNCTION(BLueprintCallable, Category = Character)
     virtual void SetCharacter(const FString& CharacterPath);
+
+
+	UFUNCTION(BlueprintCallable, Reliable, Server, WithValidation, Category = Character)
+	void ServerSetCharacter(const FString& CharacterPath);
+	inline TSubclassOf<class ANZCharacterContent> GetSelectedCharacter() const { return SelectedCharacter; }
+
+	/** Don't do engine style ping updating */
+	virtual void UpdatePing(float InPing) override;
+
+	/** Called on client using the roundtrip time for servermove/ack */
+	virtual void CalculatePing(float NewPing);
     
     /**
      * ID that can be used to consistently identify this player for spectating commands
@@ -32,6 +43,8 @@ public:
     UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
     uint8 SpectatingID;
     
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
+	uint8 SpectatingIDTeam;
     
     
     

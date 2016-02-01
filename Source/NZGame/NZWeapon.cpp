@@ -15,6 +15,7 @@
 #include "NZWeaponStateActive.h"
 #include "NZWeaponStateInactive.h"
 #include "NZWeaponStateFiring.h"
+#include "NZWeaponStateFiringCharged.h"
 #include "NZWeaponStateEquipping.h"
 #include "NZWeaponStateUnequipping.h"
 
@@ -687,20 +688,49 @@ void ANZWeapon::DetachFromOwner_Implementation()
 
 bool ANZWeapon::IsChargedFireMode(uint8 TestMode) const
 {
-    //return FiringState.IsValidIndex(TestMode) && Cast<UNZWeaponStateFiringCharged>(FiringState[TestMode]) != NULL;
-    return false;
+	return FiringState.IsValidIndex(TestMode) && Cast<UNZWeaponStateFiringCharged>(FiringState[TestMode]) != NULL;
 }
 
 void ANZWeapon::GivenTo(ANZCharacter* NewOwner, bool bAutoActivate)
 {
-    // todo:
-    check(false);
+	Super::GivenTo(NewOwner, bAutoActivate);
+
+	// If characters has ammo on it, transfer to weapon
+	for (int32 i = 0; i < NewOwner->SavedAmmo.Num(); i++)
+	{
+		if (NewOwner->SavedAmmo[i].Type == GetClass())
+		{
+			AddAmmo(NewOwner->SavedAmmo[i].Amount);
+			NewOwner->SavedAmmo.RemoveAt(i);
+			break;
+		}
+	}
 }
 
 void ANZWeapon::ClientGivenTo_Internal(bool bAutoActivate)
 {
-    // todo:
-    check(false);
+	if (bMustBeHolstered && NZOwner && HasAnyAmmo())
+	{
+		AttachToHolster();
+	}
+
+	// Make sure we initialized our state; this can be triggered if the weapon is spawned at game startup, since BeginPlay() will be deferred
+	if (CurrentState == NULL)
+	{
+		GotoState(InactiveState);
+	}
+
+	Super::ClientGivenTo_Internal(bAutoActivate);
+
+	// Grab our switch priority
+	ANZPlayerController* NZPC = Cast<ANZPlayerController>(NZOwner->Controller);
+	if (NZPC != NULL)
+	{
+		AutoSwitchPriority = NZPC->GetWeaponAutoSwitchPriority(GetNameSafe(this), AutoSwitchPriority);
+		NZPC->SetWeaponGroup(this);
+	}
+
+
 }
 
 void ANZWeapon::Removed()

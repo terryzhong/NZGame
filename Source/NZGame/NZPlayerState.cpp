@@ -2,6 +2,7 @@
 
 #include "NZGame.h"
 #include "NZPlayerState.h"
+#include "NZPlayerController.h"
 
 
 
@@ -13,12 +14,53 @@ void ANZPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 void ANZPlayerState::SetCharacter(const FString& CharacterPath)
 {
-    
+    // todo:
+	check(false);
 }
+
+void ANZPlayerState::ServerSetCharacter_Implementation(const FString& CharacterPath)
+{
+	// todo:
+	check(false);
+}
+
+bool ANZPlayerState::ServerSetCharacter_Validate(const FString& CharacterPath)
+{
+	return true;
+}
+
+void ANZPlayerState::UpdatePing(float InPing)
+{
+
+}
+
+void ANZPlayerState::CalculatePing(float NewPing)
+{
+	if (NewPing < 0.f)
+	{
+		// Caused by timestamp wrap around
+		return;
+	}
+
+	float OldPing = ExactPing;
+	Super::UpdatePing(NewPing);
+
+	ANZPlayerController* PC = Cast<ANZPlayerController>(GetOwner());
+	if (PC)
+	{
+		PC->LastPingCalcTime = GetWorld()->GetTimeSeconds();
+		if (ExactPing != OldPing)
+		{
+			PC->ServerUpdatePing(ExactPing);
+		}
+	}
+}
+
 
 void ANZPlayerState::NotifyTeamChanged_Implementation()
 {
-
+	// todo:
+	check(false);
 }
 
 float ANZPlayerState::GetStatsValue(FName StatsName) const

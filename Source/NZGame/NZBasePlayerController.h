@@ -43,4 +43,14 @@ public:
     TEnumAsByte<EInputMode::Type> InputMode;
 #endif
     
+
+	UFUNCTION(Client, Reliable)
+	virtual void ClientRequireContentItemListBegin(const FString& CloudId);
+
+	UFUNCTION(Client, Reliable)
+	virtual void ClientRequireContentItem(const FString& PakFile, const FString& MD5);
+
+	UFUNCTION(Client, Reliable)
+	virtual void ClientRequireContentItemListComplete();
+
 };

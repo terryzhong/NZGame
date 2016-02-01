@@ -78,3 +78,18 @@ void ANZBasePlayerController::UpdateInputMode()
         }
     }
 }
+
+void ANZBasePlayerController::ClientRequireContentItemListBegin_Implementation(const FString& CloudId)
+{
+
+}
+
+void ANZBasePlayerController::ClientRequireContentItem_Implementation(const FString& PakFile, const FString& MD5)
+{
+
+}
+
+void ANZBasePlayerController::ClientRequireContentItemListComplete_Implementation()
+{
+
+}

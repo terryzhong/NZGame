@@ -231,11 +231,32 @@ public:
     TArray<class ANZProjectile*> FakeProjectiles;
     
     // Ping calculation
+
+	UPROPERTY()
+	float LastPingCalcTime;
+
+	/** Client sends ping request to server - used when servermoves aren't happening */
+	UFUNCTION(unreliable, server, WithValidation)
+	virtual void ServerBouncePing(float TimeStamp);
+
+	/** Server bounces ping request back to client - used when servermoves aren't happening */
+	UFUNCTION(unreliable, client)
+	virtual void ClientReturnPing(float TimeStamp);
+
+	/** Client informs server of new ping update */
+	UFUNCTION(unreliable, server, WithValidation)
+	virtual void ServerUpdatePing(float ExactPing);
     
     /** Guess of this player's target on last shot, used by AI */
     UPROPERTY(BlueprintReadWrite, Category = AI)
     APawn* LastShotTargetGuess;
+
+	virtual float GetWeaponAutoSwitchPriority(FString WeaponClassname, float DefaultPriority);
+	virtual void SetWeaponGroup(class ANZWeapon* InWeapon);
     
+	virtual void ClientRequireContentItemListComplete_Implementation() override;
+
+
     
 protected:
     UPROPERTY()

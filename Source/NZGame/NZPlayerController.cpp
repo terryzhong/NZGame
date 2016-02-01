@@ -761,6 +761,60 @@ float ANZPlayerController::GetProjectileSleepTime()
     //return 0.001f * FMath::Max(0.f, PlayerState->ExactPing - PredictionFudgeFactor - MaxPredictionPing);
 }
 
+void ANZPlayerController::ServerBouncePing_Implementation(float TimeStamp)
+{
+	ClientReturnPing(TimeStamp);
+}
+
+bool ANZPlayerController::ServerBouncePing_Validate(float TimeStamp)
+{
+	return true;
+}
+
+void ANZPlayerController::ClientReturnPing_Implementation(float TimeStamp)
+{
+	ANZPlayerState* NZPS = Cast<ANZPlayerState>(PlayerState);
+	if (NZPS)
+	{
+		NZPS->CalculatePing(GetWorld()->GetTimeSeconds() - TimeStamp);
+	}
+}
+
+void ANZPlayerController::ServerUpdatePing_Implementation(float ExactPing)
+{
+	if (PlayerState)
+	{
+		PlayerState->ExactPing = ExactPing;
+		PlayerState->Ping = FMath::Min(255, (int32)(ExactPing * 0.25f));
+	}
+}
+
+bool ANZPlayerController::ServerUpdatePing_Validate(float ExactPing)
+{
+	return true;
+}
+
+float ANZPlayerController::GetWeaponAutoSwitchPriority(FString WeaponClassname, float DefaultPriority)
+{
+	return DefaultPriority;
+}
+
+void ANZPlayerController::SetWeaponGroup(class ANZWeapon* InWeapon)
+{
+	if (Cast<UNZLocalPlayer>(Player))
+	{
+		UNZProfileSettings* ProfileSettings = Cast<
+	}
+}
+
+void ANZPlayerController::ClientRequireContentItemListComplete_Implementation()
+{
+
+}
+
+
+
+
 
 
 
