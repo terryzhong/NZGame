@@ -6,6 +6,8 @@
 #include "NZGameState.h"
 #include "NZPlayerState.h"
 #include "NZPlayerController.h"
+#include "NZMutator.h"
+#include "NZCharacter.h"
 
 
 
@@ -20,6 +22,41 @@ ANZGameMode::ANZGameMode()
     PlayerControllerClass = ANZPlayerController::StaticClass();
     
 }
+
+void ANZGameMode::RestartPlayer(AController* aPlayer)
+{
+    Super::RestartPlayer(aPlayer);
+}
+
+
+void ANZGameMode::SetPlayerDefaults(APawn* PlayerPawn)
+{
+    Super::SetPlayerDefaults(PlayerPawn);
+    
+    if (BaseMutator != NULL)
+    {
+        BaseMutator->ModifyPlayer(PlayerPawn, bSetPlayerDefaultsNewSpawn);
+    }
+    
+    if (bSetPlayerDefaultsNewSpawn)
+    {
+        GiveDefaultInventory(PlayerPawn);
+    }
+}
+
+void ANZGameMode::GiveDefaultInventory(APawn* PlayerPawn)
+{
+    ANZCharacter* NZCharacter = Cast<ANZCharacter>(PlayerPawn);
+    if (NZCharacter != NULL)
+    {
+        if (bClearPlayerInventory)
+        {
+            NZCharacter->DefaultCharacterInventory.Empty();
+        }
+        NZCharacter->AddDefaultInventory(DefaultInventory);
+    }
+}
+
 
 bool ANZGameMode::PlayerCanAltRestart_Implementation(APlayerController* Player)
 {

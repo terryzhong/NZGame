@@ -107,7 +107,13 @@ public:
     UFUNCTION()
     virtual void FindGoodView(const FVector& Targetloc, bool bIsUpdate);
     
-    /** Set when request view projectile if no projectile find, keep looking */
+    
+    /** View player holding flag specified by TeamIndex */
+    UFUNCTION(Unreliable, Server, WithValidation)
+    void ServerViewFlagHolder(uint8 TeamIndex);
+    
+    /** 256
+     Set when request view projectile if no projectile find, keep looking */
     UPROPERTY()
     float ViewProjectileTime;
     
@@ -266,14 +272,18 @@ public:
 
     
 protected:
+    /** If set, this will be the final viewtarget this pawn can see */
     UPROPERTY()
     AActor* FinalViewTarget;
     
-    //TSet<TWeakObjectPtr<ANZPickupWeapon> > RecentWeaponPickups;
+    /** List of weapon pickups that my Pawn has recently picked up, so we can hide the weapon mesh per player */
+    TSet<TWeakObjectPtr<class ANZPickupWeapon> > RecentWeaponPickups;
     
+    /** Base turn rate, in deg/sec. Other scaling may affect final turn rate */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
     float BaseTurnRate;
     
+    /** Base look up/down rate, in deg/sec. Other scaling may affect final rate */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
     float BaseLookUpRate;
     
@@ -281,9 +291,9 @@ protected:
     float MovementForwardAxis;
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
-    float MovementStrafeAxis;
-  
+    float MovementStrafeAxis;  
     
+public:
     /** Whether player wants behindview when spectating */
     UPROPERTY(BlueprintReadWrite, GlobalConfig)
     bool bSpectateBehindView;
@@ -305,9 +315,11 @@ protected:
     UPROPERTY()
     bool bShowPowerupTimes;
     
+    /** Toggle behindview for spectators */
+    UFUNCTION(exec)
+    virtual void ToggleBehindView();
     
-    
-    
+    /** User configurable FOV setting */
     UPROPERTY(BlueprintReadOnly, GlobalConfig, Category = Camera)
     float ConfigDefaultFOV;
     

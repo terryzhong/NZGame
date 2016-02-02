@@ -13,6 +13,7 @@ class NZGAME_API ANZReplicatedLoadoutInfo : public AInfo
 {
 	GENERATED_BODY()
 	
+public:
 	// The weapon
 	UPROPERTY(Replicated)
     TSubclassOf<class ANZInventory> ItemClass;

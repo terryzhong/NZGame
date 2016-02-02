@@ -29,14 +29,36 @@ public:
     ANZGameMode();
     
 	
-	
+    /** 226
+     Remove all items from character inventory list, before giving him game mode's default inventory */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
+    bool bClearPlayerInventory;
     
-    UFUNCTION(BlueprintNativeEvent, Category = Game)
-    bool PlayerCanAltRestart(APlayerController* Player);
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
+    TArray<TSubclassOf<class ANZInventory> > DefaultInventory;
     
-    /** If true, firing weapons costs ammo */
+    /** 237
+     If true, firing weapons costs ammo */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Game)
     bool bAmmoIsLimited;
+    
+    /** First mutator; Mutators are a linked list */
+    UPROPERTY(BlueprintReadOnly, Category = Mutator)
+    class ANZMutator* BaseMutator;
+    
+    /** 346
+     Workaround for call chain from engine, SetPlayerDefaults() could be called while pawn is alive to reset its values but we don't want it to do new spawn stuff like spawning inventory unless it's called from RestartPlayer() */
+    UPROPERTY(Transient, BlueprintReadOnly)
+    bool bSetPlayerDefaultsNewSpawn;
+    
+    /** 416 */
+    virtual void RestartPlayer(AController* aPlayer);
+    
+    /** 418 */
+    virtual void SetPlayerDefaults(APawn* PlayerPawn) override;
+    
+    /** 421 */
+    virtual void GiveDefaultInventory(APawn* PlayerPawn);
     
     
     /** 606
@@ -45,4 +67,11 @@ public:
      */
     UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
     bool OverridePickupQuery(APawn* Other, TSubclassOf<ANZInventory> ItemClass, AActor* Pickup, bool& bAllowPickup);
+    
+    
+    /** 709
+     Called when the player attempts to restart using AltFire */
+    UFUNCTION(BlueprintNativeEvent, Category = Game)
+    bool PlayerCanAltRestart(APlayerController* Player);
+    
 };

@@ -10,6 +10,7 @@
 #include "NZPlayerController.h"
 #include "NZWeaponAttachment.h"
 #include "NZGameState.h"
+#include "NZReplicatedLoadoutInfo.h"
 
 
 // Sets default values
@@ -446,17 +447,34 @@ bool ANZCharacter::IsInInventory(const ANZInventory* TestInv) const
 
 void ANZCharacter::AddDefaultInventory(TArray<TSubclassOf<ANZInventory>> DefaultInventoryToAdd)
 {
+    // Check to see if this player has an active loadout. If they do, apply it.
+    // NOTE: Loadouts are 100% authoratative. So if we apply any type of loadout, then end the AddDefaultInventory call right there.
+    // If you are using the loadout system and want to insure a player has some default items, use bDefaultInclude and make sure their cost is 0.
     ANZPlayerState* NZPlayerState = Cast<ANZPlayerState>(PlayerState);
     if (NZPlayerState && NZPlayerState->Loadout.Num() > 0)
     {
         for (int32 i = 0; i < NZPlayerState->Loadout.Num(); i++)
         {
-/*            if (NZPlayerState->GetAvailableCurrency() >= NZPlayerState->Loadout[i]->CurrentCost)
+            if (NZPlayerState->GetAvailableCurrency() >= NZPlayerState->Loadout[i]->CurrentCost)
             {
                 AddInventory(GetWorld()->SpawnActor<ANZInventory>(NZPlayerState->Loadout[i]->ItemClass, FVector(0.0f), FRotator(0, 0, 0)), true);
                 NZPlayerState->AdjustCurrency(NZPlayerState->Loadout[i]->CurrentCost * -1);
-            }*/
+            }
         }
+        
+        return;
+    }
+    
+    // Add the default character inventory
+    for (int32 i = 0; i < DefaultCharacterInventory.Num(); i++)
+    {
+        AddInventory(GetWorld()->SpawnActor<ANZInventory>(DefaultCharacterInventory[i], FVector(0.0f), FRotator(0, 0, 0)), true);
+    }
+    
+    // Add the default inventory passed in from the game
+    for (int32 i = 0; i < DefaultCharacterInventory.Num(); i++)
+    {
+        AddInventory(GetWorld()->SpawnActor<ANZInventory>(DefaultInventoryToAdd[i], FVector(0.0f), FRotator(0, 0, 0)), true);
     }
 }
 
@@ -821,6 +839,13 @@ void ANZCharacter::MoveUp(float Value)
 		AddMovementInput(FVector(0.f, 0.f, 1.f), Value);
 	}
 }
+
+APlayerCameraManager* ANZCharacter::GetPlayerCameraManager()
+{
+    ANZPlayerController* PC = GetLocalViewer();
+    return PC != NULL ? PC->PlayerCameraManager : NULL;
+}
+
 
 
 float ANZCharacter::GetFireRateMultiplier()

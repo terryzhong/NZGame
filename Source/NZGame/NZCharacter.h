@@ -367,7 +367,7 @@ public:
     }
 
     
-    
+    /** Firemodes with input currently being held down (pending or actually firing) */
     UPROPERTY(BlueprintReadOnly, Category = Pawn)
     class ANZWeapon* PendingWeapon;
     
@@ -382,6 +382,10 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = UpdateWeaponAttachment, Category = Pawn)
     TSubclassOf<ANZWeaponAttachment> WeaponAttachmentClass;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
+    TArray<TSubclassOf<ANZInventory> > DefaultCharacterInventory;
+
     
     
     
@@ -403,6 +407,8 @@ public:
 	virtual void MoveUp(float Value);
 
 
+    UFUNCTION(BlueprintPure, Category = PlayerController)
+    virtual APlayerCameraManager* GetPlayerCameraManager();
 
 
 

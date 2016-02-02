@@ -11,6 +11,7 @@
 #include "NZGameState.h"
 #include "NZGameMode.h"
 #include "NZProjectile.h"
+#include "NZCarriedObject.h"
 
 
 
@@ -231,6 +232,18 @@ void ANZPlayerController::PawnPendingDestroy(APawn* InPawn)
     }
 }
 
+void ANZPlayerController::ToggleBehindView()
+{
+    bSpectateBehindView = !bSpectateBehindView;
+    BehindView(bSpectateBehindView);
+    
+    ANZCarriedObject* NZFlag = Cast<ANZCarriedObject>(GetViewTarget());
+    if (!bSpectateBehindView && NZFlag && NZFlag->Holder)
+    {
+        ServerViewFlagHolder(NZFlag->GetTeamNum());
+    }
+}
+
 void ANZPlayerController::SpawnPlayerCameraManager()
 {
     Super::SpawnPlayerCameraManager();
@@ -388,6 +401,17 @@ void ANZPlayerController::FindGoodView(const FVector& Targetloc, bool bIsUpdate)
 {
     // todo:
 }
+
+void ANZPlayerController::ServerViewFlagHolder_Implementation(uint8 TeamIndex)
+{
+    // todo:
+}
+
+bool ANZPlayerController::ServerViewFlagHolder_Validate(uint8 TeamIndex)
+{
+    return true;
+}
+
 
 void ANZPlayerController::SetWeaponHand(EWeaponHand NewHand)
 {

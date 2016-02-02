@@ -18,11 +18,14 @@
 #include "NZWeaponStateFiringCharged.h"
 #include "NZWeaponStateEquipping.h"
 #include "NZWeaponStateUnequipping.h"
+#include "NZWeaponStateZooming.h"
 #include "NZWeaponAttachment.h"
 #include "NZTypes.h"
 #include "NZGameViewportClient.h"
 #include "NZImpactEffect.h"
 #include "UnrealNetwork.h"
+#include "NZDamageType.h"
+#include "NZPlayerCameraManager.h"
 
 
 ANZWeapon::ANZWeapon()
@@ -872,14 +875,14 @@ void ANZWeapon::PlayFiringEffects()
         // Try and play the sound if specified
         if (FireSound.IsValidIndex(EffectFiringMode) && FireSound[EffectFiringMode] != NULL)
         {
-            // todo:
+            UNZGameplayStatics::NZPlaySound(GetWorld(), FireSound[EffectFiringMode], NZOwner, SRT_AllButOwner);
         }
         
         // Reload sound on local shooter
         if ((GetNetMode() != NM_DedicatedServer) && NZOwner && NZOwner->GetLocalViewer() &&
             ReloadSound.IsValidIndex(EffectFiringMode) && ReloadSound[EffectFiringMode] != NULL)
         {
-            // todo:
+            UNZGameplayStatics::NZPlaySound(GetWorld(), ReloadSound[EffectFiringMode], NZOwner, SRT_None);
         }
         
         if (ShouldPlay1PVisuals() && GetWeaponHand() != HAND_Hidden)
@@ -1138,8 +1141,7 @@ void ANZWeapon::GuessPlayerTarget(const FVector& StartFireLoc, const FVector& Fi
             {
                 MaxRange = InstantHitInfo[CurrentFireMode].TraceRange * 1.2f;   // extra since player may miss intended target due to being out of range
             }
-            // todo:
-            //PC->LastShotTargetGuess = UNZGameplayStatics::PickBestAimTarget(PC, StartFireLoc, FireDir, 0.9f, MaxRange);
+            PC->LastShotTargetGuess = UNZGameplayStatics::PickBestAimTarget(PC, StartFireLoc, FireDir, 0.9f, MaxRange);
         }
     }
 }
@@ -1248,8 +1250,10 @@ void ANZWeapon::FireInstantHit(bool bDealDamage, FHitResult* OutHit)
         {
             PS->ModifyStatsValue(HitsStatsName, 1);
         }
-        // todo:
-        //Hit.Actor->TakeDamage(InstantHitInfo[CurrentFireMode].Damage, FNZPointDamageEvent(InstantHitInfo[CurrentFireMode].Damage, Hit, FireDir, InstantHitInfo[CurrentFireMode].DamageType, FireDIr * GetImpartedMomentumMag(Hit.Actor.Get())), NZOwner->Controller, this);
+        Hit.Actor->TakeDamage(InstantHitInfo[CurrentFireMode].Damage,
+                              FNZPointDamageEvent(InstantHitInfo[CurrentFireMode].Damage, Hit, FireDir, InstantHitInfo[CurrentFireMode].DamageType, FireDir * GetImpartedMomentumMag(Hit.Actor.Get())),
+                              NZOwner->Controller,
+                              this);
     }
     if (OutHit != NULL)
     {
@@ -1907,8 +1911,7 @@ bool ANZWeapon::CanAttack_Implementation(AActor* Target, const FVector& TargetLo
         TArray<uint8, TInlineAllocator<4> > ValidAIModes;
         for (uint8 i = 0; i < GetNumFireModes(); i++)
         {
-            // todo:
-            //if (Cast<UNZWeaponStateZooming>(FiringState[i]) == NULL)
+            if (Cast<UNZWeaponStateZooming>(FiringState[i]) == NULL)
             {
                 ValidAIModes.Add(i);
             }
@@ -2028,11 +2031,10 @@ void ANZWeapon::OnRep_ZoomCount()
 
 void ANZWeapon::OnRep_ZoomState_Implementation()
 {
-    // todo:
-/*    if (GetNetMode() != NM_DedicatedServer && ZoomState == EZoomState::EZS_NotZoomed && GetNZOwner() && GetNZOwner()->GetPlayerCameraManager())
+    if (GetNetMode() != NM_DedicatedServer && ZoomState == EZoomState::EZS_NotZoomed && GetNZOwner() && GetNZOwner()->GetPlayerCameraManager())
     {
         GetNZOwner()->GetPlayerCameraManager()->UnlockFOV();
-    }*/
+    }
 }
 
 void ANZWeapon::SetZoomMode(uint8 NewZoomMode)
@@ -2130,5 +2132,70 @@ void ANZWeapon::TickZoom(float DeltaTime)
 {
     // todo:
     check(false);
+    
+    if (GetNZOwner() != NULL && ZoomModes.IsValidIndex(CurrentZoomMode))
+    {
+        if (ZoomState != EZoomState::EZS_NotZoomed)
+        {
+            if (ZoomState == EZoomState::EZS_ZoomingIn)
+            {
+                ZoomTime += DeltaTime;
+                
+                if (ZoomTime >= ZoomModes[CurrentZoomMode].Time)
+                {
+                    OnZoomedIn();
+                }
+            }
+            else if (ZoomState == EZoomState::EZS_ZoomingOut)
+            {
+                ZoomTime -= DeltaTime;
+                
+                if (ZoomTime <= 0.0f)
+                {
+                    OnZoomedOut();
+                }
+            }
+            ZoomTime = FMath::Clamp(ZoomTime, 0.0f, ZoomModes[CurrentZoomMode].Time);
+            
+            // Do the FOV change
+            if (GetNetMode() != NM_DedicatedServer)
+            {
+                float StartFOV = ZoomModes[CurrentZoomMode].StartFOV;
+                float EndFOV = ZoomModes[CurrentZoomMode].EndFOV;
+                
+                // Use the players default FOV if the FOV is zero
+                ANZPlayerController* NZPC = Cast<ANZPlayerController>(GetWorld()->GetFirstPlayerController());
+                if (NZPC != NULL)
+                {
+                    if (StartFOV == 0.0f)
+                    {
+                        StartFOV = NZPC->ConfigDefaultFOV;
+                    }
+                    if (EndFOV == 0.0f)
+                    {
+                        EndFOV = NZPC->ConfigDefaultFOV;
+                    }
+                }
+                
+                // Calculate the FOV based on the zoom time
+                float FOV = 90.0f;
+                if (ZoomModes[CurrentZoomMode].Time == 0.0f)
+                {
+                    FOV = StartFOV;
+                }
+                else
+                {
+                    FOV = FMath::Lerp(StartFOV, EndFOV, ZoomTime / ZoomModes[CurrentZoomMode].Time);
+                    FOV = FMath::Clamp(FOV, EndFOV, StartFOV);
+                }
+                
+                ANZPlayerCameraManager* Camera = Cast<ANZPlayerCameraManager>(GetNZOwner()->GetPlayerCameraManager());
+                if (Camera != NULL && Camera->GetCameraStyleWithOverrides() == FName(TEXT("Default")))
+                {
+                    Camera->SetFOV(FOV);
+                }
+            }
+        }
+    }
 }
 

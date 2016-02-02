@@ -81,3 +81,18 @@ void ANZPlayerState::ModifyStatsValue(FName StatsName, float Change)
     StatsData.Add(StatsName, CurrentValue + Change);
 }
 
+
+float ANZPlayerState::GetAvailableCurrency()
+{
+    return AvailableCurrency;
+}
+
+void ANZPlayerState::AdjustCurrency(float Adjustment)
+{
+    AvailableCurrency += Adjustment;
+    if (AvailableCurrency < 0.0)
+    {
+        AvailableCurrency = 0.0f;
+    }
+}
+

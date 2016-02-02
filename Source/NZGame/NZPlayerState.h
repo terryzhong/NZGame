@@ -72,10 +72,6 @@ public:
     class APlayerState* RespawnChoiceB;
 	
 	
-public:
-    UPROPERTY(Replicated)
-    TArray<class ANZReplicatedLoadoutInfo*> Loadout;
-    
     
 private:
     /** 633
@@ -91,5 +87,21 @@ public:
     float GetStatsValue(FName StatsName) const;
     void SetStatsValue(FName StatsName, float NewValue);
     void ModifyStatsValue(FName StatsName, float Change);
+    
+    
+protected:
+    UPROPERTY(Replicated)
+    float AvailableCurrency;
+    
+public:
+    UPROPERTY(Replicated)
+    TArray<class ANZReplicatedLoadoutInfo*> Loadout;
+    
+
+    virtual float GetAvailableCurrency();
+    
+    virtual void AdjustCurrency(float Adjustment);
+    
+    
 
 };

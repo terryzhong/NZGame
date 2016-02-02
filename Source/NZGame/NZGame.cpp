@@ -24,3 +24,27 @@ bool IsLoopingParticleSystem(const UParticleSystem* PSys)
     return false;
 }
 
+APhysicsVolume* FindPhysicsVolume(UWorld* World, const FVector& TestLoc, const FCollisionShape& Shape)
+{
+    APhysicsVolume* NewVolume = World->GetDefaultPhysicsVolume();
+    
+    TArray<FOverlapResult> Hits;
+    static FName NAME_PhysicsVolumeTrace = FName(TEXT("PhysicsVolumeTrace"));
+    FComponentQueryParams Params(NAME_PhysicsVolumeTrace, NULL);
+    
+    World->OverlapMultiByChannel(Hits, TestLoc, FQuat::Identity, ECC_Pawn, Shape, Params);
+    
+    for (int32 HitIdx = 0; HitIdx < Hits.Num(); HitIdx++)
+    {
+        const FOverlapResult& Link = Hits[HitIdx];
+        APhysicsVolume* const V = Cast<APhysicsVolume>(Link.GetActor());
+        if (V != NULL && V->Priority > NewVolume->Priority && (V->bPhysicsOnContact || V->EncompassesPoint(TestLoc)))
+        {
+            NewVolume = V;
+        }
+    }
+    
+    return NewVolume;
+}
+
+
