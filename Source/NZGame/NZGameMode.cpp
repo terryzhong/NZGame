@@ -13,6 +13,8 @@
 
 ANZGameMode::ANZGameMode()
 {
+	PlayerPawnObject = FStringAssetReference(TEXT("/Game/Blueprints/Nicholas.Nicholas_C"));
+
     HUDClass = ANZHUD::StaticClass();
     
     GameStateClass = ANZGameState::StaticClass();
@@ -25,7 +27,45 @@ ANZGameMode::ANZGameMode()
 
 void ANZGameMode::RestartPlayer(AController* aPlayer)
 {
-    Super::RestartPlayer(aPlayer);
+	if ((aPlayer == NULL) || (aPlayer->PlayerState == NULL) || aPlayer->PlayerState->PlayerName.IsEmpty())
+	{
+		//UE_LOG(NZ, Warning, TEXT("RestartPlayer with a bad player, bad playerstate, or empty player name"));
+		return;
+	}
+
+	if (!IsMatchInProgress() || aPlayer->PlayerState->bOnlySpectator)
+	{
+		return;
+	}
+
+	{
+		TGuardValue<bool> FlagGuard(bSetPlayerDefaultsNewSpawn, true);
+		Super::RestartPlayer(aPlayer);
+
+		ANZCharacter* NZC = Cast<ANZCharacter>(aPlayer->GetPawn());
+		if (NZC != NULL && NZC->GetClass()->GetDefaultObject<ANZCharacter>()->Health == 0)
+		{
+			NZC->Health = NZC->HealthMax;
+		}
+	}
+
+	// todo:
+
+	if (Cast<ANZPlayerController>(aPlayer) != NULL)
+	{
+		((APlayerController*)aPlayer)->ClientForceGarbageCollection();
+		if (!aPlayer->IsLocalController())
+		{
+			((ANZPlayerController*)aPlayer)->ClientSwitchToBestWeapon();
+		}
+	}
+
+	// Clear spawn choices
+	Cast<ANZPlayerState>(aPlayer->PlayerState)->RespawnChoiceA = NULL;
+	Cast<ANZPlayerState>(aPlayer->PlayerState)->RespawnChoiceB = NULL;
+
+	// todo:
+	//Cast<ANZPlayerState>(aPlayer->PlayerState)->LastKillTime = -100.f;
 }
 
 

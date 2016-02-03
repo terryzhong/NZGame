@@ -14,18 +14,24 @@ class NZGAME_API UNZWeaponStateEquipping : public UNZWeaponState
 	GENERATED_BODY()
 	
 public:
+	UNZWeaponStateEquipping();
+
     /** Set to amount of equip time that elapsed when exiting early, i.e. to go back down */
     float PartialEquipTime;
     
+	/** Total time to bring up the weapon */
     float EquipTime;
     
+	/** Pending fire mode on server when equip completes */
     int32 PendingFireSequence;
     
     virtual void BeginState(const UNZWeaponState* PrevState) override;
     
     virtual bool BeginFiringSequence(uint8 FireModeNum, bool bClientFired) override;
     
+	/** Called to start the equip timer/anim; This isn't done automatically in BeginState() because we need to pass in any overflow time from the previous weapon's PutDown() */
     virtual void StartEquip(float OverflowTime);
+
     virtual void EndState() override
     {
         GetOuterANZWeapon()->GetWorldTimerManager().ClearAllTimersForObject(this);
@@ -46,6 +52,7 @@ public:
     
     virtual void PutDown() override
     {
-        
+		PartialEquipTime = FMath::Max(0.001f, GetOuterANZWeapon()->GetWorldTimerManager().GetTimerElapsed(BringUpFinishedHandle));
+		GetOuterANZWeapon()->GotoState(GetOuterANZWeapon()->UnequippingState);
     }
 };

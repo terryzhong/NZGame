@@ -467,6 +467,12 @@ void ANZPlayerController::SwitchToBestWeapon()
     }
 }
 
+void ANZPlayerController::ClientSwitchToBestWeapon_Implementation()
+{
+	SwitchToBestWeapon();
+}
+
+
 void ANZPlayerController::PrevWeapon()
 {
 }
@@ -783,6 +789,47 @@ void ANZPlayerController::AddPitchInput(float Value)
     {
         Super::AddPitchInput(Value);
     }
+}
+
+void ANZPlayerController::ApplyDeferredFireInputs()
+{
+	for (FDeferredFireInput& Input : DeferredFireInputs)
+	{
+		if (Input.bStartFire)
+		{
+			if (!IsMoveInputIgnored())
+			{
+				if (NZCharacter != NULL)
+				{
+					if (StateName == NAME_Playing)
+					{
+						NZCharacter->StartFire(Input.FireMode);
+					}
+				}
+				else if (GetPawn() != NULL)
+				{
+					GetPawn()->PawnStartFire(Input.FireMode);
+				}
+			}
+		}
+		else if (NZCharacter != NULL)
+		{
+			NZCharacter->StopFire(Input.FireMode);
+		}
+	}
+	DeferredFireInputs.Empty();
+}
+
+bool ANZPlayerController::HasDeferredFireInputs()
+{
+	for (FDeferredFireInput& Input : DeferredFireInputs)
+	{
+		if (Input.bStartFire)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 float ANZPlayerController::GetPredictionTime()

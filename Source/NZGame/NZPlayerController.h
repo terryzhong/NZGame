@@ -151,6 +151,10 @@ public:
 
 	UFUNCTION(exec)
 	virtual void SwitchToBestWeapon();
+
+	/** Forces SwitchToBestWeapon() call, should only be used after granting startup inventory */
+	UFUNCTION(Client, Reliable)
+	virtual void ClientSwitchToBestWeapon();
     
     void PrevWeapon();
     void NextWeapon();
@@ -210,11 +214,15 @@ public:
 	virtual void AddYawInput(float Value) override;
 	virtual void AddPitchInput(float Value) override;
     
-    /**
+    /** 813
      * Stores fire inputs until after movement has been executed (default would be fire -> movement -> render, this causes movement -> fire -> render)
      * Makes weapons feel a little more responsive while strafing
      */
     TArray<FDeferredFireInput, TInlineAllocator<2> > DeferredFireInputs;
+
+	void ApplyDeferredFireInputs();
+
+	bool HasDeferredFireInputs();
     
 
     // Perceived latency reduction

@@ -15,11 +15,6 @@ class NZGAME_API UNZWeaponState : public UObject
 	GENERATED_BODY()
 	
 public:
-    UNZWeaponState(const FObjectInitializer& ObjectInitializer)
-        : Super(ObjectInitializer)
-    {
-    }
-    
     // Accessor for convenience
     inline class ANZCharacter* GetNZOwner()
     {
