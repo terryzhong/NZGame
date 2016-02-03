@@ -2,23 +2,10 @@
 
 #include "NZGame.h"
 #include "NZWeaponStateEquipping.h"
+#include "ComponentRecreateRenderStateContext.h"
+#include "NZWeaponStateUnequipping.h"
 
 
-static float GetAnimLengthForScaling(UAnimMontage* WeaponAnim, UAnimMontage* HandsAnim)
-{
-	if (HandsAnim != NULL)
-	{
-		return HandsAnim->SequenceLength / HandsAnim->RateScale;
-	}
-	else if (WeaponAnim != NULL)
-	{
-		return WeaponAnim->SequenceLength / WeaponAnim->RateScale;
-	}
-	else
-	{
-		return 0.0f;
-	}
-}
 
 UNZWeaponStateEquipping::UNZWeaponStateEquipping()
 {
@@ -48,6 +35,7 @@ bool UNZWeaponStateEquipping::BeginFiringSequence(uint8 FireModeNum, bool bClien
 		PendingFireSequence = FireModeNum;
 		GetNZOwner()->NotifyPendingServerFire();
 	}
+    return false;
 }
 
 void UNZWeaponStateEquipping::StartEquip(float OverflowTime)
@@ -64,6 +52,8 @@ void UNZWeaponStateEquipping::StartEquip(float OverflowTime)
 			GetAnimLengthForScaling(GetOuterANZWeapon()->BringUpAnim, GetOuterANZWeapon()->BringUpAnimHands) / EquipTime);
 		if (GetOuterANZWeapon()->GetNetMode() != NM_DedicatedServer && GetOuterANZWeapon()->ShouldPlay1PVisuals())
 		{
+            // Now that the anim is playing, force update first person meshes
+            // This is necessary to avoid one frame artifacts since the meshes may have been set to not update while the weapon was down
 			GetOuterANZWeapon()->GetNZOwner()->FirstPersonMesh->TickAnimation(0.0f, false);
 			GetOuterANZWeapon()->GetNZOwner()->FirstPersonMesh->RefreshBoneTransforms();
 			GetOuterANZWeapon()->GetNZOwner()->FirstPersonMesh->UpdateComponentToWorld();
@@ -74,6 +64,20 @@ void UNZWeaponStateEquipping::StartEquip(float OverflowTime)
 			FComponentRecreateRenderStateContext ReregisterContext2(GetOuterANZWeapon()->Mesh);
 		}
 	}
+}
+
+void UNZWeaponStateEquipping::EndState()
+{
+    GetOuterANZWeapon()->GetWorldTimerManager().ClearAllTimersForObject(this);
+}
+
+void UNZWeaponStateEquipping::Tick(float DeltaTime)
+{
+    if (!GetOuterANZWeapon()->GetWorldTimerManager().IsTimerActive(BringUpFinishedHandle))
+    {
+        //UE_LOG(NZ, Warning, TEXT("%s in state Equipping with no equip timer!"), *GetOuterAUTWeapon()->GetName());
+        BringUpFinished();
+    }
 }
 
 void UNZWeaponStateEquipping::BringUpFinished()
@@ -88,3 +92,8 @@ void UNZWeaponStateEquipping::BringUpFinished()
 	}
 }
 
+void UNZWeaponStateEquipping::PutDown()
+{
+    PartialEquipTime = FMath::Max(0.001f, GetOuterANZWeapon()->GetWorldTimerManager().GetTimerElapsed(BringUpFinishedHandle));
+    GetOuterANZWeapon()->GotoState(GetOuterANZWeapon()->UnequippingState);
+}

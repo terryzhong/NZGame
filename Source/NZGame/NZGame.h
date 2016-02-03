@@ -19,3 +19,6 @@ extern bool IsLoopingParticleSystem(const UParticleSystem* PSys);
 
 /** Utility to retrieve the highest priority physics volume overlapping the passed in primitive */
 extern APhysicsVolume* FindPhysicsVolume(UWorld* World, const FVector& TestLoc, const FCollisionShape& Shape);
+
+/**  */
+extern float GetAnimLengthForScaling(UAnimMontage* WeaponAnim, UAnimMontage* HandsAnim);

@@ -32,27 +32,13 @@ public:
 	/** Called to start the equip timer/anim; This isn't done automatically in BeginState() because we need to pass in any overflow time from the previous weapon's PutDown() */
     virtual void StartEquip(float OverflowTime);
 
-    virtual void EndState() override
-    {
-        GetOuterANZWeapon()->GetWorldTimerManager().ClearAllTimersForObject(this);
-    }
+    virtual void EndState() override;
     
-    virtual void Tick(float DeltaTime)
-    {
-        if (!GetOuterANZWeapon()->GetWorldTimerManager().IsTimerActive(BringUpFinishedHandle))
-        {
-            //UE_LOG(NZ, Warning, TEXT("%s in state Equipping with no equip timer!"), *GetOuterAUTWeapon()->GetName());
-            BringUpFinished();
-        }
-    }
+    virtual void Tick(float DeltaTime);
     
     FTimerHandle BringUpFinishedHandle;
     
     virtual void BringUpFinished();
     
-    virtual void PutDown() override
-    {
-		PartialEquipTime = FMath::Max(0.001f, GetOuterANZWeapon()->GetWorldTimerManager().GetTimerElapsed(BringUpFinishedHandle));
-		GetOuterANZWeapon()->GotoState(GetOuterANZWeapon()->UnequippingState);
-    }
+    virtual void PutDown() override;
 };

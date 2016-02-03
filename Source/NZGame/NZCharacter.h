@@ -122,6 +122,10 @@ public:
     UPROPERTY()
     float MaxSavedPositionAge;
     
+    /** 379
+     Mark the last saved position as where a shot was spawned so can synch firing to client position */
+    virtual void NotifyPendingServerFire();
+    
     /** Returns this character's position PredictionTime seconds ago */
     UFUNCTION(BlueprintCallable, Category = Pawn)
     virtual FVector GetRewindLocation(float PredictionTime);

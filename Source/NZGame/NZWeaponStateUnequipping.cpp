@@ -2,6 +2,7 @@
 
 #include "NZGame.h"
 #include "NZWeaponStateUnequipping.h"
+#include "NZWeaponStateEquipping.h"
 
 
 
@@ -44,5 +45,10 @@ void UNZWeaponStateUnequipping::BringUp(float OverflowTime)
 
 void UNZWeaponStateUnequipping::Tick(float DeltaTime)
 {
-
+    UnequipTimeElapsed += DeltaTime;
+    if (UnequipTimeElapsed > UnequipTime)
+    {
+        PutDownFinished();
+    }
 }
+

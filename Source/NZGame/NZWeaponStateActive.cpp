@@ -2,6 +2,7 @@
 
 #include "NZGame.h"
 #include "NZWeaponStateActive.h"
+#include "NZWeaponStateFiring.h"
 
 
 

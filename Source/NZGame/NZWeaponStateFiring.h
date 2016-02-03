@@ -15,10 +15,19 @@ class NZGAME_API UNZWeaponStateFiring : public UNZWeaponState
 	
 	
 public:
+    /** Pending fire mode on server when equip completes */
+    int32 PendingFireSequence;
+    
+    /** Delay shot one frame to synch with client */
+    bool bDelayShot;
+    
+    virtual bool BeginFiringSequence(uint8 FireModeNum, bool bClientFired) override;
     
     /** 66
      */
     virtual void PendingFireStarted() {}
 	
     virtual void PendingFireStopped() {}
+    
+    virtual void WeaponBecameInactive() {}
 };

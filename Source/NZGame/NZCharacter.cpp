@@ -165,7 +165,13 @@ bool ANZCharacter::IsSpawnProtected()
     }
 }
 
-
+void ANZCharacter::NotifyPendingServerFire()
+{
+    if (SavedPositions.Num() > 0)
+    {
+        SavedPositions.Last().bShotSpawned = true;
+    }
+}
 
 FVector ANZCharacter::GetRewindLocation(float PredictionTime)
 {

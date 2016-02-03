@@ -5,4 +5,14 @@
 
 
 
+bool UNZWeaponStateFiring::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
+{
+    // On server, might not be quite done reloading yet when client done, so queue firing
+    if (bClientFired)
+    {
+        PendingFireSequence = FireModeNum;
+        GetNZOwner()->NotifyPendingServerFire();
+    }
+    return false;
+}
 

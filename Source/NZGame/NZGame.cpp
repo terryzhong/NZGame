@@ -47,4 +47,19 @@ APhysicsVolume* FindPhysicsVolume(UWorld* World, const FVector& TestLoc, const F
     return NewVolume;
 }
 
+float GetAnimLengthForScaling(UAnimMontage* WeaponAnim, UAnimMontage* HandsAnim)
+{
+    if (HandsAnim != NULL)
+    {
+        return HandsAnim->SequenceLength / HandsAnim->RateScale;
+    }
+    else if (WeaponAnim != NULL)
+    {
+        return WeaponAnim->SequenceLength / WeaponAnim->RateScale;
+    }
+    else
+    {
+        return 0.0f;
+    }
+}
 

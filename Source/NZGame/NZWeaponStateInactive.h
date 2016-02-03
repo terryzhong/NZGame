@@ -13,7 +13,8 @@ class NZGAME_API UNZWeaponStateInactive : public UNZWeaponState
 {
 	GENERATED_BODY()
 	
+public:
+    virtual void BeginState(const UNZWeaponState* PrevState);
 	
-	
-	
+    virtual void BringUp(float OverflowTime);
 };
