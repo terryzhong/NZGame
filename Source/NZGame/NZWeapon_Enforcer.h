@@ -73,7 +73,7 @@ public:
 	FVector FirstPLeftMeshOffset;
 
 	UPROPERTY()
-	FVector FirstPLeftMeshRotation;
+	FRotator FirstPLeftMeshRotation;
 
 	UPROPERTY()
 	int32 FireCount;

@@ -536,25 +536,68 @@ public:
     
     // Weapon bob and eye offset
     
-    /** */
+    /** Current 1st person weapon deflection due to running bob */
     UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
     FVector CurrentWeaponBob;
     
+	/** Max 1st person weapon bob deflection with axes based on player view */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
     FVector WeaponBobMagnitude;
     
+	/** Z deflection of first person weapon when player jumps */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
     FVector WeaponJumpBob;
     
+	/** Z deflection of first person weapon when player lands */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+	FVector WeaponLandBob;
+
+	/** Desired 1st person weapon deflection due to jumping */
     UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
     FVector DesiredJumpBob;
     
+	/** Current jump bob (interpolating to DesiredJumpBob) */
     UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
     FVector CurrentJumpBob;
-    
+
+	/** Time used for weapon bob sinusoids, reset on landing */
+	UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+	float BobTime;
+
+	/** Rate of weapon bob when standing still */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+	float WeaponBreathingBobRate;
+
+	/** Rate of weapon bob when running */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+	float WeaponRunningBobRate;
+
+	/** How fast to interpolate to Jump/Land bob offset */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+	float WeaponJumpBobInterpRate;
+
+	/** Max horizontal weapon movement interpolation rate */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+	float WeaponHorizontalBobInterpRate;
+
+	/** How fast to decay out Land bob offset */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+	float WeaponLandBobDecayRate;
+
+	/** Get Max eye offset land bob deflection at landing velocity Z of FullEyeOffsetLandBobVelZ + EyeOffsetLandBobThreshold */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+	float WeaponDirChangeDeflection;
+
+	UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+	FVector EyeOffset;
+
+	UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+	FVector CrouchEyeOffset;
+
     /** Returns offset to add to first person mesh for weapon bob */
     virtual FVector GetWeaponBobOffset(float DeltaTime, ANZWeapon* MyWeapon);
     
+	virtual FVector GetTransformedEyeOffset() const;
     
     UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
     FVector TargetEyeOffset;

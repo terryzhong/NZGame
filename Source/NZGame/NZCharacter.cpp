@@ -952,11 +952,69 @@ void ANZCharacter::UpdateSkin()
 
 FVector ANZCharacter::GetWeaponBobOffset(float DeltaTime, ANZWeapon* MyWeapon)
 {
-    // todo:
-    check(false);
-    return FVector(0.f);
+	FRotationMatrix RotMatrix = FRotationMatrix(GetViewRotation());
+	FVector X = RotMatrix.GetScaledAxis(EAxis::X);
+	FVector Y = RotMatrix.GetScaledAxis(EAxis::Y);
+	FVector Z = RotMatrix.GetScaledAxis(EAxis::Z);
+
+	float InterpTime = FMath::Min(1.f, WeaponJumpBobInterpRate * DeltaTime);
+	if (!GetCharacterMovement() || GetCharacterMovement()->IsFalling())
+	{
+		BobTime = 0.f;
+		CurrentWeaponBob.Y *= FMath::Max(0.f, 1.f - WeaponLandBobDecayRate * DeltaTime);
+		CurrentWeaponBob.Z *= FMath::Max(0.f, 1.f - WeaponLandBobDecayRate * DeltaTime);
+	}
+	else
+	{
+		float Speed = GetCharacterMovement()->Velocity.Size();
+		float LastBobTime = BobTime;
+		float BobFactor = (WeaponBreathingBobRate + WeaponRunningBobRate * Speed / GetCharacterMovement()->MaxWalkSpeed);
+		BobTime += DeltaTime * BobFactor;
+		DesiredJumpBob *= FMath::Max(0.f, 1.f - WeaponLandBobDecayRate * DeltaTime);
+		FVector AccelDir = GetCharacterMovement()->GetCurrentAcceleration().GetSafeNormal();
+		if ((AccelDir | GetCharacterMovement()->Velocity) < 0.5 * GetCharacterMovement()->MaxWalkSpeed)
+		{
+			if ((AccelDir | Y) > 0.65f)
+			{
+				DesiredJumpBob.Y = -1.f * WeaponDirChangeDeflection;
+			}
+			else if ((AccelDir | Y) < -0.65f)
+			{
+				DesiredJumpBob.Y = WeaponDirChangeDeflection;
+			}
+		}
+		CurrentWeaponBob.X = 0.f;
+		if (NZCharacterMovement && /*NZCharacterMovement->bIsFloorSliding*/false)
+		{
+		}
+		else
+		{
+			CurrentWeaponBob.Y = WeaponBobMagnitude.Y * BobFactor * FMath::Sin(8.f * BobTime);
+			CurrentWeaponBob.Z = WeaponBobMagnitude.Z * BobFactor * FMath::Sin(16.f * BobTime);
+		}
+
+		if (GetCharacterMovement()->MovementMode == MOVE_Walking && Speed > 10.0f && !bIsCrouched &&
+			(FMath::FloorToInt(0.5f + 8.f * BobTime / PI) != FMath::FloorToInt(0.5f + 8.f * LastBobTime / PI)) &&
+			(GetMesh()->MeshComponentUpdateFlag >= EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered) && !GetMesh()->bRecentlyRendered)
+		{
+			//PlayFootstep((LastFoot + 1£© & 1, true);
+		}
+	}
+
+	float JumpYInterp = ((DesiredJumpBob.Y == 0.f) || (DesiredJumpBob.Z == 0.f)) ? FMath::Min(1.f, WeaponJumpBobInterpRate * DeltaTime) : FMath::Min(1.f, WeaponHorizontalBobInterpRate * FMath::Abs(DesiredJumpBob.Y) * DeltaTime);
+	CurrentJumpBob.X = (1.f - InterpTime) * CurrentJumpBob.X + InterpTime * DesiredJumpBob.X;
+	CurrentJumpBob.Y = (1.f - JumpYInterp) * CurrentJumpBob.Y + JumpYInterp * DesiredJumpBob.X;
+	CurrentJumpBob.Z = (1.f - InterpTime) * CurrentJumpBob.Z + InterpTime * DesiredJumpBob.Z;
+
+	ANZPlayerController* MyPC = Cast<ANZPlayerController>(GetController());
+	float WeaponBobGlobalScaling = (MyWeapon ? MyWeapon->WeaponBobScaling : 1.f)/* * (MyPC ? MyPC->WeaponBobGlobalScaling) : 1.f)*/;
+	return WeaponBobGlobalScaling * (CurrentWeaponBob.Y + CurrentJumpBob.Y) * Y + WeaponBobGlobalScaling * (CurrentWeaponBob.Z + CurrentJumpBob.Z) * Z + CrouchEyeOffset + GetTransformedEyeOffset();
 }
 
+FVector ANZCharacter::GetTransformedEyeOffset() const
+{
+	return FVector(0.f);
+}
 
 
 ANZPlayerController* ANZCharacter::GetLocalViewer()

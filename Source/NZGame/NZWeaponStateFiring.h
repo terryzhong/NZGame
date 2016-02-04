@@ -15,6 +15,15 @@ class NZGAME_API UNZWeaponStateFiring : public UNZWeaponState
 	
 	
 public:
+	FTimerHandle RefireCheckHandle;
+
+	inline uint8 GetFireMode() { return GetOuterANZWeapon()->GetCurrentFireMode(); }
+
+	virtual bool IsFiring() const override { return true; }
+
+	/** Called after the refire delay to see what we should do next (generally, fire or go back to active state) */
+	virtual void RefireCheckTimer();
+
     /** Pending fire mode on server when equip completes */
     int32 PendingFireSequence;
     
