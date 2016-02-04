@@ -47,19 +47,42 @@ ANZCharacter::ANZCharacter()
 
     GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-    GetMesh()->bEnablePhysicsOnDedicatedServer = true;  // needed for feign death; death ragdoll shouldn't be invoked on server
+    //GetMesh()->bEnablePhysicsOnDedicatedServer = true;  // needed for feign death; death ragdoll shouldn't be invoked on server
     GetMesh()->bReceivesDecals = false;
     GetMesh()->bLightAttachmentsAsGroup = true;
     //GetMesh()->SetRelativeScale3D(FVector(1.15f));
     
     NZCharacterMovement = Cast<UNZCharacterMovementComponent>(GetCharacterMovement());
     
+    HealthMax = 100;
+    //SuperHealthMax = 199;
+    DamageScaling = 1.0f;
+    //bDamageHurtsHealth = true;
+    FireRateMultiplier = 1.0f;
+    bSpawnProtectionEligible = true;
+    //MaxSafeFallSpeed = 2400.0f;
+    //FallingDamageFactor = 100.0f;
+    //CrushingDamageFactor = 2.0f;
+    
+    BobTime = 0.f;
+    WeaponBobMagnitude = FVector(0.f, 0.8f, 0.4f);
+    WeaponJumpBob = FVector(0.f, 0.f, -3.6f);
+    WeaponLandBob = FVector(0.f, 0.f, 10.5f);
+    WeaponBreathingBobRate = 0.2f;
+    WeaponRunningBobRate = 0.8f;
+    WeaponJumpBobInterpRate = 6.5f;
+    WeaponHorizontalBobInterpRate = 4.3f;
+    WeaponLandBobDecayRate = 5.f;
+    EyeOffset = FVector(0.f, 0.f, 0.f);
+    CrouchEyeOffset = EyeOffset;
+    TargetEyeOffset = EyeOffset;
+    
 }
 
 // Called when the game starts or when spawned
 void ANZCharacter::BeginPlay()
 {
-    GetMesh()->SetOwnerNoSee(false);
+    GetMesh()->SetOwnerNoSee(false);    // Compatibility with old content, we're doing this through UpdateHiddenComponents() now
     
     if (GetWorld()->GetNetMode() != NM_DedicatedServer)
     {
@@ -92,7 +115,6 @@ void ANZCharacter::BeginPlay()
     }
 
     Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -147,7 +169,32 @@ void ANZCharacter::Destroyed()
     
     DiscardAllInventory();
     
+    if (WeaponAttachment != NULL)
+    {
+        WeaponAttachment->Destroy();
+        WeaponAttachment = NULL;
+    }
+    
+    if (HolsteredWeaponAttachment != NULL)
+    {
+        HolsteredWeaponAttachment->Destroy();
+        HolsteredWeaponAttachment = NULL;
+    }
 
+    if (GetWorld()->GetNetMode() != NM_DedicatedServer && GEngine->GetWorldContextFromWorld(GetWorld()) != NULL)
+    {
+        APlayerController* PC = GEngine->GetFirstLocalPlayerController(GetWorld());
+        if (PC != NULL && PC->MyHUD != NULL)
+        {
+            PC->MyHUD->RemovePostRenderedActor(this);
+        }
+    }
+    
+    if (GetCharacterMovement())
+    {
+        GetWorldTimerManager().ClearAllTimersForObject(GetCharacterMovement());
+    }
+    GetWorldTimerManager().ClearAllTimersForObject(this);
 }
 
 
@@ -478,7 +525,7 @@ void ANZCharacter::AddDefaultInventory(TArray<TSubclassOf<ANZInventory>> Default
     }
     
     // Add the default inventory passed in from the game
-    for (int32 i = 0; i < DefaultCharacterInventory.Num(); i++)
+    for (int32 i = 0; i < DefaultInventoryToAdd.Num(); i++)
     {
         AddInventory(GetWorld()->SpawnActor<ANZInventory>(DefaultInventoryToAdd[i], FVector(0.0f), FRotator(0, 0, 0)), true);
     }
@@ -937,6 +984,15 @@ void ANZCharacter::SetHolsteredWeaponAttachmentClass(TSubclassOf<class ANZWeapon
     
 }
 
+void ANZCharacter::UpdateCharOverlays()
+{
+    
+}
+
+void ANZCharacter::UpdateWeaponOverlays()
+{
+    
+}
 
 void ANZCharacter::SetSkin(UMaterialInterface* NewSkin)
 {

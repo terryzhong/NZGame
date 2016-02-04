@@ -20,7 +20,6 @@
 #include "NZWeaponStateUnequipping.h"
 #include "NZWeaponStateZooming.h"
 #include "NZWeaponAttachment.h"
-#include "NZTypes.h"
 #include "NZGameViewportClient.h"
 #include "NZImpactEffect.h"
 #include "UnrealNetwork.h"
@@ -1661,8 +1660,12 @@ void ANZWeapon::UpdateCrosshairTarget(ANZPlayerState* NewCrosshairTarget, UNZHUD
 
 void ANZWeapon::UpdateOverlaysShared(AActor* WeaponActor, ANZCharacter* InOwner, USkeletalMeshComponent* InMesh, const TArray<struct FParticleSysParam>& InOverlayEffectParams, USkeletalMeshComponent*& InOverlayMesh) const
 {
-    // todo:
-    check(false);
+    ANZGameState* GameState = WeaponActor ? WeaponActor->GetWorld()->GetGameState<ANZGameState>() : NULL;
+    if (GameState != NULL && InOwner != NULL && InMesh != NULL)
+    {
+        FOverlayEffect TopOverlay = GameState->GetFirstOverlay(InOwner->GetWeaponOverlayFlags(), Cast<ANZWeapon>(WeaponActor) != NULL);
+        
+    }
 }
 
 void ANZWeapon::UpdateOverlays()
@@ -1708,9 +1711,49 @@ bool ANZWeapon::ShouldLagRot()
 
 float ANZWeapon::LagWeaponRotation(float NewValue, float LastValue, float DeltaTime, float MaxDiff, int32 Index)
 {
-    // todo:
-    check(false);
-    return 0.f;
+    // Check if NewValue is clockwise from LastValue
+    NewValue = FMath::UnwindDegrees(NewValue);
+    LastValue = FMath::UnwindDegrees(LastValue);
+    
+    float LeadMag = 0.f;
+    float RotDiff = NewValue - LastValue;
+    if ((RotDiff == 0.f) || (OldRotDiff[Index] == 0.f))
+    {
+        LeadMag = ShouldLagRot() ? OldLeadMag[Index] : 0.f;
+        if ((RotDiff == 0.f) && (OldRotDiff[Index] == 0.f))
+        {
+            OldMaxDiff[Index] = 0.f;
+        }
+    }
+    else if ((RotDiff > 0.f) == (OldRotDiff[Index] > 0.f))
+    {
+        if (ShouldLagRot())
+        {
+            MaxDiff = FMath::Min(1.f, FMath::Abs(RotDiff) / (66.f * DeltaTime)) * MaxDiff;
+            if (OldMaxDiff[Index] != 0.f)
+            {
+                MaxDiff = FMath::Max(OldMaxDiff[Index], MaxDiff);
+            }
+            
+            OldMaxDiff[Index] = MaxDiff;
+            LeadMag = (NewValue > LastValue) ? -1.f * MaxDiff : MaxDiff;
+        }
+        LeadMag = (DeltaTime < 1.f / RotChgSpeed)
+            ? LeadMag = (1.f - RotChgSpeed * DeltaTime) * OldLeadMag[Index] + RotChgSpeed * DeltaTime * LeadMag
+            : LeadMag = 0.f;
+    }
+    else
+    {
+        OldMaxDiff[Index] = 0.f;
+        if (DeltaTime < 1.f / ReturnChgSpeed)
+        {
+            LeadMag = (1.f - ReturnChgSpeed * DeltaTime) * OldLeadMag[Index] + ReturnChgSpeed * DeltaTime * LeadMag;
+        }
+    }
+    OldLeadMag[Index] = LeadMag;
+    OldRotDiff[Index] = RotDiff;
+    
+    return LeadMag;
 }
 
 void ANZWeapon::UpdateWeaponHand()
@@ -2130,9 +2173,6 @@ void ANZWeapon::OnZoomedOut_Implementation()
 
 void ANZWeapon::TickZoom(float DeltaTime)
 {
-    // todo:
-    check(false);
-    
     if (GetNZOwner() != NULL && ZoomModes.IsValidIndex(CurrentZoomMode))
     {
         if (ZoomState != EZoomState::EZS_NotZoomed)

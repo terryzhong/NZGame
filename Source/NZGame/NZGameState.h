@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/GameState.h"
+#include "NZATypes.h"
 #include "NZGameState.generated.h"
 
 /**
@@ -13,7 +14,6 @@ class NZGAME_API ANZGameState : public AGameState
 {
 	GENERATED_BODY()
 	
-    
 public:
     /** 38
      Teams, if the game type has them */
@@ -33,9 +33,25 @@ public:
     UFUNCTION(BlueprintCallable, Category = GameState)
     virtual bool OnSameTeam(const AActor* Actor1, const AActor* Actor2);
     
+    /** 246
+     Returns first active overlay material given the passed in flags */
+    FOverlayEffect GetFirstOverlay(uint16 Flags, bool bFirstPerson);
+    
     /** 271
      * This is called from the NZPlayerCameraManager to allow the game to force an override to the current player camera to make it easier for
      * presentation to be controlled by the server
      */
     virtual FName OverrideCameraStyle(APlayerController* PCOwner, FName CurrentCameraStyle);
+    
+protected:
+    static const uint8 MAX_OVERLAY_MATERIALS = 16;
+    
+    UPROPERTY(ReplicatedUsing = OnRep_OverlayEffects)
+    FOverlayEffect OverlayEffects[MAX_OVERLAY_MATERIALS];
+    
+    UPROPERTY(ReplicatedUsing = OnRep_OverlayEffects)
+    FOverlayEffect OverlayEffects1P[MAX_OVERLAY_MATERIALS];
+    
+    UFUNCTION()
+    virtual void OnRep_OverlayEffects();
 };

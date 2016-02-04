@@ -232,6 +232,114 @@ void ANZPlayerController::PawnPendingDestroy(APawn* InPawn)
     }
 }
 
+static void HideComponentTree(const UPrimitiveComponent* Primitive, TSet<FPrimitiveComponentId>& HiddenComponents)
+{
+    if (Primitive != NULL)
+    {
+        HiddenComponents.Add(Primitive->ComponentId);
+        TArray<USceneComponent*> Children;
+        Primitive->GetChildrenComponents(true, Children);
+        for (int32 i = 0; i < Children.Num(); i++)
+        {
+            UPrimitiveComponent* ChildPrimitive = Cast<UPrimitiveComponent>(Children[i]);
+            if (ChildPrimitive != NULL)
+            {
+                HiddenComponents.Add(ChildPrimitive->ComponentId);
+            }
+        }
+    }
+}
+
+void ANZPlayerController::UpdateHiddenComponents(const FVector& ViewLocation, TSet<FPrimitiveComponentId>& HiddenComponents)
+{
+    Super::UpdateHiddenComponents(ViewLocation, HiddenComponents);
+    
+    // todo:
+    
+    
+    // Hide all components that shouldn't be shown in the current 1P/3P state
+    // with bOwnerNoSee/bOnlyOwnerSee not being propagated to children this method is much easier to maintain
+    // although slightly less efficient
+    ANZCharacter* P = Cast<ANZCharacter>(GetViewTarget());
+    if (IsBehindView())
+    {
+        // Hide first person weapon
+        if (P != NULL)
+        {
+            HiddenComponents.Add(P->FirstPersonMesh->ComponentId);
+            if (P->GetWeapon() != NULL)
+            {
+                TArray<UMeshComponent*> Meshes = P->GetWeapon()->Get1PMeshes();
+                for (UMeshComponent* WeaponMesh : Meshes)
+                {
+                    if (WeaponMesh != NULL)
+                    {
+                        HideComponentTree(WeaponMesh, HiddenComponents);
+                    }
+                }
+            }
+        }
+    }
+    else if (P != NULL)
+    {
+        // Hide first person mesh (but not attachments) if hidden weapons
+        if (GetWeaponHand() == HAND_Hidden || (P->GetWeapon() != NULL && P->GetWeapon()->ZoomState != EZoomState::EZS_NotZoomed))
+        {
+            HiddenComponents.Add(P->FirstPersonMesh->ComponentId);
+            if (P->GetWeapon() != NULL)
+            {
+                TArray<UMeshComponent*> Meshes = P->GetWeapon()->Get1PMeshes();
+                for (UMeshComponent* WeaponMesh : Meshes)
+                {
+                    if (WeaponMesh != NULL)
+                    {
+                        HiddenComponents.Add(WeaponMesh->ComponentId);
+                    }
+                }
+            }
+        }
+        else if (P->GetWeapon() == NULL || P->GetWeapon()->HandsAttachSocket == NAME_None)
+        {
+            // Weapon doesn't use hands
+            HiddenComponents.Add(P->FirstPersonMesh->ComponentId);
+        }
+        
+        // Hide third person character model
+        HideComponentTree(P->GetMesh(), HiddenComponents);
+        
+        // Hide flag
+        // todo:
+/*        if (P->GetCarriedObject() != NULL)
+        {
+            HideComponentTree(Cast<UPrimitiveComponent>(P->GetCarriedObject()->GetRootComponent()), HiddenComponents);
+        }*/
+    }
+    else if (GetViewTarget() != NULL)
+    {
+        // For others we can't just hide everything because we don't know where the camera component is and we don't want to hide its attachments
+        // so just hide root
+        UPrimitiveComponent* RootPrimitive = Cast<UPrimitiveComponent>(GetViewTarget()->GetRootComponent());
+        if (RootPrimitive != NULL)
+        {
+            HiddenComponents.Add(RootPrimitive->ComponentId);
+        }
+    }
+    
+    // Hide other pawns' first person hands/weapons
+    for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; ++It)
+    {
+        if (It->IsValid() && It->Get() != GetViewTarget() && It->Get() != GetPawn())
+        {
+            ANZCharacter* OtherP = Cast<ANZCharacter>(It->Get());
+            if (OtherP != NULL)
+            {
+                HideComponentTree(OtherP->FirstPersonMesh, HiddenComponents);
+            }
+        }
+    }
+}
+
+
 void ANZPlayerController::ToggleBehindView()
 {
     bSpectateBehindView = !bSpectateBehindView;

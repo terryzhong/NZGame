@@ -76,6 +76,8 @@ public:
     virtual void ProcessPlayerInput(const float DeltaTime, const bool bGamePaused) override;
     virtual void PawnPendingDestroy(APawn* InPawn) override;
     
+    /** 167 */
+    virtual void UpdateHiddenComponents(const FVector& ViewLocation, TSet<FPrimitiveComponentId>& HiddenComponents);
     
     /** 179
      Attempts to restart this player, generally called from the client upon respawn request */

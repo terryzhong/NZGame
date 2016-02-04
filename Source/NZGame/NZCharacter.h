@@ -221,6 +221,7 @@ public:
 	void SwitchToBestWeapon();
     
 protected:
+    /** Firemodes with input currently being held down (pending or actually firing) */
     UPROPERTY(BlueprintReadOnly, Category = Pawn)
     TArray<uint8> PendingFire;
 public:
@@ -371,7 +372,8 @@ public:
     }
 
     
-    /** Firemodes with input currently being held down (pending or actually firing) */
+    /** 1682
+     Weapon and attachments */
     UPROPERTY(BlueprintReadOnly, Category = Pawn)
     class ANZWeapon* PendingWeapon;
     
@@ -386,6 +388,12 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = UpdateWeaponAttachment, Category = Pawn)
     TSubclassOf<ANZWeaponAttachment> WeaponAttachmentClass;
+    
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    class ANZWeaponAttachment* HolsteredWeaponAttachment;
+    
+    UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = UpdateHolsteredWeaponAttachment, Category = Pawn)
+    TSubclassOf<ANZWeaponAttachment> HolsteredWeaponAttachmentClass;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
     TArray<TSubclassOf<ANZInventory> > DefaultCharacterInventory;
@@ -506,6 +514,30 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Effects)
     virtual void SetHolsteredWeaponAttachmentClass(TSubclassOf<class ANZWeaponAttachment> NewWeaponAttachmentClass);
     
+    /** 1254
+     Uses CharOverlayFlags to apply the desired overlay material (if any) to OverlayMesh */
+    UFUNCTION()
+    virtual void UpdateCharOverlays();
+    
+    /** 1278
+     Uses WeaponOverlayFlags to apply the desired overlay material (if any) to OverlayMesh */
+    UFUNCTION()
+    virtual void UpdateWeaponOverlays();
+    
+protected:
+    /** Replicated overlays, bits match entries in NZGameState's OverlayMaterials array */
+    UPROPERTY(Replicated, ReplicatedUsing = UpdateCharOverlays)
+    uint16 CharOverlayFlags;
+    UPROPERTY(Replicated, ReplicatedUsing = UpdateWeaponOverlays)
+    uint16 WeaponOverlayFlags;
+    
+    /** Mesh with current active overlay material on it (created dynamically when needed) */
+    UPROPERTY(BlueprintReadOnly, Category = Effects)
+    USkeletalMeshComponent* OverlayMesh;
+    
+public:
+    inline int16 GetCharOverlayFlags() { return CharOverlayFlags; }
+    inline int16 GetWeaponOverlayFlags() { return WeaponOverlayFlags; }
     
     /** 1294
      * Sets full body material override only one at a time
