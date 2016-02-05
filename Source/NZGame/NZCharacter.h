@@ -83,6 +83,17 @@ public:
     
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Character)
     class UNZCharacterMovementComponent* NZCharacterMovement;
+
+	/** 1320 */
+	UFUNCTION(BlueprintCallable, Category = Team)
+	virtual uint8 GetTeamNum() const;
+
+
+	virtual void NotifyTeamChanged();
+
+	virtual void PlayerChangedTeam();
+
+	virtual void PlayerSuicide();
     
     UPROPERTY(BlueprintReadOnly)
     TSubclassOf<class ANZCharacterContent> CharacterData;

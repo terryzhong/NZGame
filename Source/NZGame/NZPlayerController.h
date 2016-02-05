@@ -88,7 +88,7 @@ public:
     UFUNCTION(Server, Reliable, WithValidation)
     virtual void ServerSwitchTeam();
     
-    
+    /** 193 */
     UFUNCTION(exec)
     virtual void BehindView(bool bWantBehindView);
     
@@ -97,6 +97,11 @@ public:
     virtual void ClientSetCameraMode_Implementation(FName NewCamMode) override;
     virtual void ClientGameEnded_Implementation(AActor* EndGameFocus, bool bIsWinner) override;
     
+	/** Handles bWantsBehindView */
+	virtual void ResetCameraMode() override;
+
+	/** Switch to best current camera while spectating */
+	virtual void ChooseBestCamera();
     
     virtual void SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams = FViewTargetTransitionParams()) override;
     virtual void ServerViewSelf_Implementation(FViewTargetTransitionParams TransitionParams) override;
@@ -124,6 +129,13 @@ public:
     UPROPERTY(BlueprintReadWrite)
     bool bAutoCam;
     
+
+	virtual void Possess(APawn* PawnToPossess) override;
+	virtual void PawnLeavingGame() override;
+
+	/** 313
+	 We override player tick to keep updating the player's rotation when the game is over */
+	virtual void PlayerTick(float DeltaTime) override;
     
     
 protected:

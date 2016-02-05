@@ -19,7 +19,10 @@ ANZPlayerController::ANZPlayerController()
 {
     // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
+
+	PlayerCameraManagerClass = ANZPlayerCameraManager::StaticClass();
     
+	ConfigDefaultFOV = 100.0f;
 }
 
 ANZCharacter* ANZPlayerController::GetNZCharacter()
@@ -153,7 +156,16 @@ void ANZPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Crouch", IE_Pressed, this, &ANZPlayerController::Crouch);
 	InputComponent->BindAction("Crouch", IE_Released, this, &ANZPlayerController::UnCrouch);
 	InputComponent->BindAction("ToggleCrouch", IE_Pressed, this, &ANZPlayerController::ToggleCrouch);
-    
+
+	InputComponent->BindAction("PrevWeapon", IE_Pressed, this, &ANZPlayerController::PrevWeapon);
+	InputComponent->BindAction("NextWeapon", IE_Released, this, &ANZPlayerController::NextWeapon);
+	InputComponent->BindAction("ThrowWeapon", IE_Released, this, &ANZPlayerController::ThrowWeapon);
+
+	InputComponent->BindAction("StartFire", IE_Pressed, this, &ANZPlayerController::OnFire);
+	InputComponent->BindAction("StopFire", IE_Released, this, &ANZPlayerController::OnStopFire);
+	InputComponent->BindAction("StartAltFire", IE_Pressed, this, &ANZPlayerController::OnAltFire);
+	InputComponent->BindAction("StopAltFire", IE_Released, this, &ANZPlayerController::OnStopAltFire);
+
  /*   InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
     InputComponent->BindAction("TapRight", IE_Pressed, this, &ANZPlayerController::OnTapRight);
     InputComponent->BindAction("TapForward", IE_Pressed, this, &ANZPlayerController::OnTapForward);
@@ -167,14 +179,6 @@ void ANZPlayerController::SetupInputComponent()
     InputComponent->BindAction("TapForwardRelease", IE_Released, this, &ANZPlayerController::OnTapForwardRelease);
     InputComponent->BindAction("TapBackRelease", IE_Released, this, &ANZPlayerController::OnTapBackRelease);
 	    
-	InputComponent->BindAction("PrevWeapon", IE_Pressed, this, &ANZPlayerController::PrevWeapon);
-    InputComponent->BindAction("NextWeapon", IE_Released, this, &ANZPlayerController::NextWeapon);
-    InputComponent->BindAction("ThrowWeapon", IE_Released, this, &ANZPlayerController::ThrowWeapon);
-    
-    InputComponent->BindAction("StartFire", IE_Pressed, this, &ANZPlayerController::OnFire);
-    InputComponent->BindAction("StopFire", IE_Released, this, &ANZPlayerController::OnStopFire);
-    InputComponent->BindAction("StartAltFire", IE_Pressed, this, &ANZPlayerController::OnAltFire);
-    InputComponent->BindAction("StopAltFire", IE_Released, this, &ANZPlayerController::OnStopAltFire);
     InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZPlayerController::TouchStarted);
     
     InputComponent->BindAction("ShowScores", IE_Pressed, this, &ANZPlayerController::OnShowScores);
@@ -414,14 +418,12 @@ bool ANZPlayerController::IsBehindView()
 {
     if (PlayerCameraManager != NULL)
     {
-/*        static FName NAME_FreeCam(TEXT("FreeCam"));
+		static FName NAME_FreeCam(TEXT("FreeCam"));
         
-        ANZPlayerController* NZCam = Cast<ANZPlayerCameraManager>(PlayerCameraManager);
+		ANZPlayerCameraManager* NZCam = Cast<ANZPlayerCameraManager>(PlayerCameraManager);
         FName CameraStyle = (NZCam != NULL) ? NZCam->GetCameraStyleWithOverrides() : PlayerCameraManager->CameraStyle;
         
-        return CameraStyle == NAME_FreeCam;*/
-        // todo:
-        return false;
+        return CameraStyle == NAME_FreeCam;
     }
     else
     {
@@ -442,6 +444,15 @@ void ANZPlayerController::ClientGameEnded_Implementation(AActor* EndGameFocus, b
     
 }
 
+void ANZPlayerController::ResetCameraMode()
+{
+
+}
+
+void ANZPlayerController::ChooseBestCamera()
+{
+
+}
 
 
 void ANZPlayerController::SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
@@ -519,6 +530,101 @@ bool ANZPlayerController::ServerViewFlagHolder_Validate(uint8 TeamIndex)
 {
     return true;
 }
+
+void ANZPlayerController::Possess(APawn* PawnToPossess)
+{
+	Super::Possess(PawnToPossess);
+
+	// todo:
+}
+
+void ANZPlayerController::PawnLeavingGame()
+{
+	if (NZCharacter != NULL)
+	{
+		NZCharacter->PlayerSuicide();
+	}
+	else
+	{
+		UnPossess();
+	}
+}
+
+void ANZPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+
+	if (StateName == FName(TEXT("GameOver")))
+	{
+		UpdateRotation(DeltaTime);
+	}
+
+	// If we have no NZCharacterMovementComponent, we need to apply firing here since it won't happen from the component
+	if (GetPawn() == NULL || Cast<UNZCharacterMovementComponent>(GetPawn()->GetMovementComponent()) == NULL)
+	{
+		ApplyDeferredFireInputs();
+	}
+
+	// Force ping update if servermoves aren't triggering it
+	if ((GetWorld()->GetTimeSeconds() - LastPingCalcTime > 0.5f) && (GetNetMode() == NM_Client))
+	{
+		LastPingCalcTime = GetWorld()->GetTimeSeconds();
+		ServerBouncePing(GetWorld()->GetTimeSeconds());
+	}
+
+	APawn* ViewTargetPawn = PlayerCameraManager->GetViewTargetPawn();
+
+	if (Cast<ASpectatorPawn>(ViewTargetPawn) == NULL && bSpectatorMouseChangesView)
+	{
+		// If we aren't in free-cam then turn off movement via mouse
+		SetSpectatorMouseChangesView(false);
+	}
+
+	ANZCharacter* ViewTargetCharacter = Cast<ANZCharacter>(ViewTargetPawn);
+	if (IsInState(NAME_Spectating) && bAutoCam && (!ViewTargetCharacter || !ViewTargetCharacter->IsRecentlyDead()))
+	{
+		// Possibly switch cameras
+		ChooseBestCamera();
+	}
+
+	// Follow the last spectated player again when they respawn
+	if (IsInState(NAME_Spectating) && LastSpectatedPlayerId >= 0 && IsLocalController() && (!Cast<ANZProjectile>(GetViewTarget()) || GetViewTarget()->IsPendingKillPending()))
+	{
+		ViewTargetPawn = PlayerCameraManager->GetViewTargetPawn();
+		ViewTargetCharacter = Cast<ANZCharacter>(ViewTargetPawn);
+		if (!ViewTargetPawn || (ViewTargetCharacter && ViewTargetCharacter->IsDead() && !ViewTargetCharacter->IsRecentlyDead()))
+		{
+			for (FConstPawnIterator Iterator = GetWorld()->GetPawnIterator(); Iterator; ++Iterator)
+			{
+				APawn* Pawn = *Iterator;
+				if (Pawn != NULL)
+				{
+					ANZPlayerState* PS = Cast<ANZPlayerState>(Pawn->PlayerState);
+					if (PS && PS->SpectatingID == LastSpectatedPlayerId)
+					{
+						ANZCharacter* TargetCharacter = Cast<ANZCharacter>(Pawn);
+						if (TargetCharacter && TargetCharacter->DrivenVehicle && !TargetCharacter->DrivenVehicle->IsPendingKillPending())
+						{
+							ViewPawn(TargetCharacter->DrivenVehicle);
+						}
+						else
+						{
+							ViewPawn(*Iterator);
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+	else if (PlayerState && PlayerState->bOnlySpectator && (GetViewTarget() == this))
+	{
+		ClientViewSpectatorPawn(FViewTargetTransitionParams());
+	}
+
+	// todo:
+}
+
 
 
 void ANZPlayerController::SetWeaponHand(EWeaponHand NewHand)
@@ -879,8 +985,10 @@ void ANZPlayerController::UnCrouch()
 
 void ANZPlayerController::ToggleCrouch()
 {
-	// todo:
-
+	if (GetCharacter() != NULL)
+	{
+		GetCharacter()->bIsCrouched ? UnCrouch() : Crouch();
+	}
 }
 
 void ANZPlayerController::AddYawInput(float Value)

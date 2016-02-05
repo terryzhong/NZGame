@@ -15,11 +15,10 @@ ANZGameMode::ANZGameMode()
 {
 	PlayerPawnObject = FStringAssetReference(TEXT("/Game/Blueprints/Nicholas.Nicholas_C"));
 
-    HUDClass = ANZHUD::StaticClass();
+    //HUDClass = ANZHUD::StaticClass();
     
-    GameStateClass = ANZGameState::StaticClass();
-    PlayerStateClass = ANZPlayerState::StaticClass();
-    
+    //GameStateClass = ANZGameState::StaticClass();
+    //PlayerStateClass = ANZPlayerState::StaticClass();
     
     PlayerControllerClass = ANZPlayerController::StaticClass();
     
@@ -61,8 +60,8 @@ void ANZGameMode::RestartPlayer(AController* aPlayer)
 	}
 
 	// Clear spawn choices
-	Cast<ANZPlayerState>(aPlayer->PlayerState)->RespawnChoiceA = NULL;
-	Cast<ANZPlayerState>(aPlayer->PlayerState)->RespawnChoiceB = NULL;
+	//Cast<ANZPlayerState>(aPlayer->PlayerState)->RespawnChoiceA = NULL;
+	//Cast<ANZPlayerState>(aPlayer->PlayerState)->RespawnChoiceB = NULL;
 
 	// todo:
 	//Cast<ANZPlayerState>(aPlayer->PlayerState)->LastKillTime = -100.f;
