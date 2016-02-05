@@ -23,5 +23,7 @@ public:
     UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
     void ModifyPlayer(APawn* Other, bool bIsNewSpawn);
 	
-	
+    
+	UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
+    void ModifyInventory(ANZInventory* Inv, ANZCharacter* NewOwner);
 };

@@ -11,6 +11,8 @@
 #include "NZWeaponAttachment.h"
 #include "NZGameState.h"
 #include "NZReplicatedLoadoutInfo.h"
+#include "NZGameMode.h"
+#include "NZMutator.h"
 
 
 // Sets default values
@@ -350,11 +352,11 @@ bool ANZCharacter::AddInventory(ANZInventory* InvToAdd, bool bAutoActivate)
             
             if (InvToAdd->GetNZOwner() == this)
             {
-/*                ANZGameMode* Game = GetWorld()->GetAuthGameMode<ANZGameMode>();
+                ANZGameMode* Game = GetWorld()->GetAuthGameMode<ANZGameMode>();
                 if (Game != NULL && Game->BaseMutator != NULL)
                 {
                     Game->BaseMutator->ModifyInventory(InvToAdd, this);
-                }*/
+                }
             }
             
             return true;
