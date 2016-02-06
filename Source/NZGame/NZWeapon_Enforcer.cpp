@@ -4,6 +4,8 @@
 #include "NZWeapon_Enforcer.h"
 #include "NZWeaponStateEquipping_Enforcer.h"
 #include "NZWeaponStateUnequippingEnforcer.h"
+#include "NZWeaponStateFiringBurst.h"
+#include "NZWeaponStateFiringBurstEnforcer.h"
 
 const FName NAME_EnforcerKills(TEXT("EnforcerKills"));
 const FName NAME_EnforcerDeaths(TEXT("EnforcerDeaths"));
@@ -18,7 +20,7 @@ ANZWeapon_Enforcer::ANZWeapon_Enforcer()
 	Ammo = 20;
 	MaxAmmo = 40;
 	LastFireTime = 0.f;
-	SpreadResetIncrease = 1.f;
+	SpreadResetInterval = 1.f;
 	SpreadIncrease = 0.03f;
 	MaxSpread = 0.12f;
 	BringUpTime = 0.28f;
@@ -90,17 +92,93 @@ void ANZWeapon_Enforcer::UpdateViewBob(float DeltaTime)
 
 void ANZWeapon_Enforcer::PlayFiringEffects()
 {
-
+    UNZWeaponStateFiringBurstEnforcer* BurstFireMode = Cast<UNZWeaponStateFiringBurstEnforcer>(FiringState[GetCurrentFireMode()]);
+    
+    if (NZOwner != NULL)
+    {
+        if (!bDualEnforcerMode || (BurstFireMode ? (FireCount / BurstFireMode->BurstSize == 0) : !bFireLeftSide))
+        {
+            if (!BurstFireMode || BurstFireMode->CurrentShot == 0)
+            {
+                Super::PlayFiringEffects();
+            }
+            else if (ShouldPlay1PVisuals())
+            {
+                NZOwner->TargetEyeOffset.X = FiringViewKickback;
+                // Muzzle flash
+                if (MuzzleFlash.IsValidIndex(CurrentFireMode) && MuzzleFlash[CurrentFireMode] != NULL && MuzzleFlash[CurrentFireMode]->Template != NULL)
+                {
+                    // If we detect a looping particle system, then don't reactivate it
+                    if (!MuzzleFlash[CurrentFireMode]->bIsActive || !IsLoopingParticleSystem(MuzzleFlash[CurrentFireMode]->Template))
+                    {
+                        MuzzleFlash[CurrentFireMode]->ActivateSystem();
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Try and play the sound if specified
+            if ((!BurstFireMode || BurstFireMode->CurrentShot == 0) && FireSound.IsValidIndex(CurrentFireMode) && FireSound[CurrentFireMode] != NULL)
+            {
+                UNZGameplayStatics::NZPlaySound(GetWorld(), FireSound[CurrentFireMode], NZOwner, SRT_AllButOwner);
+            }
+            
+            if (ShouldPlay1PVisuals())
+            {
+                if ((!BurstFireMode || BurstFireMode->CurrentShot == 0) && FireAnimation.IsValidIndex(CurrentFireMode) && FireAnimation[CurrentFireMode] != NULL)
+                {
+                    UAnimInstance* AnimInstance = LeftMesh->GetAnimInstance();
+                    if (AnimInstance != NULL)
+                    {
+                        AnimInstance->Montage_Play(FireAnimation[CurrentFireMode], NZOwner->GetFireRateMultiplier());
+                    }
+                }
+                
+                NZOwner->TargetEyeOffset.X = FiringViewKickback;
+                
+                uint8 LeftHandMuzzleFlashIndex = CurrentFireMode + 2;
+                if (MuzzleFlash.IsValidIndex(LeftHandMuzzleFlashIndex) && MuzzleFlash[LeftHandMuzzleFlashIndex] != NULL && MuzzleFlash[LeftHandMuzzleFlashIndex]->Template != NULL)
+                {
+                    if (!MuzzleFlash[LeftHandMuzzleFlashIndex]->bIsActive || MuzzleFlash[LeftHandMuzzleFlashIndex]->bSuppressSpawning || !IsLoopingParticleSystem(MuzzleFlash[LeftHandMuzzleFlashIndex]->Template))
+                    {
+                        MuzzleFlash[LeftHandMuzzleFlashIndex]->ActivateSystem();
+                    }
+                }
+            }
+        }
+        if (!BurstFireMode)
+        {
+            bFireLeftSide = !bFireLeftSide;
+        }
+    }
 }
 
 void ANZWeapon_Enforcer::FireInstantHit(bool bDealDamage, FHitResult* OutHit)
 {
+    // Burst mode takes care of spread variation itself
+    if (!Cast<UNZWeaponStateFiringBurst>(FiringState[GetCurrentFireMode()]))
+    {
+        float TimeSinceFired = NZOwner->GetWorld()->GetTimeSeconds() - LastFireTime;
+        float SpreadScalingOverTime = FMath::Max(0.f, 1.f - (TimeSinceFired - FireInterval[GetCurrentFireMode()]) / (SpreadResetInterval - FireInterval[GetCurrentFireMode()]));
+        Spread[GetCurrentFireMode()] = FMath::Min(MaxSpread, Spread[GetCurrentFireMode()] + SpreadIncrease) * SpreadScalingOverTime;
+    }
 
+    Super::FireInstantHit(bDealDamage, OutHit);
+    
+    if (NZOwner)
+    {
+        LastFireTime = NZOwner->GetWorld()->GetTimeSeconds();
+    }
 }
 
 bool ANZWeapon_Enforcer::StackPickup_Implementation(ANZInventory* ContainedInv)
 {
-	return 0.f;
+	if (!bBecomeDual)
+    {
+        BecomeDual();
+    }
+    return Super::StackPickup_Implementation(ContainedInv);
 }
 
 void ANZWeapon_Enforcer::BringUp(float OverflowTime)

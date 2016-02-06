@@ -22,6 +22,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	TSubclassOf<class ANZWeaponAttachment> DualWieldAttachmentType;
 
+    /** Left hand weapon mesh */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon)
 	USkeletalMeshComponent* LeftMesh;
 
@@ -36,21 +37,26 @@ public:
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
 	UNZWeaponState* EnforcerUnequippingState;
 
+    /** How much spread increases for each shot */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Enforcer)
 	float SpreadIncrease;
 
+    /** How much spread increases for each shot */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Enforcer)
-	float SpreadResetIncrease;
+	float SpreadResetInterval;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Enforcer)
 	float MaxSpread;
 
+    /** Last time a shot was fired (used for calculating spread) */
 	UPROPERTY(BlueprintReadWrite, Category = Enforcer)
 	float LastFireTime;
 
+    /** Stopping power against players with melee weapons. Overrides normal momentum imparted by bullets */
 	UPROPERTY(BlueprintReadWrite, Category = Enforcer)
 	float StoppingPower;
 
+    /** Left hand mesh equip anims */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	UAnimMontage* LeftBringUpAnim;
 
@@ -60,9 +66,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	TArray<float> SpreadDualWield;
 
+    /** Weapon bring up time when dual wielding */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float DualBringUpTime;
 
+    /** Weapon put down time when dual wielding */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon)
 	float DualPutDownTime;
 
@@ -93,6 +101,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = Weapon)
 	TArray<UParticleSystemComponent*> LeftMuzzleFlash;
 
+    /** Update the left hand mesh positioning */
 	virtual void UpdateViewBob(float DeltaTime) override;
 
 	virtual void PlayFiringEffects() override;
@@ -111,6 +120,7 @@ public:
 	virtual void DetachFromOwner_Implementation() override;
 	virtual void AttachToOwner_Implementation() override;
 
+    /** Switch to second enforcer mode */
 	UFUNCTION(BlueprintCallable, Category = Weapon)
 	virtual void BecomeDual();
 

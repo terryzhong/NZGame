@@ -13,6 +13,9 @@
 #include "NZReplicatedLoadoutInfo.h"
 #include "NZGameMode.h"
 #include "NZMutator.h"
+#include "NZDamageType_Suicide.h"
+#include "NZGameplayStatics.h"
+#include "NZCharacterContent.h"
 
 
 // Sets default values
@@ -139,7 +142,6 @@ void ANZCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 }
 
-
 void ANZCharacter::PostInitializeComponents()
 {
     Super::PostInitializeComponents();
@@ -199,6 +201,80 @@ void ANZCharacter::Destroyed()
     GetWorldTimerManager().ClearAllTimersForObject(this);
 }
 
+bool ANZCharacter::ShouldTakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const
+{
+    // We want to allow zero damage (momentum only) hits so never pass 0 to super call
+    return bTearOff || Super::ShouldTakeDamage(FMath::Max<float>(1.0f, Damage), DamageEvent, EventInstigator, DamageCauser);
+}
+
+float ANZCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+{
+    return 0.f;
+}
+
+FVector ANZCharacter::GetHeadLocation(float PredictionTime)
+{
+    return FVector(0.f);
+}
+
+bool ANZCharacter::IsHeadShot(FVector HitLocation, FVector ShotDirection, float WeaponHeadScaling, ANZCharacter* ShotInstigator, float PredictionTime)
+{
+    return false;
+}
+
+void ANZCharacter::NotifyTakeHit(AController* InstigatedBy, int32 AppliedDamage, int32 Damage, FVector Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent)
+{
+    
+}
+
+void ANZCharacter::PlayTakeHitEffects_Implementation()
+{
+    
+}
+
+void ANZCharacter::PlayDamageEffects_Implementation()
+{
+    
+}
+
+bool ANZCharacter::K2_Died(AController* EventInstigator, TSubclassOf<UDamageType> DamageType)
+{
+    return false;
+}
+
+void ANZCharacter::Died(AController* EventInstigator, const FDamageEvent& DamageEvent)
+{
+    
+}
+
+
+
+uint8 ANZCharacter::GetTeamNum() const
+{
+    check(false);
+    return 0;
+}
+
+void ANZCharacter::NotifyTeamChanged()
+{
+    
+}
+
+void ANZCharacter::PlayerChangedTeam()
+{
+    
+}
+
+void ANZCharacter::PlayerSuicide()
+{
+    if (Role == ROLE_Authority)
+    {
+        FHitResult FakeHit(this, NULL, GetActorLocation(), GetActorRotation().Vector());
+        FNZPointDamageEvent FakeDamageEvent(0, FakeHit, FVector(0, 0, 0), UNZDamageType_Suicide::StaticClass());
+        UNZGameplayStatics::NZPlaySound(GetWorld(), CharacterData.GetDefaultObject()->PainSound, this, SRT_All, false, FVector::ZeroVector, Cast<ANZPlayerController>(Controller), NULL, false);
+        Died(NULL, FakeDamageEvent);
+    }
+}
 
 
 bool ANZCharacter::IsSpawnProtected()
@@ -857,6 +933,26 @@ void ANZCharacter::StopFiring()
 }
 
 
+void ANZCharacter::SetAmbientSound(USoundBase* NewAmbientSound, bool bClear)
+{
+    if (bClear)
+    {
+        if (NewAmbientSound == AmbientSound)
+        {
+            AmbientSound = NULL;
+        }
+    }
+    else
+    {
+        AmbientSound = NewAmbientSound;
+    }
+    AmbientSoundUpdated();
+}
+
+void ANZCharacter::AmbientSoundUpdated()
+{
+    
+}
 
 
 

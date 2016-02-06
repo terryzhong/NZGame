@@ -433,31 +433,116 @@ bool ANZPlayerController::IsBehindView()
 
 void ANZPlayerController::SetCameraMode(FName NewCamMode)
 {
+    ClientSetCameraMode_Implementation(NewCamMode);
+    
+    if (GetNetMode() == NM_DedicatedServer)
+    {
+        ClientSetCameraMode(NewCamMode);
+    }
 }
 
 void ANZPlayerController::ClientSetCameraMode_Implementation(FName NewCamMode)
 {
+    if (PlayerCameraManager)
+    {
+        PlayerCameraManager->CameraStyle = NewCamMode;
+    }
 }
 
 void ANZPlayerController::ClientGameEnded_Implementation(AActor* EndGameFocus, bool bIsWinner)
 {
+    ChangeState(FName(TEXT("GameOver")));
+    FinalViewTarget = EndGameFocus;
+    BehindView(true);
+    FTimerHandle TimerHandle;
+    GetWorldTimerManager().SetTimer(TimerHandle, this, &ANZPlayerController::ShowEndGameScoreboard, 10.f, false);
+    Super::ClientGameEnded_Implementation(EndGameFocus, bIsWinner);
     
+    TurnOffPawns();
 }
+
+void ANZPlayerController::ShowEndGameScoreboard()
+{
+    // todo:
+    check(false);
+}
+
+void ANZPlayerController::TurnOffPawns()
+{
+    // Freezze all Pawns locally
+    for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; ++It)
+    {
+        if (It->IsValid() && !Cast<ASpectatorPawn>(It->Get()))
+        {
+            It->Get()->TurnOff();
+        }
+    }
+}
+
+
 
 void ANZPlayerController::ResetCameraMode()
 {
-
+    bool bBehindView;
+    
+    if (IsInState(NAME_Spectating))
+    {
+        bBehindView = bSpectateBehindView;
+    }
+    else if (!bAllowPlayingBehindView && GetNetMode() != NM_Standalone && GetWorld()->WorldType != EWorldType::PIE)
+    {
+        bBehindView = false;
+    }
+    else
+    {
+        bBehindView = bPlayBehindView;
+    }
+    
+    if (bBehindView)
+    {
+        SetCameraMode(FName(TEXT("FreeCam")));
+    }
+    else
+    {
+        Super::ResetCameraMode();
+    }
 }
 
 void ANZPlayerController::ChooseBestCamera()
 {
+    // For now, choose just between live players. Eventually also use level cameras, etc.
+    float BestScore = 0.f;
+    APlayerState* BestPS = LastSpectatedPlayerState;
+    ANZPlayerCameraManager* NZCam = Cast<ANZPlayerCameraManager>(PlayerCameraManager);
+    if (NZCam)
+    {
+        for (FConstPawnIterator Iterator = GetWorld()->GetPawnIterator(); Iterator; ++Iterator)
+        {
+            ANZCharacter* CamPawn = Cast<ANZCharacter>(*Iterator);
+            ANZPlayerState* NextPlayerState = (CamPawn && (CamPawn->Health > 0)) ? Cast<ANZPlayerState>(CamPawn->PlayerState) : NULL;
+            if (NextPlayerState)
+            {
+                float NewScore = NZCam->RatePlayerCamera(NextPlayerState, CamPawn, LastSpectatedPlayerState);
+                if (NewScore > BestScore)
+                {
+                    BestScore = NewScore;
+                    BestPS = NextPlayerState;
+                }
+            }
+        }
+    }
 
+    if (BestPS && (BestPS != LastSpectatedPlayerState))
+    {
+        ViewPlayerState(BestPS);
+        BehindView(bSpectateBehindView);
+    }
 }
 
 
 void ANZPlayerController::SetViewTarget(class AActor* NewViewTarget, FViewTargetTransitionParams TransitionParams)
 {
-    // remove any FOV shifts when changing targets (e.g. sniper zoom)
+    // Remove any FOV shifts when changing targets (e.g. sniper zoom)
     if (PlayerCameraManager != NULL)
     {
         PlayerCameraManager->UnlockFOV();
@@ -521,6 +606,21 @@ void ANZPlayerController::FindGoodView(const FVector& Targetloc, bool bIsUpdate)
     // todo:
 }
 
+void ANZPlayerController::ClientViewSpectatorPawn_Implementation(FViewTargetTransitionParams TransitionParams)
+{
+    
+}
+
+void ANZPlayerController::ViewPlayerNum(int32 Index, uint8 TeamNum)
+{
+    
+}
+
+void ANZPlayerController::ViewNextPlayer()
+{
+    
+}
+
 void ANZPlayerController::ServerViewFlagHolder_Implementation(uint8 TeamIndex)
 {
     // todo:
@@ -530,6 +630,60 @@ bool ANZPlayerController::ServerViewFlagHolder_Validate(uint8 TeamIndex)
 {
     return true;
 }
+
+void ANZPlayerController::ServerViewProjectile_Implementation()
+{
+    
+}
+
+bool ANZPlayerController::ServerViewProjectile_Validate()
+{
+    return true;
+}
+
+void ANZPlayerController::ViewProjectile()
+{
+    
+}
+
+void ANZPlayerController::ServerViewProjectileShim()
+{
+    
+}
+
+void ANZPlayerController::ServerViewPlayerState_Implementation(APlayerState* PS)
+{
+    
+}
+
+bool ANZPlayerController::ServerViewPlayerState_Validate(APlayerState* PS)
+{
+    return true;
+}
+
+void ANZPlayerController::ViewPlayerState(APlayerState* PS)
+{
+    
+}
+
+void ANZPlayerController::ViewClosestVisiblePlayer()
+{
+    
+}
+
+void ANZPlayerController::ViewFlag(uint8 Index)
+{
+    
+}
+
+void ANZPlayerController::ViewCamera(int32 Index)
+{
+    
+}
+
+
+
+
 
 void ANZPlayerController::Possess(APawn* PawnToPossess)
 {
@@ -1147,6 +1301,31 @@ void ANZPlayerController::FOV(float NewFOV)
         SaveConfig();
     }
 }
+
+void ANZPlayerController::ServerViewPawn_Implementation(APawn* PawnToView)
+{
+    // Don't view other pawns when we already have a pawn
+    if (GetPawn() != NULL)
+    {
+        return;
+    }
+    
+    if (PawnToView)
+    {
+        SetViewTarget(PawnToView->PlayerState);
+    }
+}
+
+bool ANZPlayerController::ServerViewPawn_Validate(APawn* PawnToView)
+{
+    return true;
+}
+
+void ANZPlayerController::ViewPawn(APawn* PawnToView)
+{
+    ServerViewPawn(PawnToView);
+}
+
 
 void ANZPlayerController::Suicide()
 {

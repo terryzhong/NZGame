@@ -88,6 +88,9 @@ public:
     UFUNCTION(Server, Reliable, WithValidation)
     virtual void ServerSwitchTeam();
     
+    UPROPERTY(Replicated, BlueprintReadWrite, Category = Camera)
+    bool bAllowPlayingBehindView;
+    
     /** 193 */
     UFUNCTION(exec)
     virtual void BehindView(bool bWantBehindView);
@@ -96,6 +99,11 @@ public:
     virtual void SetCameraMode(FName NewCamMode);
     virtual void ClientSetCameraMode_Implementation(FName NewCamMode) override;
     virtual void ClientGameEnded_Implementation(AActor* EndGameFocus, bool bIsWinner) override;
+    
+    /** Timer function to bring up scoreboard after end of game */
+    virtual void ShowEndGameScoreboard();
+    
+    void TurnOffPawns();
     
 	/** Handles bWantsBehindView */
 	virtual void ResetCameraMode() override;
@@ -114,6 +122,14 @@ public:
     UFUNCTION()
     virtual void FindGoodView(const FVector& Targetloc, bool bIsUpdate);
     
+    UFUNCTION(Client, Reliable)
+    void ClientViewSpectatorPawn(FViewTargetTransitionParams TransitionParams);
+    
+    UFUNCTION(exec)
+    virtual void ViewPlayerNum(int32 Index, uint8 TeamNum = 255);
+    
+    UFUNCTION(exec)
+    virtual void ViewNextPlayer();
     
     /** View player holding flag specified by TeamIndex */
     UFUNCTION(Unreliable, Server, WithValidation)
@@ -123,6 +139,30 @@ public:
      Set when request view projectile if no projectile find, keep looking */
     UPROPERTY()
     float ViewProjectileTime;
+
+    /** View last projectile fired by currently viewed player */
+    UFUNCTION(Unreliable, Server, WithValidation)
+    void ServerViewProjectile();
+    
+    UFUNCTION(exec)
+    virtual void ViewProjectile();
+    
+    virtual void ServerViewProjectileShim();
+   
+    /** View character associated with playerstate */
+    UFUNCTION(Unreliable, Server, WithValidation)
+    void ServerViewPlayerState(APlayerState* PS);
+    
+    virtual void ViewPlayerState(APlayerState* PS);
+    
+    UFUNCTION(exec)
+    virtual void ViewClosestVisiblePlayer();
+    
+    UFUNCTION(exec)
+    virtual void ViewFlag(uint8 Index);
+    
+    UFUNCTION(exec)
+    virtual void ViewCamera(int32 Index);
     
     
     /** Enables auto best camera for spectators */
@@ -355,6 +395,11 @@ public:
     
     UPROPERTY()
     int32 LastSpectatedPlayerId;
+    
+    UFUNCTION(Server, Reliable, WithValidation)
+    virtual void ServerViewPawn(APawn* PawnToView);
+    
+    virtual void ViewPawn(APawn* PawnToView);
     
     
     

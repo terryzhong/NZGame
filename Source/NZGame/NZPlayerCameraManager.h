@@ -22,4 +22,9 @@ public:
      */
     virtual FName GetCameraStyleWithOverrides() const;
 	
+    /** 85
+     Rate player as camera focus for spectating */
+    virtual float RatePlayerCamera(class ANZPlayerState* InPS, class ANZCharacter* Character, APlayerState* CurrentCamPS);
+    
+    
 };

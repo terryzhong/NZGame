@@ -72,6 +72,38 @@ public:
     
     virtual void Destroyed() override;
     
+    /** 813 */
+    virtual bool ShouldTakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const override;
+    
+    virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
+    
+    /**
+     * Returns location of head (origin of headshot zone)
+     * Will force a skeleton update if mesh hasn't been rendered (or dedicated server) so the provided position is accurate
+     */
+    virtual FVector GetHeadLocation(float PredictionTime = 0.f);
+    
+    /** Checks for a head shot - called by weapons with head shot bonuses */
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual bool IsHeadShot(FVector HitLocation, FVector ShotDirection, float WeaponHeadScaling, ANZCharacter* ShotInstigator, float PredictionTime = 0.f);
+    
+    virtual void NotifyTakeHit(AController* InstigatedBy, int32 AppliedDamage, int32 Damage, FVector Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent);
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCosmetic)
+    void PlayTakeHitEffects();
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintCosmetic)
+    void PlayDamageEffects();
+    
+    /**
+     * Called when we die (generally, by running out of health)
+     * SERVER ONLY - do not do visual effects here!
+     * Return true if we can die, false if immortal (gametype effect, powerup, mutator, etc)
+     */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DisplayName = "Died"), Category = Pawn)
+    bool K2_Died(AController* EventInstigator, TSubclassOf<UDamageType> DamageType);
+    virtual void Died(AController* EventInstigator, const FDamageEvent& DamageEvent);
+    
 
     /** First person arm mesh */
     UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
@@ -409,8 +441,17 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
     TArray<TSubclassOf<ANZInventory> > DefaultCharacterInventory;
 
+    // Ambient sounds
+protected:
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = AmbientSoundUpdated, Category = Audio)
+    USoundBase* AmbientSound;
     
+public:
+    UFUNCTION(BlueprintCallable, Category = Audio)
+    virtual void SetAmbientSound(USoundBase* NewAmbientSound, bool bClear = false);
     
+    UFUNCTION()
+    void AmbientSoundUpdated();
     
     
     UPROPERTY()

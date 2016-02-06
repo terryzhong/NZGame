@@ -34,3 +34,7 @@ FName ANZPlayerCameraManager::GetCameraStyleWithOverrides() const
     return (GameState != NULL) ? GameState->OverrideCameraStyle(PCOwner, CameraStyle) : CameraStyle;
 }
 
+float ANZPlayerCameraManager::RatePlayerCamera(ANZPlayerState* InPS, ANZCharacter* Character, APlayerState* CurrentCamPS)
+{
+    return 0.f;
+}
