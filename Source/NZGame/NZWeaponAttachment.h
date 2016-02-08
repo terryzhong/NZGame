@@ -5,7 +5,11 @@
 #include "GameFramework/Actor.h"
 #include "NZWeaponAttachment.generated.h"
 
-UCLASS()
+/**
+ * The third person representation of a weapon
+ * Not spawned on dedicated servers
+ */
+UCLASS(Blueprintable, NotPlaceable, Abstract)
 class NZGAME_API ANZWeaponAttachment : public AActor
 {
 	GENERATED_BODY()
@@ -13,9 +17,6 @@ class NZGAME_API ANZWeaponAttachment : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ANZWeaponAttachment();
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 protected:
     /** Weapon class that resulted in this attachment; set at spawn time so no need to be reflexive here, just set AttachmentType in NZWeapon */
@@ -53,6 +54,16 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Pickup)
     FVector PickupScaleOverride;
     
+    /** Third person mesh attach point */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    FName HolsterSocket;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    FVector HolsterOffset;
+    
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Weapon)
+    FRotator HolsterRotation;
+    
     /** If true, don't spawn impact effect. Used for hitscan hits, skips by default for pawn and projectile hits */
     UFUNCTION(BlueprintCallable, Category = Weapon)
     virtual bool CancelImpactEffect(const FHitResult& ImpactHit);
@@ -66,7 +77,7 @@ public:
     
     /** Optional effect for instant hit endpoint */
     UPROPERTY(EditAnywhere, Category = Weapon)
-    TArray<TSubclassOf<class ANZImpactEffect> > ImpactEffects;
+    TArray<TSubclassOf<class ANZImpactEffect> > ImpactEffect;
     
     /** Throttling for impact effects - don't spawn another unless last effect is farther than this away or longer age than MaxImpactEffectSkipTime */
     UPROPERTY(EditAnywhere, Category = Weapon)
@@ -86,7 +97,7 @@ public:
     
 	/** If set, get impact effect from weapon class (most weapons use game instant hit impact for 1p and 3p) */
     UPROPERTY(EditDefaultsOnly, Category = Weapon)
-    bool bCopyWeaponImpactEffects;
+    bool bCopyWeaponImpactEffect;
     
     /** Optional bullet whip sound when instant hit shots pass close by a local player without hitting */
     UPROPERTY(EditDefaultsOnly, Category = Weapon)
@@ -96,17 +107,66 @@ public:
     UPROPERTY(EditDefaultsOnly, Category = Weapon)
     float MaxBulletWhipDist;
     
-    
-    
+    virtual void BeginPlay() override;
+    virtual void RegisterAllComponents() override;
+    virtual void Destroyed() override;
     
     UFUNCTION(BlueprintNativeEvent)
     void AttachToOwner();
-    virtual void AttachToOwnerNative();
     
     UFUNCTION(BlueprintNativeEvent)
     void DetachFromOwner();
     
+    UFUNCTION(BlueprintNativeEvent)
+    void HolsterToOwner();
     
+    /** Blueprint hook to modify spawned instance of FireEffect (e.g. tracer or beam) */
+    UFUNCTION(BlueprintImplementableEvent, Category = Weapon)
+    void ModifyFireEffect(UParticleSystemComponent* Effect);
     
-	
+    /**
+     * Play firing effects (both muzzle flash and any tracers/beams/impact effects)
+     * Use NZOwner's FlashLocation and FireMode to determine firing data
+     * Don't play sounds as those are played/replicated from NZWeapon by the server as the Pawn/WeaponAttachment may not be relevant
+     */
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void PlayFiringEffects();
+    
+    /**
+     * Called when FlashExtra on the owner is changed
+     * Some weapons may use this to display intermediate firing states (e.g. charging)
+     * or to provide extra data to a normal firing sequence (e.g. rocket type used for rocket launcher fire)
+     */
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void FiringExtraUpdated();
+
+    /** Stop any looping fire effects */
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void StopFiringEffects(bool bIgnoreCurrentMode = false);
+    
+    virtual void AttachToOwnerNative();
+    
+    virtual void HolsterToOwnerNative();
+    
+    /**
+     * Default prarmeters set on overlay particle effect (if any)
+     * up to the effect to care about them
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Effects)
+    TArray<struct FParticleSysParam> OverlayEffectParams;
+    
+    /** Read WeaponOverlayFlags from owner and apply the appropriate overlay material (if any) */
+    virtual void UpdateOverlays();
+    
+    /** Set main skin override for the weapon, NULL to restore to default */
+    virtual void SetSkin(UMaterialInterface* NewSkin);
+    
+    UFUNCTION(BlueprintCallable, Category = Weapon)
+    virtual void PlayBulletWhip();
+    
+    virtual void MarkComponentsAsPendingKill() override;
+
+    /** Blueprint hook to modify team color materials */
+    UFUNCTION(BlueprintImplementableEvent, Category = Weapon)
+    void NotifyTeamChanged();
 };

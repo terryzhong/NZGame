@@ -13,7 +13,18 @@ class NZGAME_API UNZProjectileMovementComponent : public UProjectileMovementComp
 {
 	GENERATED_BODY()
 	
-	
+public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile)
+    float AccelRate;
+    
+    UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = Projectile)
+    FVector Acceleration;
+    
+    UPROPERTY(Replicated)
+    FVector ReplicatedAcceleration;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Projectile, Meta = (EditCondition = "!bBounce"))
+    float HitZStopSimulatingThreshold;
 	
 	
 };

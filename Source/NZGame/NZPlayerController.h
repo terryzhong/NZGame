@@ -76,6 +76,12 @@ public:
     virtual void ProcessPlayerInput(const float DeltaTime, const bool bGamePaused) override;
     virtual void PawnPendingDestroy(APawn* InPawn) override;
     
+    virtual void HearSound(USoundBase* InSoundCue, AActor* SoundPlayer, const FVector& SoundLocation, bool bStopWhenOwnerDestroyed, bool bAmplifyVolume);
+    
+    UFUNCTION(Client, Unreliable)
+    void ClientHearSound(USoundBase* TheSound, AActor* SoundPlayer, FVector_NetQuantize SoundLocation, bool bStopWhenOwnerDestroyed, bool bOccluded, bool bAmplifyVolume);
+    
+    
     /** 167 */
     virtual void UpdateHiddenComponents(const FVector& ViewLocation, TSet<FPrimitiveComponentId>& HiddenComponents);
     

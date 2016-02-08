@@ -7,6 +7,13 @@ IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, NZGame, "NZGame" );
 
 
 
+FCollisionResponseParams WorldResponseParams = []()
+{
+    FCollisionResponseParams Result(ECR_Ignore);
+    Result.CollisionResponse.WorldStatic = ECR_Block;
+    Result.CollisionResponse.WorldDynamic = ECR_Block;
+    return Result;
+}();
 
 #include "Particles/ParticleSystemComponent.h"
 #include "Particles/ParticleModuleRequired.h"

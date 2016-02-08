@@ -236,6 +236,16 @@ void ANZPlayerController::PawnPendingDestroy(APawn* InPawn)
     }
 }
 
+void ANZPlayerController::HearSound(USoundBase* InSoundCue, AActor* SoundPlayer, const FVector& SoundLocation, bool bStopWhenOwnerDestroyed, bool bAmplifyVolume)
+{
+    
+}
+
+void ANZPlayerController::ClientHearSound_Implementation(USoundBase* TheSound, AActor* SoundPlayer, FVector_NetQuantize SoundLocation, bool bStopWhenOwnerDestroyed, bool bOccluded, bool bAmplifyVolume)
+{
+    
+}
+
 static void HideComponentTree(const UPrimitiveComponent* Primitive, TSet<FPrimitiveComponentId>& HiddenComponents)
 {
     if (Primitive != NULL)
@@ -840,21 +850,36 @@ void ANZPlayerController::ClientSwitchToBestWeapon_Implementation()
 	SwitchToBestWeapon();
 }
 
-
 void ANZPlayerController::PrevWeapon()
 {
+    SwitchWeaponInSequence(true);
 }
 
 void ANZPlayerController::NextWeapon()
 {
+    SwitchWeaponInSequence(false);
 }
 
 void ANZPlayerController::ThrowWeapon()
 {
+    if (NZCharacter != NULL && IsLocalPlayerController() && !NZCharacter->IsRagdoll())
+    {
+        if (NZCharacter->GetWeapon() != NULL && NZCharacter->GetWeapon()->DroppedPickupClass != NULL && NZCharacter->GetWeapon()->bCanThrowWeapon)
+        {
+            ServerThrowWeapon();
+        }
+    }
 }
 
 void ANZPlayerController::ServerThrowWeapon_Implementation()
 {
+    if (NZCharacter != NULL && !NZCharacter->IsRagdoll())
+    {
+        if (NZCharacter->GetWeapon() != NULL && NZCharacter->GetWeapon()->DroppedPickupClass != NULL && NZCharacter->GetWeapon()->bCanThrowWeapon && !NZCharacter->GetWeapon()->IsFiring())
+        {
+            NZCharacter->TossInventory(NZCharacter->GetWeapon(), FVector(400.0f, 0.0f, 200.0f));
+        }
+    }
 }
 
 bool ANZPlayerController::ServerThrowWeapon_Validate()
@@ -918,7 +943,19 @@ void ANZPlayerController::SwitchWeaponInSequence(bool bPrev)
             Offset *= -1.f;
         }
         
-        // todo:
+        ASpectatorPawn* Spectator = Cast<ASpectatorPawn>(GetViewTarget());
+        if (!Spectator)
+        {
+            PlayerCameraManager->FreeCamDistance = FMath::Clamp(PlayerCameraManager->FreeCamDistance + Offset, 16.f, 2048.f);
+        }
+        else
+        {
+            USpectatorPawnMovement* SpectatorMovement = Cast<USpectatorPawnMovement>(Spectator->GetMovementComponent());
+            if (SpectatorMovement)
+            {
+                SpectatorMovement->MaxSpeed = FMath::Clamp(SpectatorMovement->MaxSpeed + 5.f * Offset, 200.f, 6000.f);
+            }
+        }
     }
 }
 
@@ -1204,20 +1241,14 @@ bool ANZPlayerController::HasDeferredFireInputs()
 
 float ANZPlayerController::GetPredictionTime()
 {
-    // todo:
-    check(false);
-    return 0.f;
     // Exact ping is in msec, devide by 1000 to get time in seconds
     //if (Role == ROLE_Authority) { UE_LOG(NZ, Warning, TEXT("Server ExactPing %f"), PlayerState->ExactPing); }
-    //return (PlayerState && (GetNetMode() != NM_Standalone)) ? (0.0005f * FMath::Clamp(PlayerState->ExactPing - PredictionFudgeFactor, 0.f, MaxPredictionPing)) : 0.f;
+    return (PlayerState && (GetNetMode() != NM_Standalone)) ? (0.0005f * FMath::Clamp(PlayerState->ExactPing - PredictionFudgeFactor, 0.f, MaxPredictionPing)) : 0.f;
 }
 
 float ANZPlayerController::GetProjectileSleepTime()
 {
-    // todo:
-    check(false);
-    return 0.f;
-    //return 0.001f * FMath::Max(0.f, PlayerState->ExactPing - PredictionFudgeFactor - MaxPredictionPing);
+    return 0.001f * FMath::Max(0.f, PlayerState->ExactPing - PredictionFudgeFactor - MaxPredictionPing);
 }
 
 void ANZPlayerController::ServerBouncePing_Implementation(float TimeStamp)

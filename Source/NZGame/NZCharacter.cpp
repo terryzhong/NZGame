@@ -823,14 +823,71 @@ void ANZCharacter::ClearFiringInfo()
 
 void ANZCharacter::FiringInfoUpdated()
 {
-    // todo:
-    check(false);
+    UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+    if (AnimInstance != NULL)
+    {
+        AnimInstance->Montage_Stop(0.2f);
+    }
+    
+    ANZPlayerController* NZPC = GetLocalViewer();
+    if ((bLocalFlashLoc || NZPC == NULL || NZPC->GetPredictionTime() == 0.f || !IsLocallyControlled()) && Weapon != NULL && Weapon->ShouldPlay1PVisuals())
+    {
+        if (!FlashLocation.IsZero())
+        {
+            uint8 EffectFiringMode = Weapon->GetCurrentFireMode();
+            // If non-local first person spectator, also play firing effects from here
+            if (Controller == NULL)
+            {
+                EffectFiringMode = FireMode;
+                Weapon->FiringInfoUpdated(FireMode, FlashCount, FlashLocation);
+                Weapon->FiringEffectsUpdated(FireMode, FlashLocation);
+            }
+            else
+            {
+                FVector SpawnLocation;
+                FRotator SpawnRotation;
+                Weapon->GetImpactSpawnPosition(FlashLocation, SpawnLocation, SpawnRotation);
+                Weapon->PlayImpactEffects(FlashLocation, EffectFiringMode, SpawnLocation, SpawnRotation);
+            }
+        }
+        else if (Controller == NULL)
+        {
+            Weapon->FiringInfoUpdated(FireMode, FlashCount, FlashLocation);
+        }
+        if (FlashCount == 0 && FlashLocation.IsZero() && WeaponAttachment != NULL)
+        {
+            WeaponAttachment->StopFiringEffects();
+        }
+    }
+    else if (WeaponAttachment != NULL)
+    {
+        if (FlashCount != 0 || !FlashLocation.IsZero())
+        {
+            if (!IsLocallyControlled() || NZPC == NULL || NZPC->IsBehindView())
+            {
+                WeaponAttachment->PlayFiringEffects();
+            }
+        }
+        else
+        {
+            // Always call Stop to avoid effects mismatches where we switched view modes during a firing sequence
+            // and some effect ends up being left on forever
+            WeaponAttachment->StopFiringEffects();
+        }
+    }
 }
 
 void ANZCharacter::FiringExtraUpdated()
 {
-    // todo:
-    check(false);
+    ANZPlayerController* NZPC = Cast<ANZPlayerController>(Controller);
+    if (WeaponAttachment != NULL && (!IsLocallyControlled() || NZPC == NULL || NZPC->IsBehindView()))
+    {
+        WeaponAttachment->FiringExtraUpdated();
+    }
+    if (Weapon != NULL && NZPC == NULL)
+    {
+        Weapon->FiringExtraUpdated(FlashExtra, FireMode);
+    }
 }
 
 void ANZCharacter::FiringInfoReplicated()
@@ -840,7 +897,6 @@ void ANZCharacter::FiringInfoReplicated()
         FiringInfoUpdated();
     }
 }
-
 
 void ANZCharacter::UpdateWeaponAttachment()
 {
@@ -874,7 +930,27 @@ void ANZCharacter::UpdateWeaponAttachment()
 
 void ANZCharacter::UpdateHolsteredWeaponAttachment()
 {
-    
+    if (GetNetMode() != NM_DedicatedServer)
+    {
+        TSubclassOf<ANZWeaponAttachment> NewAttachmentClass = HolsteredWeaponAttachmentClass;
+        if (HolsteredWeaponAttachment != NULL &&
+            (NewAttachmentClass == NULL || (HolsteredWeaponAttachment != NULL && HolsteredWeaponAttachment->GetClass() != NewAttachmentClass)))
+        {
+            HolsteredWeaponAttachment->Destroy();
+            HolsteredWeaponAttachment = NULL;
+        }
+        if (HolsteredWeaponAttachment == NULL && NewAttachmentClass != NULL)
+        {
+            FActorSpawnParameters Params;
+            Params.Instigator = this;
+            Params.Owner = this;
+            HolsteredWeaponAttachment = GetWorld()->SpawnActor<ANZWeaponAttachment>(NewAttachmentClass, Params);
+            if (HolsteredWeaponAttachment != NULL)
+            {
+                HolsteredWeaponAttachment->HolsterToOwner();
+            }
+        }
+    }
 }
 
 

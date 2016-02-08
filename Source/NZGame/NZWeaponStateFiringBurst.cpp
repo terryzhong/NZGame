@@ -31,6 +31,34 @@ void UNZWeaponStateFiringBurst::UpdateTiming()
 
 void UNZWeaponStateFiringBurst::RefireCheckTimer()
 {
+    uint8 CurrentFireMode = GetOuterANZWeapon()->GetCurrentFireMode();
+    if (GetOuterANZWeapon()->GetNZOwner()->GetPendingWeapon() != NULL || !GetOuterANZWeapon()->HasAmmo(CurrentFireMode))
+    {
+        GetOuterANZWeapon()->GotoActiveState();
+    }
+    else if ((CurrentShot < BurstSize) || GetOuterANZWeapon()->GetNZOwner()->IsPendingFire(CurrentFireMode))
+    {
+        if (CurrentShot == BurstSize)
+        {
+            CurrentShot = 0;
+            if (GetOuterANZWeapon()->Spread.IsValidIndex(CurrentFireMode))
+            {
+                GetOuterANZWeapon()->Spread[CurrentFireMode] = 0.f;
+            }
+        }
+        GetOuterANZWeapon()->OnContinuedFiring();
+        FireShot();
+        CurrentShot++;
+        if (GetOuterANZWeapon()->Spread.IsValidIndex(CurrentFireMode))
+        {
+            GetOuterANZWeapon()->Spread[CurrentFireMode] += SpreadIncrease;
+        }
+        IncrementShotTimer();
+    }
+    else
+    {
+        GetOuterANZWeapon()->GotoActiveState();
+    }
 }
 
 void UNZWeaponStateFiringBurst::Tick(float DeltaTime)

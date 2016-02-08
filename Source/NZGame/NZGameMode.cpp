@@ -17,8 +17,8 @@ ANZGameMode::ANZGameMode()
 
     //HUDClass = ANZHUD::StaticClass();
     
-    //GameStateClass = ANZGameState::StaticClass();
-    //PlayerStateClass = ANZPlayerState::StaticClass();
+    GameStateClass = ANZGameState::StaticClass();
+    PlayerStateClass = ANZPlayerState::StaticClass();
     
     PlayerControllerClass = ANZPlayerController::StaticClass();
     

@@ -14,6 +14,9 @@
 #define COLLISION_TRANSDISK     ECC_GameTraceChannel7
 
 
+/** Handy response params for world-only checks */
+extern FCollisionResponseParams WorldResponseParams;
+
 /** Utility to find out if a particle system loops */
 extern bool IsLoopingParticleSystem(const UParticleSystem* PSys);
 

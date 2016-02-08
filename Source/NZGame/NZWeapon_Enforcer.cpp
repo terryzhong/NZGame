@@ -60,7 +60,7 @@ ANZWeapon_Enforcer::ANZWeapon_Enforcer()
 void ANZWeapon_Enforcer::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
+    DOREPLIFETIME_CONDITION(ANZWeapon_Enforcer, bBecomeDual, COND_None);
 }
 
 float ANZWeapon_Enforcer::GetBringUpTime()
@@ -92,10 +92,11 @@ void ANZWeapon_Enforcer::UpdateViewBob(float DeltaTime)
 
 void ANZWeapon_Enforcer::PlayFiringEffects()
 {
-    UNZWeaponStateFiringBurstEnforcer* BurstFireMode = Cast<UNZWeaponStateFiringBurstEnforcer>(FiringState[GetCurrentFireMode()]);
+    UNZWeaponStateFiringBurstEnforcer* BurstFireMode = Cast<UNZWeaponStateFiringBurstEnforcer>(FiringState[CurrentFireMode]);
     
     if (NZOwner != NULL)
     {
+        // Fire on right side by default, unless dual and bFireLeftSide
         if (!bDualEnforcerMode || (BurstFireMode ? (FireCount / BurstFireMode->BurstSize == 0) : !bFireLeftSide))
         {
             if (!BurstFireMode || BurstFireMode->CurrentShot == 0)
@@ -106,7 +107,9 @@ void ANZWeapon_Enforcer::PlayFiringEffects()
             {
                 NZOwner->TargetEyeOffset.X = FiringViewKickback;
                 // Muzzle flash
-                if (MuzzleFlash.IsValidIndex(CurrentFireMode) && MuzzleFlash[CurrentFireMode] != NULL && MuzzleFlash[CurrentFireMode]->Template != NULL)
+                if (MuzzleFlash.IsValidIndex(CurrentFireMode) &&
+                    MuzzleFlash[CurrentFireMode] != NULL &&
+                    MuzzleFlash[CurrentFireMode]->Template != NULL)
                 {
                     // If we detect a looping particle system, then don't reactivate it
                     if (!MuzzleFlash[CurrentFireMode]->bIsActive || !IsLoopingParticleSystem(MuzzleFlash[CurrentFireMode]->Template))
@@ -119,14 +122,19 @@ void ANZWeapon_Enforcer::PlayFiringEffects()
         else
         {
             // Try and play the sound if specified
-            if ((!BurstFireMode || BurstFireMode->CurrentShot == 0) && FireSound.IsValidIndex(CurrentFireMode) && FireSound[CurrentFireMode] != NULL)
+            if ((!BurstFireMode || BurstFireMode->CurrentShot == 0) &&
+                FireSound.IsValidIndex(CurrentFireMode) &&
+                FireSound[CurrentFireMode] != NULL)
             {
                 UNZGameplayStatics::NZPlaySound(GetWorld(), FireSound[CurrentFireMode], NZOwner, SRT_AllButOwner);
             }
             
             if (ShouldPlay1PVisuals())
             {
-                if ((!BurstFireMode || BurstFireMode->CurrentShot == 0) && FireAnimation.IsValidIndex(CurrentFireMode) && FireAnimation[CurrentFireMode] != NULL)
+                // Try and play a firing animation if specified
+                if ((!BurstFireMode || BurstFireMode->CurrentShot == 0) &&
+                    FireAnimation.IsValidIndex(CurrentFireMode) &&
+                    FireAnimation[CurrentFireMode] != NULL)
                 {
                     UAnimInstance* AnimInstance = LeftMesh->GetAnimInstance();
                     if (AnimInstance != NULL)
@@ -136,11 +144,16 @@ void ANZWeapon_Enforcer::PlayFiringEffects()
                 }
                 
                 NZOwner->TargetEyeOffset.X = FiringViewKickback;
-                
+                // Muzzle flash
                 uint8 LeftHandMuzzleFlashIndex = CurrentFireMode + 2;
-                if (MuzzleFlash.IsValidIndex(LeftHandMuzzleFlashIndex) && MuzzleFlash[LeftHandMuzzleFlashIndex] != NULL && MuzzleFlash[LeftHandMuzzleFlashIndex]->Template != NULL)
+                if (MuzzleFlash.IsValidIndex(LeftHandMuzzleFlashIndex) &&
+                    MuzzleFlash[LeftHandMuzzleFlashIndex] != NULL &&
+                    MuzzleFlash[LeftHandMuzzleFlashIndex]->Template != NULL)
                 {
-                    if (!MuzzleFlash[LeftHandMuzzleFlashIndex]->bIsActive || MuzzleFlash[LeftHandMuzzleFlashIndex]->bSuppressSpawning || !IsLoopingParticleSystem(MuzzleFlash[LeftHandMuzzleFlashIndex]->Template))
+                    // If we detect a looping particle system, then don't reactivate it
+                    if (!MuzzleFlash[LeftHandMuzzleFlashIndex]->bIsActive ||
+                        MuzzleFlash[LeftHandMuzzleFlashIndex]->bSuppressSpawning ||
+                        !IsLoopingParticleSystem(MuzzleFlash[LeftHandMuzzleFlashIndex]->Template))
                     {
                         MuzzleFlash[LeftHandMuzzleFlashIndex]->ActivateSystem();
                     }
@@ -197,7 +210,64 @@ void ANZWeapon_Enforcer::BringUp(float OverflowTime)
 
 void ANZWeapon_Enforcer::PlayImpactEffects(const FVector& TargetLoc, uint8 FireMode, const FVector& SpawnLocation, const FRotator& SpawnRotation)
 {
-
+    UNZWeaponStateFiringBurst* BurstFireMode = Cast<UNZWeaponStateFiringBurst>(FiringState[CurrentFireMode]);
+    if (GetNetMode() != NM_DedicatedServer)
+    {
+        if (bDualEnforcerMode && (BurstFireMode ? (FireCount / BurstFireMode->BurstSize != 0) : bFireLeftSide))
+        {
+            // Fire effects
+            static FName NAME_HitLocation(TEXT("HitLocation"));
+            static FName NAME_LocalHitLocation(TEXT("LocalHitLocation"));
+            
+            // TODO: This is a really ugly solution, what if somebody modifies this later
+            // Is the best solution really to split out a separate MuzzleFlash too??
+            uint8 LeftHandMuzzleFlashIndex = CurrentFireMode + 2;
+            const FVector LeftSpawnLocation = (MuzzleFlash.IsValidIndex(LeftHandMuzzleFlashIndex) && MuzzleFlash[LeftHandMuzzleFlashIndex] != NULL)
+                ? MuzzleFlash[LeftHandMuzzleFlashIndex]->GetComponentLocation()
+                : NZOwner->GetActorLocation() + NZOwner->GetControlRotation().RotateVector(FireOffset);
+            if (FireEffect.IsValidIndex(CurrentFireMode) && FireEffect[CurrentFireMode] != NULL)
+            {
+                UParticleSystemComponent* PSC = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FireEffect[CurrentFireMode], LeftSpawnLocation, (MuzzleFlash.IsValidIndex(LeftHandMuzzleFlashIndex) && MuzzleFlash[LeftHandMuzzleFlashIndex] != NULL) ? MuzzleFlash[LeftHandMuzzleFlashIndex]->GetComponentRotation() : (TargetLoc - SpawnLocation).Rotation(), true);
+                FVector AdjustedTargetLoc = ((TargetLoc - LeftSpawnLocation).SizeSquared() > 4000000.f)
+                    ? LeftSpawnLocation + MaxTracerDist * (TargetLoc - LeftSpawnLocation).GetSafeNormal()
+                    : TargetLoc;
+                PSC->SetVectorParameter(NAME_HitLocation, AdjustedTargetLoc);
+                PSC->SetVectorParameter(NAME_LocalHitLocation, PSC->ComponentToWorld.InverseTransformPosition(AdjustedTargetLoc));
+            }
+            // Perhaps the muzzle flash also contains hit effect (constant beam, etc) so set the parameter on it instead
+            else if (MuzzleFlash.IsValidIndex(LeftHandMuzzleFlashIndex) && MuzzleFlash[LeftHandMuzzleFlashIndex] != NULL)
+            {
+                MuzzleFlash[LeftHandMuzzleFlashIndex]->SetVectorParameter(NAME_HitLocation, TargetLoc);
+                MuzzleFlash[LeftHandMuzzleFlashIndex]->SetVectorParameter(NAME_LocalHitLocation, MuzzleFlash[LeftHandMuzzleFlashIndex]->ComponentToWorld.InverseTransformPositionNoScale(TargetLoc));
+            }
+            
+            if ((TargetLoc - LastImpactEffectLocation).Size() >= ImpactEffectSkipDistance ||
+                GetWorld()->TimeSeconds - LastImpactEffectTime >= MaxImpactEffectSkipTime)
+            {
+                if (ImpactEffect.IsValidIndex(CurrentFireMode) && ImpactEffect[CurrentFireMode] != NULL)
+                {
+                    FHitResult ImpactHit = GetImpactEffectHit(NZOwner, LeftSpawnLocation, TargetLoc);
+                    if (!CancelImpactEffect(ImpactHit))
+                    {
+                        ImpactEffect[CurrentFireMode].GetDefaultObject()->SpawnEffect(GetWorld(), FTransform(ImpactHit.Normal.Rotation(), ImpactHit.Location), ImpactHit.Component.Get(), NULL, NZOwner->Controller);
+                    }
+                }
+                LastImpactEffectLocation = TargetLoc;
+                LastImpactEffectTime = GetWorld()->TimeSeconds;
+            }
+        }
+        else
+        {
+            Super::PlayImpactEffects(TargetLoc, FireMode, SpawnLocation, SpawnRotation);
+        }
+        
+        ImpactCount++;
+        
+        if ((BurstFireMode && ImpactCount >= BurstFireMode->BurstSize * 2) || (!BurstFireMode && ImpactCount > 1))
+        {
+            ImpactCount = 0;
+        }
+    }
 }
 
 void ANZWeapon_Enforcer::UpdateOverlays()
@@ -227,7 +297,16 @@ void ANZWeapon_Enforcer::FireShot()
 {
 	Super::FireShot();
 
-	// todo:
+	if (GetNetMode() != NM_DedicatedServer)
+    {
+        FireCount++;
+        
+        UNZWeaponStateFiringBurst* BurstFireMode = Cast<UNZWeaponStateFiringBurst>(FiringState[CurrentFireMode]);
+        if ((BurstFireMode && FireCount >= BurstFireMode->BurstSize * 2) || (!BurstFireMode && FireCount > 1))
+        {
+            FireCount = 0;
+        }
+    }
 }
 
 void ANZWeapon_Enforcer::StateChanged()
@@ -245,7 +324,33 @@ void ANZWeapon_Enforcer::UpdateWeaponHand()
 {
 	Super::UpdateWeaponHand();
 
-	// todo:
+	if (bDualEnforcerMode)
+    {
+        FirstPLeftMeshOffset = FVector::ZeroVector;
+        FirstPLeftMeshRotation = FRotator::ZeroRotator;
+        
+        switch (GetWeaponHand())
+        {
+            case HAND_Center:
+                //UE_LOG(NZ, Warning, TEXT("HAND_Center is not implemented yet!"));
+            case HAND_Right:
+                LeftMesh->SetRelativeLocationAndRotation(GetClass()->GetDefaultObject<ANZWeapon_Enforcer>()->LeftMesh->RelativeLocation, GetClass()->GetDefaultObject<ANZWeapon_Enforcer>()->LeftMesh->RelativeRotation);
+                break;
+            case HAND_Left:
+            {
+                // Swap
+                LeftMesh->SetRelativeLocationAndRotation(GetClass()->GetDefaultObject<ANZWeapon_Enforcer>()->Mesh->RelativeLocation, GetClass()->GetDefaultObject<ANZWeapon_Enforcer>()->Mesh->RelativeRotation);
+                Mesh->SetRelativeLocationAndRotation(GetClass()->GetDefaultObject<ANZWeapon_Enforcer>()->LeftMesh->RelativeLocation, GetClass()->GetDefaultObject<ANZWeapon_Enforcer>()->LeftMesh->RelativeRotation);
+                break;
+            }
+            case HAND_Hidden:
+            {
+                Mesh->SetRelativeLocationAndRotation(FVector(-50.0f, 20.0f, -50.0f), FRotator::ZeroRotator);
+                LeftMesh->SetRelativeLocationAndRotation(FVector(-50.0f, -20.0f, -50.0f), FRotator::ZeroRotator);
+                break;
+            }
+        }
+    }
 }
 
 TArray<UMeshComponent*> ANZWeapon_Enforcer::Get1PMeshes_Implementation() const
@@ -281,7 +386,10 @@ void ANZWeapon_Enforcer::BecomeDual()
 
 float ANZWeapon_Enforcer::GetImpartedMomentumMag(AActor* HitActor)
 {
-	return 0.f;
+    ANZCharacter* HitChar = Cast<ANZCharacter>(HitActor);
+    return (HitChar && HitChar->GetWeapon() && HitChar->GetWeapon()->bAffectedByStoppingPower)
+        ? StoppingPower
+        : InstantHitInfo[CurrentFireMode].Momentum;
 }
 
 void ANZWeapon_Enforcer::DetachFromOwner_Implementation()
@@ -371,7 +479,37 @@ void ANZWeapon_Enforcer::DualEquipFinished()
 
 void ANZWeapon_Enforcer::FiringInfoUpdated_Implementation(uint8 InFireMode, uint8 FlashCount, FVector InFlashLocation)
 {
-
+    CurrentFireMode = InFireMode;
+    UNZWeaponStateFiringBurst* BurstFireMode = Cast<UNZWeaponStateFiringBurst>(FiringState[CurrentFireMode]);
+    if (InFlashLocation.IsZero())
+    {
+        FireCount = 0;
+        ImpactCount = 0;
+        if (BurstFireMode != NULL)
+        {
+            BurstFireMode->CurrentShot = 0;
+        }
+    }
+    else
+    {
+        PlayFiringEffects();
+        
+        FireCount++;
+        if (BurstFireMode)
+        {
+            BurstFireMode->CurrentShot++;
+        }
+        
+        if ((BurstFireMode && FireCount >= BurstFireMode->BurstSize * 2) || (!BurstFireMode && FireCount > 1))
+        {
+            FireCount = 0;
+        }
+        
+        if (BurstFireMode && BurstFireMode->CurrentShot >= BurstFireMode->BurstSize)
+        {
+            BurstFireMode->CurrentShot = 0;
+        }
+    }
 }
 
 void ANZWeapon_Enforcer::AttachLeftMesh()
