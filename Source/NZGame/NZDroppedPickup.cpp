@@ -8,6 +8,7 @@
 #include "UnrealNetwork.h"
 #include "NZRecastNavMesh.h"
 #include "NZWorldSettings.h"
+#include "NZPickupMessage.h"
 
 
 // Sets default values
@@ -235,7 +236,7 @@ void ANZDroppedPickup::GiveTo_Implementation(APawn* Target)
                 if (Cast<APlayerController>(Target->GetController()) &&
                     (!Cast<ANZWeapon>(Inventory) || !C->GetPendingWeapon() || (C->GetPendingWeapon()->GetClass() != Inventory->GetClass())))
                 {
-                    //Cast<APlayerController>(Target->GetController())->ClientReceiveLocalizedMessage(UNZPickupMessage::StaticClass(), 0, NULL, NULL, Inventory->GetClass());
+                    Cast<APlayerController>(Target->GetController())->ClientReceiveLocalizedMessage(UNZPickupMessage::StaticClass(), 0, NULL, NULL, Inventory->GetClass());
                 }
                 Inventory = NULL;
             }
@@ -243,7 +244,7 @@ void ANZDroppedPickup::GiveTo_Implementation(APawn* Target)
             {
                 if (Cast<APlayerController>(Target->GetController()))
                 {
-                    //Cast<APlayerController>(Target->GetController())->ClientReceiveLocalizedMessage(UNZPickupMessage::StaticClass(), 0, NULL, NULL, Inventory->GetClass());
+                    Cast<APlayerController>(Target->GetController())->ClientReceiveLocalizedMessage(UNZPickupMessage::StaticClass(), 0, NULL, NULL, Inventory->GetClass());
                 }
                 Inventory->Destroy();
             }

@@ -28,10 +28,3 @@ ANZCharacterContent::ANZCharacterContent()
     
     DisplayName = NSLOCTEXT("NZ", "UntitledCharacter", "Untitled Character");
 }
-
-// Called when the game starts or when spawned
-void ANZCharacterContent::BeginPlay()
-{
-	Super::BeginPlay();
-	
-}

@@ -16,3 +16,13 @@ void ANZBot::ReceiveInstantWarning(ANZCharacter* Shooter, const FVector& FireDir
     // todo:
     check(false);
 }
+
+void ANZBot::SeePawn(APawn* Other)
+{
+    
+}
+
+void ANZBot::HearSound(APawn* Other, const FVector& SoundLoc, float SoundRadius)
+{
+    
+}

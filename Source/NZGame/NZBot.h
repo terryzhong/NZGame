@@ -20,7 +20,10 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = Skill)
     float TrackingReactionTime;
     
-    void SwitchToBestWeapon();
+    /** 293 
+     Multiplier of a sound's base radius at which a bot can hear it (i.e. [0-1], > 1.0 is cheated superhuman hearing) */
+    UPROPERTY(BlueprintReadWrite, Category = Skill)
+    float HearingRadiusMult;
 	
 	
     /** 541
@@ -30,5 +33,9 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = AI)
     virtual void ReceiveInstantWarning(ANZCharacter* Shooter, const FVector& FireDir);
     
+    void SwitchToBestWeapon();
+    
+    virtual void SeePawn(APawn* Other);
+    virtual void HearSound(APawn* Other, const FVector& SoundLoc, float SoundRadius);
     
 };

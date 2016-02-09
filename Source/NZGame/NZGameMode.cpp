@@ -22,6 +22,7 @@ ANZGameMode::ANZGameMode()
     
     PlayerControllerClass = ANZPlayerController::StaticClass();
     
+    bDelayedStart = true;
 }
 
 void ANZGameMode::RestartPlayer(AController* aPlayer)

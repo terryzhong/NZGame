@@ -13,20 +13,25 @@ class NZGAME_API ANZCharacterContent : public AActor
 public:	
 	// Sets default values for this actor's properties
 	ANZCharacterContent();
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	
     
     UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, AssetRegistrySearchable)
     FText DisplayName;
     
+    /** Character gender */
     UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
     bool bIsFemale;
+    
+    /**
+     * If set this achievement is required for this character to be available
+     * (NOTE: Achievements are currently client side only and not validated by server)
+     */
+    UPROPERTY(EditDefaultsOnly, AssetRegistrySearchable, Meta = (DisplayName = "Required Offline Achievement"))
+    FName RequiredAchievement;
     
     /** Mesh relative */
     inline USkeletalMeshComponent* GetMesh() const { return Mesh; }
     
+    /** Mesh to swap in when the character is skeletized */
     UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
     USkeletalMesh* SkeletonMesh;
     
@@ -49,6 +54,9 @@ public:
 protected:
     UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly)
     USkeletalMeshComponent* Mesh;
+    
+    UPROPERTY(BlueprintReadOnly, EditDefaultsOnly)
+    TArray<UMaterialInterface*> TeamMaterials;
     
     friend class ANZCharacter;
 };

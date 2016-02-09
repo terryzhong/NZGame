@@ -397,7 +397,7 @@ void ANZWeapon::BeginPlay()
 {
     Super::BeginPlay();
     
-    InstanceMuzzleFlashArray(this, MuzzleFlash);
+    //InstanceMuzzleFlashArray(this, MuzzleFlash);
     
     // Sanity check some settings
     for (int32 i = 0; i < MuzzleFlash.Num(); i++)
@@ -1140,7 +1140,8 @@ void ANZWeapon::GuessPlayerTarget(const FVector& StartFireLoc, const FVector& Fi
             {
                 MaxRange = InstantHitInfo[CurrentFireMode].TraceRange * 1.2f;   // extra since player may miss intended target due to being out of range
             }
-            PC->LastShotTargetGuess = UNZGameplayStatics::PickBestAimTarget(PC, StartFireLoc, FireDir, 0.9f, MaxRange);
+            // todo:
+            //PC->LastShotTargetGuess = UNZGameplayStatics::PickBestAimTarget(PC, StartFireLoc, FireDir, 0.9f, MaxRange);
         }
     }
 }

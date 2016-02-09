@@ -12,7 +12,7 @@
 #include "NZGameMode.h"
 #include "NZProjectile.h"
 #include "NZCarriedObject.h"
-
+#include "NZTeamInfo.h"
 
 
 ANZPlayerController::ANZPlayerController()
@@ -238,7 +238,14 @@ void ANZPlayerController::PawnPendingDestroy(APawn* InPawn)
 
 void ANZPlayerController::HearSound(USoundBase* InSoundCue, AActor* SoundPlayer, const FVector& SoundLocation, bool bStopWhenOwnerDestroyed, bool bAmplifyVolume)
 {
-    
+    bool bIsOccluded = false;
+    if (SoundPlayer == this || (GetViewTarget() != NULL && InSoundCue->IsAudible(SoundLocation, GetViewTarget()->GetActorLocation(), (SoundPlayer != NULL) ? SoundPlayer : this, bIsOccluded, true)))
+    {
+        // We don't want to replicate the location if it's the same as Actor location (so the sound gets played attached to the Actor), but we must if the source Actor isn't relevant
+        UNetConnection* Conn = Cast<UNetConnection>(Player);
+        FVector RepLoc = (SoundPlayer != NULL && SoundPlayer->GetActorLocation() == SoundLocation && (Conn == NULL || Conn->ActorChannels.Contains(SoundPlayer))) ? FVector::ZeroVector : SoundLocation;
+        ClientHearSound(InSoundCue, SoundPlayer, RepLoc, bStopWhenOwnerDestroyed, bIsOccluded, bAmplifyVolume);
+    }
 }
 
 void ANZPlayerController::ClientHearSound_Implementation(USoundBase* TheSound, AActor* SoundPlayer, FVector_NetQuantize SoundLocation, bool bStopWhenOwnerDestroyed, bool bOccluded, bool bAmplifyVolume)
@@ -412,7 +419,10 @@ bool ANZPlayerController::ServerRestartPlayerAltFire_Validate()
 
 void ANZPlayerController::ServerSwitchTeam_Implementation()
 {
-    
+    if (NZPlayerState != NULL && NZPlayerState->Team != NULL)
+    {
+        uint8 NewTeam = (NZPlayerState->Team->TeamIndex + 1) % GetWorld()->GetGameState<ANZGameState>()->Teams.Num();
+    }
 }
 
 bool ANZPlayerController::ServerSwitchTeam_Validate()

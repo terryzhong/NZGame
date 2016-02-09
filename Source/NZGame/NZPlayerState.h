@@ -46,6 +46,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
 	uint8 SpectatingIDTeam;
     
+    UPROPERTY(BlueprintReadOnly, ReplicatedUsing = NotifyTeamChanged, Category = PlayerState)
+    class ANZTeamInfo* Team;
+    
+    UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
+    uint32 bWaitingPlayer : 1;
+    
     
     
 	UFUNCTION(BlueprintNativeEvent)
