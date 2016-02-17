@@ -74,4 +74,22 @@ public:
     UFUNCTION(BlueprintNativeEvent, Category = Game)
     bool PlayerCanAltRestart(APlayerController* Player);
     
+    /** 729 
+     Maximum time client can be ahead, without resetting. */
+    UPROPERTY(GlobalConfig)
+    float MaxTimeMargin;
+    
+    /** Maximum time client can be behind. */
+    UPROPERTY(GlobalCOnfig)
+    float MinTimeMargin;
+    
+    /** Accepted drift in clocks. */
+    UPROPERTY(GlobalConfig)
+    float TimeMarginSlack;
+    
+    /** Whether speedhack detection is enabled. */
+    UPROPERTY(GlobalConfig)
+    bool bSpeedhackDetection;
+    
+    virtual void NotifySpeedHack(ACharacter* Character);
 };

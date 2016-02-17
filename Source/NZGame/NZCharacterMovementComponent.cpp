@@ -3,7 +3,15 @@
 #include "NZGame.h"
 #include "NZCharacterMovementComponent.h"
 #include "NZCharacter.h"
+#include "GameFramework/GameNetworkManager.h"
 
+
+
+const FName NAME_RunDist(TEXT("RunDist"));
+const FName NAME_SprintDist(TEXT("SprintDist"));
+const FName NAME_InAirDist(TEXT("InAirDist"));
+const FName NAME_SwimDist(TEXT("SwimDist"));
+                           
 
 
 UNZCharacterMovementComponent::UNZCharacterMovementComponent()
@@ -138,6 +146,213 @@ void UNZCharacterMovementComponent::TickComponent(float DeltaTime, enum ELevelTi
 	}
 }
 
+float UNZCharacterMovementComponent::ComputeAnalogInputModifier() const
+{
+    return 1.f;
+}
+
+void UNZCharacterMovementComponent::UpdateMovementStats(const FVector& StartLocation)
+{
+    if (CharacterOwner && CharacterOwner->Role == ROLE_Authority)
+    {
+        ANZPlayerState* PS = Cast<ANZPlayerState>(CharacterOwner->PlayerState);
+        if (PS)
+        {
+            float Dist = (GetActorLocation() - StartLocation).Size();
+            FName MovementName = bIsSprinting ? NAME_SprintDist : NAME_RunDist;
+            if (MovementMode == MOVE_Falling)
+            {
+                ANZCharacter* NZCharOwner = Cast<ANZCharacter>(CharacterOwner);
+                MovementName = NAME_InAirDist;
+            }
+            else if (MovementMode == MOVE_Swimming)
+            {
+                MovementName = NAME_SwimDist;
+            }
+            PS->ModifyStatsValue(MovementName, Dist);
+        }
+    }
+}
+
+bool UNZCharacterMovementComponent::CanBaseOnLift(UPrimitiveComponent* LiftPrim, const FVector& LiftMoveDelta)
+{
+    // If character jumped off this lift and is still going up fast enough, then just push him along
+    if (Velocity.Z > 0.f)
+    {
+        FVector LiftVel = MovementBaseUtility::GetMovementBaseVelocity(LiftPrim, NAME_None);
+        if (LiftVel.Z > 0.f)
+        {
+            FHitResult Hit(1.f);
+            FVector MoveDelta(0.f);
+            MoveDelta.Z = LiftMoveDelta.Z;
+            SafeMoveUpdatedComponent(MoveDelta, CharacterOwner->GetActorRotation(), true, Hit);
+            return true;
+        }
+    }
+    const FVector PawnLocation = CharacterOwner->GetActorLocation();
+    FFindFloorResult FloorResult;
+    FindFloor(PawnLocation, FloorResult, false);
+    if (FloorResult.IsWalkableFloor() && IsValidLandingSpot(PawnLocation, FloorResult.HitResult))
+    {
+        if (IsFalling())
+        {
+            ProcessLanded(FloorResult.HitResult, 0.f, 1);
+        }
+        else if (IsMovingOnGround())
+        {
+            AdjustFloorHeight();
+            SetBase(FloorResult.HitResult.Component.Get(), FloorResult.HitResult.BoneName);
+        }
+        else
+        {
+            return false;
+        }
+        return (CharacterOwner->GetMovementBase() == LiftPrim);
+    }
+    return false;
+}
+
+void UNZCharacterMovementComponent::UpdateBasedMovement(float DeltaSeconds)
+{
+    Super::UpdateBasedMovement(DeltaSeconds);
+    
+    // todo:
+}
+
+bool UNZCharacterMovementComponent::CheckFall(const FFindFloorResult& OldFloor, const FHitResult& Hit, const FVector& Delta, const FVector& OldLocation, float remainingTime, float timeTick, int32 Iterations, bool bMustJump)
+{
+    bool bResult = Super::CheckFall(OldFloor, Hit, Delta, OldLocation, remainingTime, timeTick, Iterations, bMustJump);
+    if (!bResult)
+    {
+        // todo:
+    }
+    return bResult;
+}
+
+void UNZCharacterMovementComponent::OnUnableToFollowBaseMove(const FVector& DeltaPosition, const FVector& OldLocation, const FHitResult& MoveOnBaseHit)
+{
+    UPrimitiveComponent* MovementBase = CharacterOwner->GetMovementBase();
+    
+    if (CharacterOwner->Role == ROLE_SimulatedProxy)
+    {
+        // Force it since on client
+        UpdatedComponent->SetWorldLocationAndRotation(UpdatedComponent->GetComponentLocation() + DeltaPosition, UpdatedComponent->GetComponentQuat(), false);
+        return;
+    }
+    
+    // todo:
+    //if (MovementBase && Cast<ANZLift>(MovementBase->GetOwner()) && (MovementBase->GetOwner()->GetVelocity().Z >= 0.f))
+    //{
+    //    Cast<ANZLift>(MovementBase->GetOwner())->OnEncroachActor(CharacterOwner);
+    //}
+    
+}
+
+void UNZCharacterMovementComponent::ResetTimers()
+{
+    SprintStartTime = GetCurrentMovementTime() + AutoSprintDelayInterval;
+}
+
+bool UNZCharacterMovementComponent::Is3DMovementMode() const
+{
+    return (MovementMode == MOVE_Flying) || (MovementMode == MOVE_Swimming);
+}
+
+void UNZCharacterMovementComponent::CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration)
+{
+    if (MovementMode == MOVE_Walking)
+    {
+        ANZCharacter* NZOwner = Cast<ANZCharacter>(CharacterOwner);
+        if (NZOwner != NULL)
+        {
+            Friction *= (1.0f - NZOwner->GetWalkMovementReductionPct());
+            BrakingDeceleration *= (1.0f - NZOwner->GetWalkMovementReductionPct());
+        }
+    }
+    
+    Super::CalcVelocity(DeltaTime, Friction, bFluid, BrakingDeceleration);
+    
+    // Workaround for engine path following code not setting Acceleration correctly
+    if (bHasRequestedVelocity && Acceleration.IsZero())
+    {
+        Acceleration = Velocity.GetSafeNormal();
+    }
+}
+
+float UNZCharacterMovementComponent::UpdateTimeStampAndDeltaTime(float DeltaTime, FNetworkPredictionData_Client_Character* ClientData)
+{
+    float UnModifiedTimeStamp = ClientData->CurrentTimeStamp + DeltaTime;
+    DeltaTime = ClientData->UpdateTimeStampAndDeltaTime(DeltaTime, *CharacterOwner, *this);
+    if (ClientData->CurrentTimeStamp < UnModifiedTimeStamp)
+    {
+        // Client timestamp rolled over, so roll over our movement timers
+        AdjustMovementTimers(UnModifiedTimeStamp - ClientData->CurrentTimeStamp);
+    }
+    return DeltaTime;
+}
+
+void UNZCharacterMovementComponent::AdjustMovementTimers(float Adjustment)
+{
+    SprintStartTime -= Adjustment;
+}
+
+bool UNZCharacterMovementComponent::NZVerifyClientTimeStamp(float TimeStamp, FNetworkPredictionData_Server_Character& ServerData)
+{
+    // Very large deltas happen around a TimeStamp reset.
+    const float DeltaTimeStamp = (TimeStamp - ServerData.CurrentClientTimeStamp);
+    if (FMath::Abs(DeltaTimeStamp) > (MinTimeBetweenTimeStampResets * 0.5f))
+    {
+        // Client is resetting TimeStamp to increase accuracy.
+        if (DeltaTimeStamp < 0.f)
+        {
+            ServerData.CurrentClientTimeStamp = 0.f;
+            AdjustMovementTimers(-1.f * DeltaTimeStamp);
+            return true;
+        }
+        else
+        {
+            // We already reset the TimeStamp, but we just got an old outdated move before the switch.
+            // Just ignore it.
+            return false;
+        }
+    }
+    
+    // If TimeStamp is in the past, move is oudated, ignore it.
+    if (TimeStamp <= ServerData.CurrentClientTimeStamp)
+    {
+        return false;
+    }
+    
+    // SpeedHack detection: warn if the timestamp error limit is exceeded, and clamp
+    ANZGameMode* NZGameMode = GetWorld()->GetAuthGameMode<ANZGameMode>();
+    if (NZGameMode != NULL)
+    {
+        float ServerDelta = GetWorld()->GetTimeSeconds() - ServerData.ServerTimeStamp;
+        float ClientDelta = FMath::Min(TimeStamp - ServerData.CurrentClientTimeStamp, AGameNetworkManager::StaticClass()->GetDefaultObject<AGameNetworkManager>()->MAXCLIENTUPDATEINTERVAL);
+        float CurrentError = (ServerData.CurrentClientTimeStamp != 0.f) ? ClientDelta - ServerDelta * (1.f + NZGameMode->TimeMarginSlack) : 0.f;
+        TotalTimeStampError = FMath::Max(TotalTimeStampError + CurrentError, NZGameMode->MinTimeMargin);
+        bClearingSpeedHack = bClearingSpeedHack && (TotalTimeStampError > 0.f);
+        if (bClearingSpeedHack)
+        {
+            TotalTimeStampError -= ClientDelta;
+        }
+        else if (TotalTimeStampError > NZGameMode->MaxTimeMargin)
+        {
+            TotalTimeStampError -= ClientDelta;
+            bClearingSpeedHack = true;
+            NZGameMode->NotifySpeedHack(CharacterOwner);
+        }
+    }
+    
+    return true;
+}
+
+void UNZCharacterMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
+{
+    Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+    
+}
+
 
 
 
@@ -152,11 +367,6 @@ float UNZCharacterMovementComponent::GetMaxSpeed() const
 	{
 		return Super::GetMaxSpeed();
 	}
-}
-
-bool UNZCharacterMovementComponent::Is3DMovementMode() const
-{
-	return (MovementMode == MOVE_Flying) || (MovementMode == MOVE_Swimming);
 }
 
 float UNZCharacterMovementComponent::GetCurrentMovementTime() const

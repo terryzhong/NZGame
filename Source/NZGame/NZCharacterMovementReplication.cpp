@@ -601,11 +601,6 @@ void UNZCharacterMovementComponent::PerformMovement(float DeltaSeconds)
 	}
 }
 
-float UNZCharacterMovementComponent::ComputeAnalogInputModifier() const
-{
-	return 0.f;
-}
-
 
 
 

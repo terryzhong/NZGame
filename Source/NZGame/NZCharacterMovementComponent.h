@@ -84,16 +84,20 @@ public:
 	virtual void PerformMovement(float DeltaSeconds) override;
 	virtual float ComputeAnalogInputModifier() const override;
 
+    /** Update traversal stats */
 	virtual void UpdateMovementStats(const FVector& StartLocation);
 
-	virtual bool CanBaseOnLift(UPrimitiveComponent* LiftPrim, const FVector& LiftMoveData);
+    /** Try to base on lift that just ran into me, return true if success */
+	virtual bool CanBaseOnLift(UPrimitiveComponent* LiftPrim, const FVector& LiftMoveDelta);
 
 	virtual void UpdateBasedMovement(float DeltaSeconds) override;
 
 	virtual bool CheckFall(const FFindFloorResult& OldFloor, const FHitResult& Hit, const FVector& Delta, const FVector& OldLocation, float remainingTime, float timeTick, int32 Iterations, bool bMustJump) override;
 
+    /** If i'm on a lift, tell it to return */
 	virtual void OnUnableToFollowBaseMove(const FVector& DeltaPosition, const FVector& OldLocation, const FHitResult& MoveOnBaseHit) override;
 
+    /** Reset timers (called on pawn possessed) */
 	virtual void ResetTimers();
 
 	/** Return true if movement input should not be constrained to horizontal plane */
@@ -101,17 +105,23 @@ public:
 
 	virtual void CalcVelocity(float DeltaTime, float Friction, bool bFluid, float BrakingDeceleration) override;
 
+    /** Allows custom handling of timestamp and delta time updates, including resetting movement timers */
 	virtual float UpdateTimeStampAndDeltaTime(float DeltaTime, FNetworkPredictionData_Client_Character* ClientData);
 
+    /** Adjust movement timers after timestamp reset */
 	virtual void AdjustMovementTimers(float Adjustment);
 
+    /** Allows custom handling of timestamp and delta time updates, including resetting movement timers */
 	virtual bool NZVerifyClientTimeStamp(float TimeStamp, FNetworkPredictionData_Server_Character& ServerData);
 
+    /** For replaying moves set up */
 	bool bIsSettingUpFirstReplayMove;
 
+    /** Smoothed speed */
 	UPROPERTY()
 	float AvgSpeed;
 
+    /** Max Acceleration when falling (will be scaled by AirControl property). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
 	float MaxFallingAcceleration;
 
@@ -124,6 +134,7 @@ public:
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
 	//float MaxRelativeSwimmingAccelDenominator;
 
+    /** Braking when walking - set to same value as BrakingDecelerationWalking. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
 	float DefaultBrakingDecelerationWalking;
 
