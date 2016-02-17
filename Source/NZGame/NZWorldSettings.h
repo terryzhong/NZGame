@@ -9,7 +9,7 @@
 USTRUCT()
 struct FTimedImpactEffect
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     /** The component */
     UPROPERTY()

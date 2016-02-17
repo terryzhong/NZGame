@@ -9,7 +9,7 @@
 USTRUCT(BlueprintType)
 struct FInstantHitDamageInfo
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DamageInfo)
     int32 Damage;
@@ -38,7 +38,7 @@ struct FInstantHitDamageInfo
 USTRUCT()
 struct FDelayedProjectileInfo
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY()
     TSubclassOf<class ANZProjectile> ProjectileClass;
@@ -59,7 +59,7 @@ struct FDelayedProjectileInfo
 USTRUCT()
 struct FDelayedHitScanInfo
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY()
     FVector ImpactLocation;
@@ -96,7 +96,7 @@ namespace EZoomState
 USTRUCT(BlueprintType)
 struct FZoomInfo
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     /** FOV angle at start of zoom, or zero to start at the camera's default FOV */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Zoom)
@@ -125,6 +125,7 @@ class NZGAME_API ANZWeapon : public ANZInventory
     friend class UNZWeaponStateActive;
     friend class UNZWeaponStateEquipping;
     friend class UNZWeaponStateUnequipping;
+	friend class UNZWeaponStateReloading;
     
 public:
     ANZWeapon();
@@ -937,6 +938,9 @@ protected:
     
     UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
     UNZWeaponState* InactiveState;
+
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
+	UNZWeaponState* ReloadingState;
     
     /** Overlay mesh for overlay effects */
     UPROPERTY()
@@ -1041,4 +1045,19 @@ public:
     void OnZoomedOut();
     
     virtual void TickZoom(float DeltaTime);
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	UAnimMontage* ReloadAnim;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	UAnimMontage* ReloadAnimHands;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	float ReloadTime;
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual float GetReloadTime();
+
+	virtual void Reload();
 };

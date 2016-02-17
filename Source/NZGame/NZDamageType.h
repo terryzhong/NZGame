@@ -8,7 +8,7 @@
 USTRUCT(BlueprintType)
 struct FNZPointDamageEvent : public FPointDamageEvent
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     FNZPointDamageEvent()
         : FPointDamageEvent()

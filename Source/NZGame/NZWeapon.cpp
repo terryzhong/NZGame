@@ -19,6 +19,7 @@
 #include "NZWeaponStateEquipping.h"
 #include "NZWeaponStateUnequipping.h"
 #include "NZWeaponStateZooming.h"
+#include "NZWeaponStateReloading.h"
 #include "NZWeaponAttachment.h"
 #include "NZGameViewportClient.h"
 #include "NZImpactEffect.h"
@@ -65,6 +66,7 @@ ANZWeapon::ANZWeapon()
 	EquippingState = CreateDefaultSubobject<UNZWeaponStateEquipping>(TEXT("StateEquipping"));
 	UnequippingStateDefault = CreateDefaultSubobject<UNZWeaponStateUnequipping>(TEXT("StateUnequipping"));
 	UnequippingState = UnequippingStateDefault;
+	ReloadingState = CreateDefaultSubobject<UNZWeaponStateReloading>(TEXT("StateReloading"));
 
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
 	Mesh->SetOnlyOwnerSee(true);
@@ -82,6 +84,7 @@ ANZWeapon::ANZWeapon()
 		{
 			FiringState.Add(NewState);
 			FireInterval.Add(1.0f);
+			Spread.Add(0.0f);
 		}
 	}
 
@@ -397,7 +400,7 @@ void ANZWeapon::BeginPlay()
 {
     Super::BeginPlay();
     
-    //InstanceMuzzleFlashArray(this, MuzzleFlash);
+    InstanceMuzzleFlashArray(this, MuzzleFlash);
     
     // Sanity check some settings
     for (int32 i = 0; i < MuzzleFlash.Num(); i++)
@@ -2240,3 +2243,12 @@ void ANZWeapon::TickZoom(float DeltaTime)
     }
 }
 
+float ANZWeapon::GetReloadTime()
+{
+	return ReloadTime;
+}
+
+void ANZWeapon::Reload()
+{
+	GotoState(ReloadingState);
+}

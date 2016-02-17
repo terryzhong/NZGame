@@ -8,7 +8,7 @@
 USTRUCT()
 struct FStoredWeaponPriority
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
 
 	UPROPERTY()
 	FString WeaponClassName;
@@ -32,7 +32,7 @@ struct FStoredWeaponPriority
 USTRUCT()
 struct FStoredWeaponGroupInfo
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY()
     FString WeaponClassName;

@@ -10,7 +10,7 @@
 USTRUCT(BlueprintType)
 struct FImpactEffectNamedParameters
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TArray<FParticleSysParam> ParticleParams;
@@ -23,7 +23,8 @@ struct FImpactEffectNamedParameters
 };
 
 /**
- *
+ * Encapsulates all of the components of an impact or explosion effect (particles, sound, decals, etc) contains functionality to LOD by distance and settings
+ * This class is an Actor primarily for the editability features and should not be directly spawned
  */
 UCLASS(Blueprintable, Abstract)
 class NZGAME_API ANZImpactEffect : public AActor

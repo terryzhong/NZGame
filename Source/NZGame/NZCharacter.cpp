@@ -18,13 +18,17 @@
 #include "NZCharacterContent.h"
 
 
+
 // Sets default values
-ANZCharacter::ANZCharacter()
+//ANZCharacter::ANZCharacter()
+
+ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UNZCharacterMovementComponent>(CharacterMovementComponentName))
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT("Class'/Game/Characters/Malcolm/Malcolm.Malcolm_C'"));
+    static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT("UClass'/Game/Characters/Nicholas/CharacterContent_Nicholas.CharacterContent_Nicholas_C'"));
     CharacterData = DefaultCharacterContentRef.Object;
     
     // Set size for collision capsule
@@ -201,6 +205,58 @@ void ANZCharacter::Destroyed()
     GetWorldTimerManager().ClearAllTimersForObject(this);
 }
 
+void ANZCharacter::NZServerMove_Implementation(float TimeStamp, FVector_NetQuantize InAccel, FVector_NetQuantize ClientLoc, uint8 MoveFlags, float ViewYaw, float ViewPitch, UPrimitiveComponent* ClientMovementBase, FName ClientBaseBoneName, uint8 ClientMovementMode)
+{
+	if (NZCharacterMovement)
+	{
+		NZCharacterMovement->ProcessServerMove(TimeStamp, InAccel, ClientLoc, MoveFlags, ViewYaw, ViewPitch, ClientMovementBase, ClientBaseBoneName, ClientMovementMode);
+	}
+}
+
+bool ANZCharacter::NZServerMove_Validate(float TimeStamp, FVector_NetQuantize InAccel, FVector_NetQuantize ClientLoc, uint8 MoveFlags, float ViewYaw, float ViewPitch, UPrimitiveComponent* ClientMovementBase, FName ClientBaseBoneName, uint8 ClientMovementMode)
+{
+	return true;
+}
+
+void ANZCharacter::NZServerMoveOld_Implementation(float OldTimeStamp, FVector_NetQuantize OldAccel, float OldYaw, uint8 OldMoveFlags)
+{
+	if (NZCharacterMovement)
+	{
+		NZCharacterMovement->ProcessOldServerMove(OldTimeStamp, OldAccel, OldYaw, OldMoveFlags);
+	}
+}
+
+bool ANZCharacter::NZServerMoveOld_Validate(float OldTimeStamp, FVector_NetQuantize OldAccel, float OldYaw, uint8 OldMoveFlags)
+{
+	return true;
+}
+
+void ANZCharacter::NZServerMoveQuick_Implementation(float TimeStamp, FVector_NetQuantize InAccel, uint8 PendingFlags)
+{
+	if (NZCharacterMovement)
+	{
+		NZCharacterMovement->ProcessQuickServerMove(TimeStamp, InAccel, PendingFlags);
+	}
+}
+
+bool ANZCharacter::NZServerMoveQuick_Validate(float TimeStamp, FVector_NetQuantize InAccel, uint8 PendingFlags)
+{
+	return true;
+}
+
+void ANZCharacter::NZServerMoveSaved_Implementation(float TimeStamp, FVector_NetQuantize InAccel, uint8 PendingFlags, float ViewYaw, float ViewPitch)
+{
+	if (NZCharacterMovement)
+	{
+		NZCharacterMovement->ProcessSavedServerMove(TimeStamp, InAccel, PendingFlags, ViewYaw, ViewPitch);
+	}
+}
+
+bool ANZCharacter::NZServerMoveSaved_Validate(float TimeStamp, FVector_NetQuantize InAccel, uint8 PendingFlags, float ViewYaw, float ViewPitch)
+{
+	return true;
+}
+
 bool ANZCharacter::ShouldTakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const
 {
     // We want to allow zero damage (momentum only) hits so never pass 0 to super call
@@ -296,6 +352,21 @@ void ANZCharacter::NotifyPendingServerFire()
     {
         SavedPositions.Last().bShotSpawned = true;
     }
+}
+
+void ANZCharacter::PositionUpdated(bool bShotSpawned)
+{
+	const float WorldTime = GetWorld()->GetTimeSeconds();
+	if (GetCharacterMovement())
+	{
+		new(SavedPositions) FSavedPosition(GetActorLocation(), GetViewRotation(), GetCharacterMovement()->Velocity, GetCharacterMovement()->bJustTeleported, bShotSpawned, WorldTime, (NZCharacterMovement ? NZCharacterMovement->GetCurrentSynchTime() : 0.f));
+	}
+
+	// Maintain one position beyond MaxSavedPositionAge for interpolation
+	if (SavedPositions.Num() > 1 && SavedPositions[1].Time < WorldTime - MaxSavedPositionAge)
+	{
+		SavedPositions.RemoveAt(0);
+	}
 }
 
 FVector ANZCharacter::GetRewindLocation(float PredictionTime)
@@ -953,6 +1024,16 @@ void ANZCharacter::UpdateHolsteredWeaponAttachment()
     }
 }
 
+void ANZCharacter::SetWalkMovementReduction(float InPct, float InDuration)
+{
+	WalkMovementReductionPct = (InDuration > 0.f) ? InPct : 0.f;
+	WalkMovementReductionTime = InDuration;
+	if (NZCharacterMovement)
+	{
+		NZCharacterMovement->NeedsClientAdjustment();
+	}
+}
+
 
 bool ANZCharacter::IsDead()
 {
@@ -1006,6 +1087,14 @@ void ANZCharacter::StopFiring()
             StopFire(i);
         }
     }
+}
+
+void ANZCharacter::Reload()
+{
+	if (Weapon != NULL)
+	{
+		Weapon->Reload();
+	}
 }
 
 
@@ -1066,6 +1155,20 @@ void ANZCharacter::MoveUp(float Value)
 		AddMovementInput(FVector(0.f, 0.f, 1.f), Value);
 	}
 }
+
+void ANZCharacter::Sprint()
+{
+	if (GetCharacterMovement()->Velocity.Size() >= 20)
+	{
+		bSprinting = true;
+	}
+}
+
+void ANZCharacter::UnSprint()
+{
+	bSprinting = false;
+}
+
 
 APlayerCameraManager* ANZCharacter::GetPlayerCameraManager()
 {

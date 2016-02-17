@@ -23,7 +23,7 @@ namespace InventoryEventName
 USTRUCT()
 struct FTextureUVs
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TextureUVs")
     float U;
@@ -56,7 +56,7 @@ struct FTextureUVs
 USTRUCT(BlueprintType)
 struct FOverlayEffect
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     UMaterialInterface* Material;

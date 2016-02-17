@@ -3,11 +3,84 @@
 #pragma once
 
 #include "GameFramework/Character.h"
+#include "NZCharacterMovementComponent.h"
 #include "NZCharacter.generated.h"
 
 
+/**
+ * Replicated movement data of our RootComponent.
+ * More efficient than engine's FRepMovement
+ */
+USTRUCT()
+struct FRepNZMovement
+{
+	GENERATED_BODY()
 
+	UPROPERTY()
+	FVector_NetQuantize LinearVelocity;
 
+	UPROPERTY()
+	FVector_NetQuantize Location;
+
+	UPROPERTY()
+	uint8 AccelDir;
+
+	UPROPERTY()
+	FRotator Rotation;
+
+	FRepNZMovement()
+		: LinearVelocity(ForceInit)
+		, Location(ForceInit)
+		, Rotation(ForceInit)
+	{}
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess)
+	{
+		bOutSuccess = true;
+
+		bool bOutSuccessLocal = true;
+
+		// Update location, linear velocity
+		Location.NetSerialize(Ar, Map, bOutSuccessLocal);
+		bOutSuccess &= bOutSuccessLocal;
+		Rotation.SerializeCompressed(Ar);
+		LinearVelocity.NetSerialize(Ar, Map, bOutSuccessLocal);
+		bOutSuccess &= bOutSuccessLocal;
+		Ar.SerializeBits(&AccelDir, 8);
+
+		return true;
+	}
+
+	bool operator==(const FRepNZMovement& Other) const
+	{
+		if (LinearVelocity != Other.LinearVelocity)
+		{
+			return false;
+		}
+
+		if (Location != Other.Location)
+		{
+			return false;
+		}
+
+		if (Rotation != Other.Rotation)
+		{
+			return false;
+		}
+
+		if (AccelDir != Other.AccelDir)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	bool operator!=(const FRepNZMovement& Other) const
+	{
+		return !(*this == Other);
+	}
+};
 
 /**
  * Ammo counter
@@ -15,7 +88,7 @@
 USTRUCT(BlueprintType)
 struct FStoredAmmo
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
     
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ammo)
     TSubclassOf<class ANZWeapon> Type;
@@ -27,25 +100,52 @@ struct FStoredAmmo
 USTRUCT(BlueprintType)
 struct FSavedPosition
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
+
+	FSavedPosition()
+		: Position(FVector(0.f))
+		, Rotation(FRotator(0.f))
+		, Velocity(FVector(0.f))
+		, bTeleported(false)
+		, bShotSpawned(false)
+		, Time(0.f)
+		, TimeStamp(0.f)
+	{}
+
+	FSavedPosition(FVector InPos, FRotator InRot, FVector InVel, bool InTeleported, bool InShotSpawned, float InTime, float InTimeStamp)
+		: Position(InPos)
+		, Rotation(InRot)
+		, Velocity(InVel)
+		, bTeleported(InTeleported)
+		, bShotSpawned(InShotSpawned)
+		, Time(InTime)
+		, TimeStamp(InTimeStamp)
+	{}
     
+	/** Position of player at time Time */
     UPROPERTY()
     FVector Position;
     
+	/** Rotation of player at time Time */
     UPROPERTY()
     FRotator Rotation;
     
+	/** Keep velocity also for bots to use in realistic reaction time based aiming error model */
     UPROPERTY()
     FVector Velocity;
     
+	/** True if teleport occurred getting to current position (so don't interpolate) */
     UPROPERTY()
     bool bTeleported;
     
+	/** True if shot was spawned at this position */
     UPROPERTY()
     bool bShotSpawned;
     
+	/** Current server world time when this position was updated */
     float Time;
     
+	/** Client timestamp associated with this position */
     float TimeStamp;
 };
 
@@ -55,9 +155,12 @@ class NZGAME_API ANZCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
+	friend void UNZCharacterMovementComponent::PerformMovement(float DeltaSeconds);
+
 public:
 	// Sets default values for this character's properties
-	ANZCharacter();
+	//ANZCharacter();
+	ANZCharacter(const FObjectInitializer& ObjectInitializer);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -71,6 +174,37 @@ public:
     virtual void PostInitializeComponents() override;
     
     virtual void Destroyed() override;
+
+	// Networking
+	virtual void PawnClientRestart() override;
+
+	UPROPERTY(ReplicatedUsing = OnRep_NZReplicatedMovement)
+	struct FRepNZMovement NZReplicatedMovement;
+
+	virtual void NZUpdateSimulatedPosition(const FVector& NewLocation, const FRotator& NewRotatioin, const FVector& NewVelocity);
+
+	virtual void PostNetReceiveLocationAndRotation();
+
+	UFUNCTION()
+	virtual void OnRep_NZReplicatedMovement();
+
+	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
+
+	virtual bool GatherNZMovement();
+
+	virtual void OnRep_ReplicatedMovement() override;
+
+	UFUNCTION(Unreliable, Server, WithValidation)
+	virtual void NZServerMove(float TimeStamp, FVector_NetQuantize InAccel, FVector_NetQuantize ClientLoc, uint8 CompressedMoveFlags, float ViewYaw, float ViewPitch, UPrimitiveComponent* ClientMovementBase, FName ClientBaseBoneName, uint8 ClientMovementMode);
+
+	UFUNCTION(Unreliable, Server, WithValidation)
+	virtual void NZServerMoveOld(float OldTimeStamp, FVector_NetQuantize OldAccel, float OldYaw, uint8 OldMoveFlags);
+
+	UFUNCTION(Unreliable, Server, WithValidation)
+	virtual void NZServerMoveQuick(float TimeStamp, FVector_NetQuantize InAccel, uint8 PendingFlags);
+
+	UFUNCTION(Unreliable, Server, WithValidation)
+	virtual void NZServerMoveSaved(float TimeStamp, FVector_NetQuantize InAccel, uint8 PendingFlags, float ViewYaw, float ViewPitch);
     
     /** 813 */
     virtual bool ShouldTakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const override;
@@ -168,6 +302,9 @@ public:
     /** 379
      Mark the last saved position as where a shot was spawned so can synch firing to client position */
     virtual void NotifyPendingServerFire();
+
+	/** Called by CharacterMovement after movement */
+	virtual void PositionUpdated(bool bShotSpawned);
     
     /** Returns this character's position PredictionTime seconds ago */
     UFUNCTION(BlueprintCallable, Category = Pawn)
@@ -396,7 +533,22 @@ public:
     UFUNCTION()
     virtual void UpdateHolsteredWeaponAttachment();
 
+protected:
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = Movement)
+	float WalkMovementReductionPct;
 
+	/** Time remaining until WalkMovementReductionPct is reset to zero */
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = Movement)
+	float WalkMovementReductionTime;
+public:
+	inline float GetWalkMovementReductionPct()
+	{
+		return WalkMovementReductionPct;
+	}
+
+	/** Set walking movement reduction */
+	UFUNCTION(BlueprintCallable, Category = Movement)
+	virtual void SetWalkMovementReduction(float InPct, float InDuration);
 
     
     /** Weapon firing */
@@ -414,6 +566,8 @@ public:
         StartFire(FireModeNum);
     }
 
+	UFUNCTION(BlueprintCallable, Category = Pawn)
+	virtual void Reload();
     
     /** 1682
      Weapon and attachments */
@@ -469,6 +623,13 @@ public:
 
 	/** Handles up and down when swimming or flying */
 	virtual void MoveUp(float Value);
+
+	virtual void Sprint();
+	virtual void UnSprint();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bSprinting;
+
 
 
     UFUNCTION(BlueprintPure, Category = PlayerController)
@@ -706,5 +867,8 @@ public:
     float OldZ;
     
     
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bAiming;
+
 };
 

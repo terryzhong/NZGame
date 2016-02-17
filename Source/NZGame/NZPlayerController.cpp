@@ -166,6 +166,10 @@ void ANZPlayerController::SetupInputComponent()
 	InputComponent->BindAction("StartAltFire", IE_Pressed, this, &ANZPlayerController::OnAltFire);
 	InputComponent->BindAction("StopAltFire", IE_Released, this, &ANZPlayerController::OnStopAltFire);
 
+	InputComponent->BindAction("Reload", IE_Pressed, this, &ANZPlayerController::Reload);
+	InputComponent->BindAction("Sprint", IE_Pressed, this, &ANZPlayerController::Sprint);
+	InputComponent->BindAction("UnSprint", IE_Released, this, &ANZPlayerController::UnSprint);
+
  /*   InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
     InputComponent->BindAction("TapRight", IE_Pressed, this, &ANZPlayerController::OnTapRight);
     InputComponent->BindAction("TapForward", IE_Pressed, this, &ANZPlayerController::OnTapForward);
@@ -1096,6 +1100,30 @@ void ANZPlayerController::OnStopAltFire()
     {
         new(DeferredFireInputs) FDeferredFireInput(1, false);
     }
+}
+
+void ANZPlayerController::Reload()
+{
+	if (NZCharacter != NULL)
+	{
+		NZCharacter->Reload();
+	}
+}
+
+void ANZPlayerController::Sprint()
+{
+	if (NZCharacter != NULL)
+	{
+		NZCharacter->Sprint();
+	}
+}
+
+void ANZPlayerController::UnSprint()
+{
+	if (NZCharacter != NULL)
+	{
+		NZCharacter->UnSprint();
+	}
 }
 
 void ANZPlayerController::MoveForward(float Value)

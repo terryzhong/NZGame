@@ -8,7 +8,7 @@
 USTRUCT()
 struct FCustomKeyBinding
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
 
 	FCustomKeyBinding()
 		: KeyName(FName(TEXT("")))

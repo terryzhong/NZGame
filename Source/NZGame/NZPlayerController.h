@@ -246,6 +246,11 @@ public:
     virtual void OnAltFire();
     virtual void OnStopAltFire();
 
+	virtual void Reload();
+
+	virtual void Sprint();
+	virtual void UnSprint();
+
 	/** Handles moving forward */
 	virtual void MoveForward(float Value);
 
