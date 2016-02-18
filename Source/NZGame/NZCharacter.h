@@ -178,18 +178,25 @@ public:
 	// Networking
 	virtual void PawnClientRestart() override;
 
+    /** Used for replication of our RootComponent's position and velocity */
 	UPROPERTY(ReplicatedUsing = OnRep_NZReplicatedMovement)
 	struct FRepNZMovement NZReplicatedMovement;
 
-	virtual void NZUpdateSimulatedPosition(const FVector& NewLocation, const FRotator& NewRotatioin, const FVector& NewVelocity);
+    /** TODO FIXME: Temporary different name until engine team makes UpdateSimulatedPosition() virtual */
+	virtual void NZUpdateSimulatedPosition(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewVelocity);
 
 	virtual void PostNetReceiveLocationAndRotation();
 
+    /** NZReplicatedMovement struct replication event */
 	UFUNCTION()
 	virtual void OnRep_NZReplicatedMovement();
 
 	virtual void PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker) override;
 
+    /** 
+     * NZCharacter version of GatherMovement(), gathers into NZReplicatedMovement. 
+     * Return true if using NZReplicatedMovement rather than ReplicatedMovement.
+     */
 	virtual bool GatherNZMovement();
 
 	virtual void OnRep_ReplicatedMovement() override;
@@ -281,7 +288,8 @@ public:
     UFUNCTION(BlueprintCallable, Category = Damage)
     bool IsSpawnProtected();
     
-    
+    /** 712 */
+    bool bDeferredReplicatedMovement;
     
     
     UPROPERTY()
@@ -613,7 +621,16 @@ public:
 
 
 
-
+    /**
+     * Landing just occurred, play any effects desired. Landing sound will be played server-side elsewhere.
+     * Called on server and owning client.
+     */
+    UFUNCTION(BlueprintNativeEvent)
+    void PlayLandedEffect();
+    
+    /** Landing assist just occurred */
+    UFUNCTION(BlueprintImplementableEvent)
+    void OnLandingAssist();
 
 	/** Handles moving forward/backward */
 	virtual void MoveForward(float Value);
@@ -635,7 +652,13 @@ public:
     UFUNCTION(BlueprintPure, Category = PlayerController)
     virtual APlayerCameraManager* GetPlayerCameraManager();
 
-
+    /** Min Z speed to spawn LandEffect */
+    UPROPERTY(EditAnywhere, Category = Effects)
+    float LandEffectSpeed;
+    
+    /** Particle component for high velocity jump landing */
+    UPROPERTY(EditAnywhere, Category = Effects)
+    UParticleSystem* LandEffect;
 
 
     

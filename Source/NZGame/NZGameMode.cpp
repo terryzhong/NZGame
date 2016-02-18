@@ -97,13 +97,22 @@ void ANZGameMode::GiveDefaultInventory(APawn* PlayerPawn)
     }
 }
 
+bool ANZGameMode::OverridePickupQuery_Implementation(APawn* Other, TSubclassOf<ANZInventory> ItemClass, AActor* Pickup, bool& bAllowPickup)
+{
+    return true;
+}
 
 bool ANZGameMode::PlayerCanAltRestart_Implementation(APlayerController* Player)
 {
     return PlayerCanRestart(Player);
 }
 
-bool ANZGameMode::OverridePickupQuery_Implementation(APawn* Other, TSubclassOf<ANZInventory> ItemClass, AActor* Pickup, bool& bAllowPickup)
+void ANZGameMode::NotifySpeedHack(ACharacter* Character)
 {
-    return true;
+    ANZPlayerController* PC = Character ? Cast<ANZPlayerController>(Character->GetController()) : NULL;
+    if (PC)
+    {
+        PC->ClientReceiveLocalizedMessage(GameMessageClass, 15);
+    }
 }
+

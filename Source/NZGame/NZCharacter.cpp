@@ -16,6 +16,7 @@
 #include "NZDamageType_Suicide.h"
 #include "NZGameplayStatics.h"
 #include "NZCharacterContent.h"
+#include "NZWorldSettings.h"
 
 
 
@@ -204,6 +205,194 @@ void ANZCharacter::Destroyed()
     }
     GetWorldTimerManager().ClearAllTimersForObject(this);
 }
+
+void ANZCharacter::PawnClientRestart()
+{
+    if (NZCharacterMovement)
+    {
+        NZCharacterMovement->ResetTimers();
+    }
+    
+    Super::PawnClientRestart();
+}
+
+void ANZCharacter::NZUpdateSimulatedPosition(const FVector& NewLocation, const FRotator& NewRotation, const FVector& NewVelocity)
+{
+    if (NZCharacterMovement)
+    {
+        NZCharacterMovement->SimulatedVelocity = NewVelocity;
+        
+        // Always consider Location as changed if we were spawned this tick as in that case our replicated Location was set as part of spawning, before PreNetReceive()
+        if ((NewLocation != GetActorLocation()) || (CreationTime == GetWorld()->TimeSeconds))
+        {
+            FVector FinalLocation = NewLocation;
+            if (GetWorld()->EncroachingBlockingGeometry(this, NewLocation, NewRotation))
+            {
+                bSimGravityDisabled = true;
+            }
+            else
+            {
+                bSimGravityDisabled = false;
+            }
+            
+            // Don't use TeleportTo(), that clears our base.
+            SetActorLocationAndRotation(FinalLocation, NewRotation, false);
+            
+            if (GetCharacterMovement())
+            {
+                GetCharacterMovement()->bJustTeleported = true;
+                
+                // Forward simulate this character to match estimated current position on server, based on my ping
+                ANZPlayerController* PC = Cast<ANZPlayerController>(GEngine->GetFirstLocalPlayerController(GetWorld()));
+                float PredictionTime = PC ? PC->GetPredictionTime() : 0.f;
+                if ((PredictionTime > 0.f) && (PC->GetViewTarget() != this))
+                {
+                    check(GetCharacterMovement() == NZCharacterMovement);
+                    NZCharacterMovement->SimulateMovement(PredictionTime);
+                }
+            }
+        }
+        else if (NewRotation != GetActorRotation())
+        {
+            GetRootComponent()->MoveComponent(FVector::ZeroVector, NewRotation, false);
+        }
+    }
+}
+
+void ANZCharacter::PostNetReceiveLocationAndRotation()
+{
+    if (Role == ROLE_SimulatedProxy)
+    {
+        if (!ReplicatedBasedMovement.HasRelativeLocation())
+        {
+            const FVector OldLocation = GetActorLocation();
+            const FQuat OldRotation = GetActorQuat();
+            NZUpdateSimulatedPosition(ReplicatedMovement.Location, ReplicatedMovement.Rotation, ReplicatedMovement.LinearVelocity);
+            
+            INetworkPredictionInterface* PredictionInterface = Cast<INetworkPredictionInterface>(GetMovementComponent());
+            if (PredictionInterface)
+            {
+                PredictionInterface->SmoothCorrection(OldLocation, OldRotation, GetActorLocation(), GetActorQuat());
+            }
+        }
+        else if (NZCharacterMovement)
+        {
+            NZCharacterMovement->SimulatedVelocity = ReplicatedMovement.LinearVelocity;
+        }
+    }
+}
+
+void ANZCharacter::OnRep_NZReplicatedMovement()
+{
+    if (Role == ROLE_SimulatedProxy)
+    {
+        ReplicatedMovement.Location = NZReplicatedMovement.Location;
+        ReplicatedMovement.Rotation = NZReplicatedMovement.Rotation;
+        RemoteViewPitch = (uint8)(ReplicatedMovement.Rotation.Pitch * 255.f / 360.f);
+        ReplicatedMovement.Rotation.Pitch = 0.f;
+        ReplicatedMovement.LinearVelocity = NZReplicatedMovement.LinearVelocity;
+        ReplicatedMovement.AngularVelocity = FVector(0.f);
+        ReplicatedMovement.bSimulatedPhysicSleep = false;
+        ReplicatedMovement.bRepPhysics = false;
+        
+        OnRep_ReplicatedMovement();
+        
+        if (NZCharacterMovement)
+        {
+            NZCharacterMovement->SetReplicatedAcceleration(NZReplicatedMovement.Rotation, NZReplicatedMovement.AccelDir);
+        }
+    }
+}
+
+void ANZCharacter::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
+{
+    
+}
+
+bool ANZCharacter::GatherNZMovement()
+{
+    UPrimitiveComponent* RootPrimComp = Cast<UPrimitiveComponent>(GetRootComponent());
+    if (RootPrimComp && RootPrimComp->IsSimulatingPhysics())
+    {
+        FRigidBodyState RBState;
+        RootPrimComp->GetRigidBodyState(RBState);
+        ReplicatedMovement.FillFrom(RBState);
+    }
+    else if (RootComponent != NULL)
+    {
+        // If we are attached, don't replicate absolute position
+        if (RootComponent->AttachParent != NULL)
+        {
+            // Networking for attachments assumes the RootComponent of the AttachParent actor.
+            // If that's not the case, we can't update this, as the client wouldn't be able to resolve the Component and would detach as a result.
+            if (AttachmentReplication.AttachParent != NULL)
+            {
+                AttachmentReplication.LocationOffset = RootComponent->RelativeLocation;
+                AttachmentReplication.RotationOffset = RootComponent->RelativeRotation;
+            }
+        }
+        else
+        {
+            // TODO FIXME: Make sure not replicated to owning client!!!
+            NZReplicatedMovement.Location = RootComponent->GetComponentLocation();
+            NZReplicatedMovement.Rotation = RootComponent->GetComponentRotation();
+            NZReplicatedMovement.Rotation.Pitch = GetControlRotation().Pitch;
+            NZReplicatedMovement.LinearVelocity = GetVelocity();
+            
+            FVector AccelDir = GetCharacterMovement()->GetCurrentAcceleration();
+            AccelDir = AccelDir.GetSafeNormal();
+            FRotator FacingRot = NZReplicatedMovement.Rotation;
+            FacingRot.Pitch = 0.f;
+            FVector CurrentDir = FacingRot.Vector();
+            float ForwardDot = CurrentDir | AccelDir;
+            
+            NZReplicatedMovement.AccelDir = 0;
+            if (ForwardDot > 0.5f)
+            {
+                NZReplicatedMovement.AccelDir |= 1;
+            }
+            else if (ForwardDot < -0.5f)
+            {
+                NZReplicatedMovement.AccelDir |= 2;
+            }
+            
+            FVector SideDir = (CurrentDir ^ FVector(0.f, 0.f, 1.f)).GetSafeNormal();
+            float SideDot = AccelDir | SideDir;
+            if (SideDot > 0.5f)
+            {
+                NZReplicatedMovement.AccelDir |= 4;
+            }
+            else if (SideDot < -0.5f)
+            {
+                NZReplicatedMovement.AccelDir |= 8;
+            }
+            
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void ANZCharacter::OnRep_ReplicatedMovement()
+{
+    if ((bTearOff) && (RootComponent == NULL || !RootComponent->IsSimulatingPhysics()))
+    {
+        bDeferredReplicatedMovement = true;
+    }
+    else
+    {
+        if (RootComponent != NULL)
+        {
+            // We handle this ourselves, do not use base version
+            // Why on earth isn't SyncReplicatedPhysicsSimulation() virtual?
+            ReplicatedMovement.bRepPhysics = RootComponent->IsSimulatingPhysics();
+        }
+        
+        Super::OnRep_ReplicatedMovement();
+    }
+}
+
 
 void ANZCharacter::NZServerMove_Implementation(float TimeStamp, FVector_NetQuantize InAccel, FVector_NetQuantize ClientLoc, uint8 MoveFlags, float ViewYaw, float ViewPitch, UPrimitiveComponent* ClientMovementBase, FName ClientBaseBoneName, uint8 ClientMovementMode)
 {
@@ -1119,6 +1308,19 @@ void ANZCharacter::AmbientSoundUpdated()
     
 }
 
+void ANZCharacter::PlayLandedEffect_Implementation()
+{
+    UParticleSystem* EffectToPlay = ((GetNetMode() != NM_DedicatedServer) && (FMath::Abs(GetCharacterMovement()->Velocity.Z)) > LandEffectSpeed) ? LandEffect : NULL;
+    ANZWorldSettings* WS = Cast<ANZWorldSettings>(GetWorld()->GetWorldSettings());
+    if ((EffectToPlay != NULL) && WS->EffectIsRelevant(this, GetActorLocation(), true, true, 10000.f, 0.f, false))
+    {
+        FRotator EffectRot = GetCharacterMovement()->CurrentFloor.HitResult.Normal.Rotation();
+        EffectRot.Pitch -= 90.f;
+        UParticleSystemComponent* LandedPSC = UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), EffectToPlay, GetActorLocation() - FVector(0.f, 0.f, GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - 4.f), EffectRot, true);
+        float EffectScale = FMath::Clamp(FMath::Square(GetCharacterMovement()->Velocity.Z) / (2.f * LandEffectSpeed * LandEffectSpeed), 0.5f, 1.f);
+        LandedPSC->SetRelativeScale3D(FVector(EffectScale, EffectScale, 1.f));
+    }
+}
 
 
 void ANZCharacter::MoveForward(float Value)

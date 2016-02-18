@@ -16,7 +16,7 @@ const FName NAME_SwimDist(TEXT("SwimDist"));
 
 UNZCharacterMovementComponent::UNZCharacterMovementComponent()
 {
-	MaxWalkSpeedSprinting = 800;
+    
 }
 
 void UNZCharacterMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -548,15 +548,99 @@ void UNZCharacterMovementComponent::SmoothClientPosition(float DeltaSeconds)
 	SmoothClientPosition_UpdateVisuals();
 }
 
-
-
-
 float UNZCharacterMovementComponent::GetCurrentMovementTime() const
 {
-    return 0.f;
+    return ((CharacterOwner->Role == ROLE_AutonomousProxy) || (GetNetMode() == NM_DedicatedServer) || ((GetNetMode() == NM_ListenServer) && !CharacterOwner->IsLocallyControlled())) ? CurrentServerMoveTime : CharacterOwner->GetWorld()->GetTimeSeconds();
 }
 
 float UNZCharacterMovementComponent::GetCurrentSynchTime() const
 {
-    return 0.f;
+    if (CharacterOwner->Role < ROLE_Authority)
+    {
+        FNetworkPredictionData_Client_Character* ClientData = GetPredictionData_Client_Character();
+        if (ClientData)
+        {
+            return ClientData->CurrentTimeStamp;
+        }
+    }
+    return GetCurrentMovementTime();
 }
+
+FNetworkPredictionData_Client* UNZCharacterMovementComponent::GetPredictionData_Client() const
+{
+    check(PawnOwner != NULL);
+    check(PawnOwner->Role < ROLE_Authority);
+    
+    if (!ClientPredictionData)
+    {
+        UNZCharacterMovementComponent* MutableThis = const_cast<UNZCharacterMovementComponent*>(this);
+        MutableThis->ClientPredictionData = new FNetworkPredictionData_Client_NZCharacter(*this);
+        MutableThis->ClientPredictionData->MaxSmoothNetUpdateDist = 92.f;   // 2X character capsule radius
+        MutableThis->ClientPredictionData->NoSmoothNetUpdateDist = 140.f;
+    }
+    
+    return ClientPredictionData;
+}
+
+void UNZCharacterMovementComponent::MoveAutonomous(float ClientTimeStamp, float DeltaTime, uint8 CompressedFlags, const FVector& NewAccel)
+{
+    if (!HasValidData())
+    {
+        return;
+    }
+    
+    CurrentServerMoveTime = ClientTimeStamp;
+    
+    UpdateFromCompressedFlags(CompressedFlags);
+    
+    bool bOldSprinting = bIsSprinting;
+    FVector OldAccel = NewAccel;
+    CharacterOwner->CheckJumpInput(DeltaTime);
+    Acceleration = ConstrainInputAcceleration(NewAccel);
+    Acceleration = ScaleInputAcceleration(Acceleration);
+    
+    AnalogInputModifier = ComputeAnalogInputModifier();
+    
+    DeltaTime = bClearingSpeedHack ? 0.001f : FMath::Min(DeltaTime, AGameNetworkManager::StaticClass()->GetDefaultObject<AGameNetworkManager>()->MAXCLIENTUPDATEINTERVAL);
+    PerformMovement(DeltaTime);
+    
+    // If not playing root motion, tick animations after physics. We do this here to keep events, notifies, states and transitions in sync with client updates.
+    if (!CharacterOwner->bClientUpdating && !CharacterOwner->IsPlayingRootMotion() && CharacterOwner->GetMesh() && CharacterOwner->GetMesh()->IsRegistered() && (CharacterOwner->GetMesh()->MeshComponentUpdateFlag < EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered || CharacterOwner->GetMesh()->bRecentlyRendered))
+    {
+        TickCharacterPose(DeltaTime);
+        // TODO: SaveBaseLocation() in case tick moves us?
+    }
+}
+
+void UNZCharacterMovementComponent::UpdateFromCompressedFlags(uint8 Flags)
+{
+    Super::UpdateFromCompressedFlags(Flags);
+    
+    int32 FlagsDecode = (Flags >> 2) & 7;
+    bIsSprinting = (FlagsDecode == 5);
+    bShotSpawned = ((Flags & FSavedMove_Character::FLAG_Custom_3) != 0);
+}
+
+void UNZCharacterMovementComponent::ClientAdjustPosition_Implementation(float TimeStamp, FVector NewLocation, FVector NewVelocity, UPrimitiveComponent* NewBase, FName NewBaseBoneName, bool bHasBase, bool bBaseRelativePosition, uint8 ServerMovementMode)
+{
+    // Use normal replication when simulating physics
+    ANZCharacter* NZOwner = Cast<ANZCharacter>(CharacterOwner);
+    if (NZOwner == NULL || NZOwner->GetRootComponent() == NULL || (!NZOwner->GetRootComponent()->IsSimulatingPhysics() && !NZOwner->IsRagdoll()))
+    {
+        Super::ClientAdjustPosition_Implementation(TimeStamp, NewLocation, NewVelocity, NewBase, NewBaseBoneName, bHasBase, bBaseRelativePosition, ServerMovementMode);
+    }
+    else
+    {
+        ClientAckGoodMove_Implementation(TimeStamp);
+    }
+}
+
+void UNZCharacterMovementComponent::StopActiveMovement()
+{
+    Super::StopActiveMovement();
+    
+    // Make sure the sync time is reset for next move
+    TotalTimeStampError = 0.f;
+    bClearingSpeedHack = false;
+}
+

@@ -21,7 +21,7 @@ public:
 	virtual void ReplicateMoveToServer(float DeltaTime, const FVector& NewAcceleration) override;
 	virtual void ClientAckGoodMove_Implementation(float TimeStamp) override;
 
-	/** Return true if it is OK to delay sending this player movement to the server to conserver bandwidth. */
+	/** Return true if it is OK to delay sending this player movement to the server to conserver bandwidth */
 	virtual bool CanDelaySendingMove(const FSavedMovePtr& NewMove) override;
 
 	virtual void NZServerMoveHandleClientError(float TimeStamp, float DeltaTime, const FVector& Accel, const FVector& RelativeClientLoc, UPrimitiveComponent* ClientMovementBase, FName ClientBaseBoneName, uint8 ClientMovementMode);
@@ -121,7 +121,7 @@ public:
 	UPROPERTY()
 	float AvgSpeed;
 
-    /** Max Acceleration when falling (will be scaled by AirControl property). */
+    /** Max Acceleration when falling (will be scaled by AirControl property) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
 	float MaxFallingAcceleration;
 
@@ -134,7 +134,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
 	float MaxRelativeSwimmingAccelDenominator;
 
-    /** Braking when walking - set to same value as BrakingDecelerationWalking. */
+    /** Braking when walking - set to same value as BrakingDecelerationWalking */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
 	float DefaultBrakingDecelerationWalking;
 
@@ -158,7 +158,7 @@ public:
 
 	virtual bool IsCrouching() const override;
 
-	/** How long you have to be running/grounded before auto-sprint engages. */
+	/** How long you have to be running/grounded before auto-sprint engages */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint", meta = (DisplayName = "Auto Sprint Delay Interval"))
 	float AutoSprintDelayInterval;
 
@@ -166,23 +166,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint", meta = (DisplayName = "Sprint Speed"))
 	float SprintSpeed;
 
-	/** Acceleration when sprinting. */
+	/** Acceleration when sprinting */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint", meta = (DisplayName = "Sprint Acceleration"))
 	float SprintAccel;
 
-	/** Max dotproduct of wall surface sprinter ran into that doesn't stop sprint. */
+	/** Max dotproduct of wall surface sprinter ran into that doesn't stop sprint */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint")
 	float SprintMaxWallNormal;
 
-	/** World time when sprinting can start. */
+	/** World time when sprinting can start */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Sprint Start Time"))
 	float SprintStartTime;
 
-	/** True when sprinting. */
+	/** True when sprinting */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Autosprint", meta = (DisplayName = "Is Sprinting"))
 	bool bIsSprinting;
 
-	/** Reset sprint start if braking. */
+	/** Reset sprint start if braking */
 	virtual void ApplyVelocityBraking(float DeltaTime, float Friction, float BrakingDeceleration) override;
 
 	virtual float GetMaxAcceleration() const override;
@@ -191,15 +191,15 @@ public:
 
 	virtual float GetMaxSpeed() const override;
 
-	/** If true, the player is against the wall and WallSlideNormal will describe the touch. */
+	/** If true, the player is against the wall and WallSlideNormal will describe the touch */
 	UPROPERTY(BlueprintReadOnly, Category = "Wall Slide")
 	bool bIsAgainstWall;
 
-	/** Used to gate client-side checking whether other characters are falling against a wall. */
+	/** Used to gate client-side checking whether other characters are falling against a wall */
 	UPROPERTY()
 	float LastCheckedAgainstWall;
 
-	/** Normal of the wall we are sliding against. */
+	/** Normal of the wall we are sliding against */
 	UPROPERTY(BlueprintReadOnly, Category = "Wall Slide")
 	FVector WallSlideNormal;
 	
@@ -212,9 +212,11 @@ public:
 	virtual void SimulateMovement(float DeltaTime) override;
 	virtual void SimulateMovement_Internal(float DeltaTime);
 
+    /** Used for remote client simulation */
 	UPROPERTY()
 	FVector SimulatedVelocity;
 
+    /** Time server is using for this move, from TimeStamp passed by client */
 	UPROPERTY()
 	float CurrentServerMoveTime;
 
@@ -231,17 +233,13 @@ public:
 
 	virtual void ClientAdjustPosition_Implementation(float TimeStamp, FVector NewLocation, FVector NewVelocity, UPrimitiveComponent* NewBase, FName NewBaseBoneName, bool bHasBase, bool bBaseRelativePosition, uint8 ServerMovementMode) override;
 
+    /** Accumulated TimeStamp error */
 	float TotalTimeStampError;
 
+    /** True if currently clearing potential speed hack */
 	bool bClearingSpeedHack;
 
 	virtual void StopActiveMovement() override;
-
-
-	UPROPERTY(Category = "Character Movement: Walking", EditAnywhere, BlueprintReadWrite, meta = (ClampMin = "0", UIMin = "0"))
-		float MaxWalkSpeedSprinting;
-	
-    
 };
 
 /**
@@ -261,7 +259,7 @@ public:
 		SavedSprintStartTime = 0.f;
 	}
 
-	/** True if projectile/hitscan spawned this frame, not from firing press/release. */
+	/** True if projectile/hitscan spawned this frame, not from firing press/release */
 	bool bShotSpawned;
 
 	bool bSavedIsSprinting;
@@ -289,6 +287,6 @@ public:
 		: FNetworkPredictionData_Client_Character(ClientMovement)
 	{}
 
-	/** Allocate a new saved move. Subclasses should override this if they want to use a custom move class. */
+	/** Allocate a new saved move. Subclasses should override this if they want to use a custom move class */
 	virtual FSavedMovePtr AllocateNewMove() override;
 };

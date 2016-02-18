@@ -28,6 +28,15 @@ class NZGAME_API ANZGameMode : public ANZBaseGameMode
 public:
     ANZGameMode();
     
+    
+    UPROPERTY(EditDefaultsOnly, Category = Game)
+    TSubclassOf<class UNZLocalMessage> DeathMessageClass;
+    
+    UPROPERTY(EditDefaultsOnly, Category = Game)
+    TSubclassOf<class UNZLocalMessage> GameMessageClass;
+    
+    UPROPERTY(EditDefaultsOnly, Category = Game)
+    TSubclassOf<class UNZLocalMessage> VictoryMessageClass;
 	
     /** 226
      Remove all items from character inventory list, before giving him game mode's default inventory */
