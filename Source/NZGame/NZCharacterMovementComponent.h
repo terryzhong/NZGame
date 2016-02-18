@@ -125,14 +125,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
 	float MaxFallingAcceleration;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
-	//float MaxSwimmingAcceleration;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
+	float MaxSwimmingAcceleration;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
-	//float MaxRelativeSwimmingAccelNumerator;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
+	float MaxRelativeSwimmingAccelNumerator;
 
-	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
-	//float MaxRelativeSwimmingAccelDenominator;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
+	float MaxRelativeSwimmingAccelDenominator;
 
     /** Braking when walking - set to same value as BrakingDecelerationWalking. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement", meta = (ClampMin = "0", UIMin = "0"))
@@ -142,6 +142,9 @@ public:
 	UPROPERTY()
 	bool bShotSpawned;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Emote")
+	bool bIsEmoting;
+	
 protected:
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 
@@ -155,25 +158,31 @@ public:
 
 	virtual bool IsCrouching() const override;
 
-
+	/** How long you have to be running/grounded before auto-sprint engages. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint", meta = (DisplayName = "Auto Sprint Delay Interval"))
 	float AutoSprintDelayInterval;
 
+	/** Max speed when sprinting */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint", meta = (DisplayName = "Sprint Speed"))
 	float SprintSpeed;
 
+	/** Acceleration when sprinting. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint", meta = (DisplayName = "Sprint Acceleration"))
 	float SprintAccel;
 
+	/** Max dotproduct of wall surface sprinter ran into that doesn't stop sprint. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Autosprint")
 	float SprintMaxWallNormal;
 
+	/** World time when sprinting can start. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Sprint Start Time"))
 	float SprintStartTime;
 
+	/** True when sprinting. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Autosprint", meta = (DisplayName = "Is Sprinting"))
 	bool bIsSprinting;
 
+	/** Reset sprint start if braking. */
 	virtual void ApplyVelocityBraking(float DeltaTime, float Friction, float BrakingDeceleration) override;
 
 	virtual float GetMaxAcceleration() const override;
@@ -181,6 +190,19 @@ public:
 	virtual bool CanSprint() const;
 
 	virtual float GetMaxSpeed() const override;
+
+	/** If true, the player is against the wall and WallSlideNormal will describe the touch. */
+	UPROPERTY(BlueprintReadOnly, Category = "Wall Slide")
+	bool bIsAgainstWall;
+
+	/** Used to gate client-side checking whether other characters are falling against a wall. */
+	UPROPERTY()
+	float LastCheckedAgainstWall;
+
+	/** Normal of the wall we are sliding against. */
+	UPROPERTY(BlueprintReadOnly, Category = "Wall Slide")
+	FVector WallSlideNormal;
+	
 
 	// Networking
 	virtual void SendClientAdjustment() override;

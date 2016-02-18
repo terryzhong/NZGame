@@ -350,24 +350,206 @@ bool UNZCharacterMovementComponent::NZVerifyClientTimeStamp(float TimeStamp, FNe
 void UNZCharacterMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
 {
     Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
-    
+
+	// todo:
 }
 
-
-
-
-float UNZCharacterMovementComponent::GetMaxSpeed() const
+void UNZCharacterMovementComponent::HandleCrouchRequest()
 {
-	ANZCharacter* NZCharacter = Cast<ANZCharacter>(CharacterOwner);
-	if (NZCharacter != NULL && NZCharacter->bSprinting)
+	bWantsToCrouch = true;
+}
+
+void UNZCharacterMovementComponent::HandleUnCrouchRequest()
+{
+	bWantsToCrouch = false;
+}
+
+void UNZCharacterMovementComponent::Crouch(bool bClientSimulation)
+{
+	Super::Crouch(bClientSimulation);
+
+}
+
+bool UNZCharacterMovementComponent::IsCrouching() const
+{
+	return CharacterOwner && CharacterOwner->bIsCrouched;
+}
+
+void UNZCharacterMovementComponent::ApplyVelocityBraking(float DeltaTime, float Friction, float BrakingDeceleration)
+{
+	if (Acceleration.IsZero())
 	{
-		return MaxWalkSpeedSprinting;
+		SprintStartTime = GetCurrentMovementTime() + AutoSprintDelayInterval;
+	}
+	Super::ApplyVelocityBraking(DeltaTime, Friction, BrakingDeceleration);
+}
+
+float UNZCharacterMovementComponent::GetMaxAcceleration() const
+{
+	float Result;
+	if (MovementMode == MOVE_Falling)
+	{
+		Result = MaxFallingAcceleration;
+	}
+	else if (MovementMode == MOVE_Swimming)
+	{
+		Result = MaxSwimmingAcceleration + MaxRelativeSwimmingAccelNumerator / (Velocity.Size() + MaxRelativeSwimmingAccelDenominator);
 	}
 	else
 	{
-		return Super::GetMaxSpeed();
+		Result = Super::GetMaxAcceleration();
+		if (bIsSprinting && Velocity.SizeSquared() > FMath::Square<float>(MaxWalkSpeed))
+		{
+			// Smooth transition to sprinting accel to avoid client/server synch issues
+			const float CurrentSpeed = Velocity.Size();
+			const float Transition = FMath::Min(1.f, 0.1f * (CurrentSpeed - MaxWalkSpeed));
+			Result = SprintAccel * Transition + Result * (1.f - Transition);
+		}
+		Result = (bIsSprinting && Velocity.SizeSquared() > FMath::Square<float>(MaxWalkSpeed)) ? SprintAccel : Super::GetMaxAcceleration();
+	}
+	if (MovementMode == MOVE_Walking && Cast<ANZCharacter>(CharacterOwner) != NULL)
+	{
+		Result *= (1.f - ((ANZCharacter*)CharacterOwner)->GetWalkMovementReductionPct());
+	}
+	return Result;
+}
+
+bool UNZCharacterMovementComponent::CanSprint() const
+{
+	if (CharacterOwner && IsMovingOnGround() && !IsCrouching() && (GetCurrentMovementTime() > SprintStartTime))
+	{
+		// Must be moving mostly forward
+		FRotator TurnRot(0.f, CharacterOwner->GetActorRotation().Yaw, 0.f);
+		FVector X = FRotationMatrix(TurnRot).GetScaledAxis(EAxis::X);
+		return (((X | Velocity.GetSafeNormal()) > 0.8f) && ((X | Acceleration.GetSafeNormal()) > 0.9f));
+	}
+	return false;
+}
+
+float UNZCharacterMovementComponent::GetMaxSpeed() const
+{
+	// Ignore standard movement while character is a ragdoll
+	if (Cast<ANZCharacter>(CharacterOwner) != NULL && ((ANZCharacter*)CharacterOwner)->IsRagdoll())
+	{
+		// Small non-zero number used to avoid divide by zero issues
+		return 0.01f;
+	}
+	else if (bIsEmoting)
+	{
+		return 0.01f;
+	}
+/*	else if (bFallingInWater && (MovementMode == MOVE_Falling))
+	{
+		return MaxWaterSpeed;
+	}
+	else if (MovementMode == MOVE_Swimming)
+	{
+		ANZWaterVolume* WaterVolume = Cast<ANZWaterVolume>(GetPhysicsVolume());
+		return WaterVolume ? FMath::Min(MaxSwimSpeed, WaterVolume->MaxRelativeSwimSpeed) : MaxSwimSpeed;
+	}*/
+	else
+	{
+		return bIsSprinting ? SprintSpeed : Super::GetMaxSpeed();
 	}
 }
+
+void UNZCharacterMovementComponent::SendClientAdjustment()
+{
+	if (!HasValidData())
+	{
+		return;
+	}
+
+	FNetworkPredictionData_Server_Character* ServerData = GetPredictionData_Server_Character();
+	check(ServerData);
+
+	if (ServerData->PendingAdjustment.TimeStamp <= 0.f)
+	{
+		return;
+	}
+
+	if (ServerData->PendingAdjustment.bAckGoodMove)
+	{
+		if (GetWorld()->GetTimeSeconds() - LastGoodMoveAckTime > MinTimeBetweenClientAdjustments)
+		{
+			ClientAckGoodMove(ServerData->PendingAdjustment.TimeStamp);
+			LastGoodMoveAckTime = GetWorld()->GetTimeSeconds();
+		}
+	}
+	else if (GetWorld()->GetTimeSeconds() - LastClientAdjustmentTime > MinTimeBetweenClientAdjustments)
+	{
+		// In case of packet loss, more frequent correction updates if error is larger
+		LastClientAdjustmentTime = bLargeCorrection ? GetWorld()->GetTimeSeconds() - 0.05f : GetWorld()->GetTimeSeconds();
+		bool bHasBase = (ServerData->PendingAdjustment.NewBase != NULL) || (ServerData->PendingAdjustment.MovementMode == MOVE_Walking);
+		if (CharacterOwner->IsPlayingNetworkedRootMotionMontage())
+		{
+			FRotator Rotation = ServerData->PendingAdjustment.NewRot.GetNormalized();
+			FVector_NetQuantizeNormal CompressedRotation(Rotation.Pitch / 180.f, Rotation.Yaw / 180.f, Rotation.Roll / 180.f);
+			ClientAdjustRootMotionPosition(
+				ServerData->PendingAdjustment.TimeStamp,
+				CharacterOwner->GetRootMotionAnimMontageInstance()->GetPosition(),
+				ServerData->PendingAdjustment.NewLoc,
+				CompressedRotation,
+				ServerData->PendingAdjustment.NewVel.Z,
+				ServerData->PendingAdjustment.NewBase,
+				ServerData->PendingAdjustment.NewBaseBoneName,
+				bHasBase,
+				ServerData->PendingAdjustment.bBaseRelativePosition,
+				ServerData->PendingAdjustment.MovementMode
+				);
+		}
+		else if (!ServerData->PendingAdjustment.bBaseRelativePosition && (ServerData->PendingAdjustment.NewBaseBoneName == NAME_None))
+		{
+			ClientNoBaseAdjustPosition(
+				ServerData->PendingAdjustment.TimeStamp,
+				ServerData->PendingAdjustment.NewLoc,
+				ServerData->PendingAdjustment.NewVel,
+				ServerData->PendingAdjustment.MovementMode
+				);
+		}
+		else
+		{
+			ClientAdjustPosition(
+				ServerData->PendingAdjustment.TimeStamp,
+				ServerData->PendingAdjustment.NewLoc,
+				ServerData->PendingAdjustment.NewVel,
+				ServerData->PendingAdjustment.NewBase,
+				ServerData->PendingAdjustment.NewBaseBoneName,
+				bHasBase,
+				ServerData->PendingAdjustment.bBaseRelativePosition,
+				ServerData->PendingAdjustment.MovementMode
+				);
+		}
+	}
+
+	ServerData->PendingAdjustment.TimeStamp = 0;
+	ServerData->PendingAdjustment.bAckGoodMove = false;
+}
+
+void UNZCharacterMovementComponent::SmoothClientPosition(float DeltaSeconds)
+{
+	if (!HasValidData() || CharacterOwner->Role == ROLE_Authority || NetworkSmoothingMode == ENetworkSmoothingMode::Disabled)
+	{
+		return;
+	}
+
+	SmoothClientPosition_Interpolate(DeltaSeconds);
+
+	if (IsMovingOnGround())
+	{
+		FNetworkPredictionData_Client_Character* ClientData = GetPredictionData_Client_Character();
+		if (ClientData)
+		{
+			// Don't smooth Z position if walking on ground
+			ClientData->MeshTranslationOffset.Z = 0.f;
+		}
+	}
+
+	SmoothClientPosition_UpdateVisuals();
+}
+
+
+
 
 float UNZCharacterMovementComponent::GetCurrentMovementTime() const
 {

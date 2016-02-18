@@ -601,7 +601,122 @@ void UNZCharacterMovementComponent::PerformMovement(float DeltaSeconds)
 	}
 }
 
+void UNZCharacterMovementComponent::SimulateMovement(float DeltaSeconds)
+{
+	if (!HasValidData() || UpdatedComponent->IsSimulatingPhysics())
+	{
+		return;
+	}
+	FVector RealVelocity = Velocity;	// Used now to keep our forced clientside decel from affecting animation
 
+	float RemainingTime = DeltaSeconds;
+	while (RemainingTime > 0.001f * CharacterOwner->GetActorTimeDilation())
+	{
+		Velocity = SimulatedVelocity;
+		float DeltaTime = RemainingTime;
+		if (RemainingTime > MaxSimulationTimeStep)
+		{
+			DeltaTime = FMath::Min(0.5f * RemainingTime, MaxSimulationTimeStep);
+		}
+		RemainingTime -= DeltaTime;
+
+		if (MovementMode == MOVE_Walking)
+		{
+			// Update simulated velocity for walking (falling done in SimulateMovement_Internal)
+			bIsSprinting = (RealVelocity.SizeSquared() > 1.01f * FMath::Square(MaxWalkSpeed));
+
+			const float MaxAccel = GetMaxAcceleration();
+			float MaxSpeed = GetMaxSpeed();
+
+			// Apply braking or deceleration
+			const bool bZeroAcceleration = Acceleration.IsZero();
+			const bool bVelocityOverMax = IsExceedingMaxSpeed(MaxSpeed);
+
+			// Only apply braking if there is no acceleration, or we are over our max speed and need to slow down to it.
+			if (bZeroAcceleration || bVelocityOverMax)
+			{
+				const FVector OldVelocity = Velocity;
+				ApplyVelocityBraking(DeltaSeconds, GroundFriction, BrakingDecelerationWalking);
+
+				// Don't allow braking to lower us below max speed if we started above it.
+				if (bVelocityOverMax && Velocity.SizeSquared() < FMath::Square(MaxSpeed) && FVector::DotProduct(Acceleration, OldVelocity) > 0.0f)
+				{
+					Velocity = OldVelocity.GetSafeNormal() * MaxSpeed;
+				}
+			}
+			else if (!bZeroAcceleration)
+			{
+				// Friction affects our ability to change direction. This is only done for input acceleration, not path following.
+				const FVector AccelDir = Acceleration.GetSafeNormal();
+				const float VelSize = Velocity.Size();
+				Velocity = Velocity - (Velocity - AccelDir * VelSize) * FMath::Min(DeltaTime * GroundFriction, 1.f);
+			}
+
+			// Apply acceleration
+			const float NewMaxSpeed = (IsExceedingMaxSpeed(MaxSpeed)) ? Velocity.Size() : MaxSpeed;
+			Velocity += Acceleration * DeltaTime;
+			if (Velocity.Size() > NewMaxSpeed)
+			{
+				Velocity = NewMaxSpeed * Velocity.GetSafeNormal();
+			}
+		}
+
+		bool bWasFalling = (MovementMode == MOVE_Falling);
+		SimulateMovement_Internal(DeltaTime);
+
+		if (MovementMode == MOVE_Falling)
+		{
+			if (GetWorld()->GetTimeSeconds() - LastCheckedAgainstWall > 0.07f)
+			{
+				LastCheckedAgainstWall = GetWorld()->GetTimeSeconds();
+				static const FName FallingTraceParamsTag = FName(TEXT("PhysFalling"));
+				const float TestWalkTime = FMath::Max(DeltaSeconds, 0.05f);
+				const FVector TestWalk = (FVector(0.f, 0.f, GetGravityZ()) * TestWalkTime + Velocity) * TestWalkTime;
+				FCollisionQueryParams CapsuleQuery(FallingTraceParamsTag, false, CharacterOwner);
+				FCollisionResponseParams ResponseParam;
+				InitCollisionParams(CapsuleQuery, ResponseParam);
+				const FVector PawnLocation = CharacterOwner->GetActorLocation();
+				const ECollisionChannel CollisionChannel = UpdatedComponent->GetCollisionObjectType();
+				FHitResult Hit(1.f);
+				bIsAgainstWall = GetWorld()->SweepSingleByChannel(Hit, PawnLocation, PawnLocation + TestWalk, FQuat::Identity, CollisionChannel, GetPawnCapsuleCollisionShape(SHRINK_RadiusCustom, 2.f), CapsuleQuery, ResponseParam);
+				if (bIsAgainstWall)
+				{
+					WallSlideNormal = Hit.Normal;
+				}
+			}
+		}
+		else
+		{
+			LastCheckedAgainstWall = 0.f;
+		}
+
+		if (MovementMode == MOVE_Walking)
+		{
+			bIsAgainstWall = false;
+			float Speed = Velocity.Size2D();
+			if (bWasFalling && (Speed > MaxWalkSpeed))
+			{
+				// todo:
+				//if (Speed > SprintSpeed)
+				//{
+				//	Velocity = DodgeLandingSpeedFactor * Velocity.GetSafeNormal2D();
+				//}
+				//else
+				{
+					Velocity = MaxWalkSpeed * Velocity.GetSafeNormal2D();
+				}
+			}
+		}
+		SimulatedVelocity = Velocity;
+		// Save three values - linear velocity with no accel, accel before, accel after. Log error when get position update from server
+	}
+	Velocity = RealVelocity;
+}
+
+void UNZCharacterMovementComponent::SimulateMovement_Internal(float DeltaTime)
+{
+
+}
 
 
 
