@@ -16,7 +16,46 @@ const FName NAME_SwimDist(TEXT("SwimDist"));
 
 UNZCharacterMovementComponent::UNZCharacterMovementComponent()
 {
+    MinTimeBetweenTimeStampResets = 10000.f;
     
+    MaxWalkSpeed = 940.f;
+    
+    SprintSpeed = 1230;
+    SprintAccel = 300;
+    SprintMaxWallNormal = -0.7f;
+    AutoSprintDelayInterval = 2.f;
+    MaxWalkSpeedCrouched = 315.f;
+    SetWalkableFloorZ(0.695f);
+    MaxAcceleration = 5500.f;
+    MaxFallingAcceleration = 4200.f;
+    MaxSwimmingAcceleration = 5500.f;
+    MaxRelativeSwimmingAccelNumerator = 0.f;
+    MaxRelativeSwimmingAccelDenominator = 1000.f;
+    BrakingDecelerationFalling = 0.f;
+    GroundFriction = 11.5f;
+    BrakingFriction = 5.f;
+    GravityScale = 1.f;
+    MaxStepHeight = 40.f;
+    CrouchedHalfHeight = 50.f;
+    
+    MaxSwimSpeed = 1000.f;
+    //MaxWaterSpeed = 450.f;
+    
+    bIsSprinting = false;
+    SprintStartTime = 0.f;
+    LastCheckedAgainstWall = 0.f;
+    bIsSettingUpFirstReplayMove = false;
+    
+    MaxPositionErrorSquared = 5.f;
+    LastClientAdjustmentTime = -1.f;
+    LastGoodMoveAckTime = -1.f;
+    MinTimeBetweenClientAdjustments = 0.1f;
+    bLargeCorrection = false;
+    LargeCorrectionThreshold = 15.f;
+    
+    TotalTimeStampError = -0.15f;
+    bClearingSpeedHack = false;
+    NetworkSmoothingMode = ENetworkSmoothingMode::Exponential;
 }
 
 void UNZCharacterMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)

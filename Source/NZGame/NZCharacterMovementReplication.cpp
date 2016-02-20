@@ -576,14 +576,10 @@ void UNZCharacterMovementComponent::PerformMovement(float DeltaSeconds)
 			GroundFriction = BrakingFriction;
 		}
 		
-		bool bSavedWantsToCrouch = bWantsToCrouch;
-		bForceMaxAccel = false;
-
 		FVector StartMoveLoc = GetActorLocation();
 		Super::PerformMovement(DeltaSeconds);
 		UpdateMovementStats(StartMoveLoc);
 
-		bWantsToCrouch = bSavedWantsToCrouch;
 		GroundFriction = RealGroundFriction;
 		BrakingDecelerationWalking = DefaultBrakingDecelerationWalking;
 	}
