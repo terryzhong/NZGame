@@ -452,8 +452,209 @@ bool ANZCharacter::ShouldTakeDamage(float Damage, FDamageEvent const& DamageEven
     return bTearOff || Super::ShouldTakeDamage(FMath::Max<float>(1.0f, Damage), DamageEvent, EventInstigator, DamageCauser);
 }
 
-float ANZCharacter::TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
+float ANZCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser)
 {
+    if (!ShouldTakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser))
+    {
+        return 0.f;
+    }
+    else if (Damage < 0.0f)
+    {
+        //UE_LOG(LogNZCharacter, Warning, TEXT("TakeDamage() called with damage %i of type %s... use HealDamage() to add health"), int32(Damage), *GetNameSafe(DamageEvent.DamageTypeClass));
+        return 0.0f;
+    }
+    else
+    {
+        //UE_LOG(LogNZCharacter, Verbose, TEXT("%s::TakeDamage() %d Class:%s Causer:%s"), *GetName(), int32(Damage), *GetNameSafe(DamageEvent.DamageTypeClass), *GetNameSafe(DamageCauser));
+        
+        const UDamageType* const DamageTypeCDO = DamageEvent.DamageTypeClass ? DamageEvent.DamageTypeClass->GetDefaultObject<UDamageType>() : GetDefault<UDamageType>();
+        const UNZDamageType* const NZDamageTypeCDO = Cast<UNZDamageType>(DamageTypeCDO);    // Warning: may be NULL
+        
+        int32 ResultDamage = FMath::TruncToInt(Damage);
+        FVector ResultMomentum = NZGetDamageMomentum(DamageEvent, this, EventInstigator);
+        bool bRadialDamage = false;
+        if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+        {
+            bool bScaleMomentum = !DamageEvent.IsOfType(FNZRadialDamageEvent::ClassID) || ((const FNZRadialDamageEvent&)DamageEvent).bScaleMomentum;
+            if (Damage == 0.f)
+            {
+                if (bScaleMomentum)
+                {
+                    // Use fake 1.0 damage so we can use the damage scaling code to scale momentum
+                    ResultMomentum *= InternalTakeRadialDamage(1.0f, (const FRadialDamageEvent&)DamageEvent, EventInstigator, DamageCauser);
+                }
+            }
+            else
+            {
+                float AdjustedDamage = InternalTakeRadialDamage(Damage, (const FRadialDamageEvent&)DamageEvent, EventInstigator, DamageCauser);
+                if (bScaleMomentum)
+                {
+                    ResultMomentum *= AdjustedDamage / Damage;
+                }
+                ResultDamage = FMath::TruncToInt(AdjustedDamage);
+                bRadialDamage = true;
+            }
+        }
+        
+        int32 AppliedDamage = ResultDamage;
+        ANZPlayerState* EnemyPS = EventInstigator ? Cast<ANZPlayerState>(EventInstigator->PlayerState) : NULL;
+        if (EnemyPS)
+        {
+            ANZGameState* GS = Cast<ANZGameState>(GetWorld()->GetGameState());
+            if (GS && !GS->OnSameTeam(this, EventInstigator))
+            {
+                EnemyPS->DamageDone += AppliedDamage;
+            }
+        }
+        
+        if (!IsDead())
+        {
+            // We need to pull the hit info out of FDamageEvent because ModifyDamage() goes through blueprints and that doesn't correctly handle polymorphic structs
+            FHitResult HitInfo;
+            {
+                FVector UnusedDir;
+                DamageEvent.GetBestHitInfo(this, DamageCauser, HitInfo, UnusedDir);
+            }
+            
+            // Note that we split the gametype query out so that it's always in a consistent place
+            ANZGameMode* Game = GetWorld()->GetAuthGameMode<ANZGameMode>();
+            if (Game != NULL)
+            {
+                Game->ModifyDamage(ResultDamage, ResultMomentum, this, EventInstigator, HitInfo, DamageCauser, DamageEvent.DamageTypeClass);
+            }
+            if (bRadialDamage)
+            {
+                ANZProjectile* Proj = Cast<ANZProjectile>(DamageCauser);
+                if (Proj)
+                {
+                    Proj->StatsHitCredit += ResultDamage;
+                }
+                else if (Cast<ANZRemoteRedeemer>(DamageCauser))
+                {
+                    Cast<ANZRemoteRedeemer>(DamageCauser)->StatsHitCredit += ResultDamage;
+                }
+            }
+            AppliedDamage = ResultDamage;
+            ANZInventory* HitArmor = NULL;
+            ModifyDamageTaken(AppliedDamage, ResultDamage, ResultMomentum, HitArmor, HitInfo, EventInstigator, DamageCauser, DamageEvent.DamageTypeClass);
+            if (HitArmor)
+            {
+                ArmorAmount = GetArmorAmount();
+            }
+            if (ResultDamage > 0 || !ResultMomentum.IsZero())
+            {
+                if (EventInstigator != NULL && EventInstigator != Controller)
+                {
+                    LastHitBy = EventInstigator;
+                }
+                
+                if (ResultDamage > 0)
+                {
+                    // This is partially copied from AActor::TakeDamage() (just the calls to the various delegates and K2 notifications)
+                    
+                    float ActualDamage = float(ResultDamage);
+                    // Generic damage notifications sent for any damage
+                    ReceiveAnyDamage(ActualDamage, DamageTypeCDO, EventInstigator, DamageCauser);
+                    OnTakeAnyDamage.Broadcast(ActualDamage, DamageTypeCDO, EventInstigator, DamageCauser);
+                    if (EventInstigator != NULL)
+                    {
+                        EventInstigator->InstigatedAnyDamage(ActualDamage, DamageTypeCDO, this, DamageCauser);
+                    }
+                    if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+                    {
+                        // Point damage event, pass off to helper function
+                        FPointDamageEvent* const PointDamageEvent = (FPointDamageEvent*)&DamageEvent;
+                        
+                        // K2 notification for this actor
+                        if (ActualDamage != 0.f)
+                        {
+                            ReceivePointDamage(ActualDamage, DamageTypeCDO, PointDamageEvent->HitInfo.ImpactPoint, PointDamageEvent->HitInfo.ImpactNormal, PointDamageEvent->HitInfo.Component.Get(), PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection, EventInstigator, DamageCauser);
+                            OnTakePointDamage.Broadcast(ActualDamage, EventInstigator, PointDamageEvent->HitInfo.ImpactPoint, PointDamageEvent->HitInfo.Component.Get(), PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection, DamageTypeCDO, DamageCauser);
+                        }
+                    }
+                    else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+                    {
+                        // Radial damage event, pass off to helper function
+                        FRadialDamageEvent* const RadialDamageEvent = (FRadialDamageEvent*)&DamageEvent;
+                        
+                        // K2 notification for this actor
+                        if (ActualDamage != 0.f)
+                        {
+                            FHitResult const& Hit = (RadialDamageEvent->ComponentHits.Num() > 0) ? RadialDamageEvent->ComponentHits[0] : FHitResult();
+                            ReceiveRadialDamage(ActualDamage, DamageTypeCDO, RadialDamageEvent->Origin, Hit, EventInstigator, DamageCauser);
+                        }
+                    }
+                }
+            }
+            
+            if ((Game->bDamageHurtsHealth && bDamageHurtsHealth) || (!Cast<ANZPlayerController>(GetController()) && (!DrivenVehicle || !Cast<ANZPlayerController>(DrivenVehicle->GetController()))))
+            {
+                Health -= ResultDamage;
+                bWasFallingWhenDamaged = (GetCharacterMovement() != NULL && (GetCharacterMovement()->MovementMode == MOVE_Falling));
+            }
+            //UE_LOG(LogNZCharacter, Verbose, TEXT("%s took %d damage, %d health remaining"), *GetName(), ResultDamage, Health);
+            
+            // Let the game Score damage if it wants to make sure not to count overkill damage!
+            Game->ScoreDamage(ResultDamage + FMath::Min<int32>(Health, 0), Controller, EventInstigator);
+            bool bIsSelfDamage = (EventInstigator == Controller && Controller != NULL);
+            if (NZDamageTypeCDO != NULL)
+            {
+                if (NZDamageTypeCDO->bForceZMomentum && GetCharacterMovement()->MovementMode == MOVE_Walking)
+                {
+                    ResultMomentum.Z = FMath::Max<float>(ResultMomentum.Z, NZDamageTypeCDO->ForceZMomentumPct * ResultMomentum.Size());
+                }
+                if (bIsSelfDamage)
+                {
+                    if (NZDamageTypeCDO->bSelfMomentumBoostOnlyZ)
+                    {
+                        ResultMomentum.Z *= NZDamageTypeCDO->SelfMomentumBoost;
+                    }
+                    else
+                    {
+                        ResultMomentum *= NZDamageTypeCDO->SelfMomentumBoost;
+                    }
+                }
+            }
+            
+            if (IsRagdoll())
+            {
+                if (GetNetMode() != NM_Standalone)
+                {
+                    ANZGameState* GS = EventInstigator ? Cast<ANZGameState>(GetWorld()->GetGameState()) : NULL;
+                    float PushScaling = (GS && GS->OnSameTeam(this, EventInstigator)) ? 0.5f : 1.f;
+                    GetMesh()->AddImpulseAtLocation(PushScaling * ResultMomentum, GetMesh()->GetComponentLocation());
+                }
+                else
+                {
+                    FVector HitLocation = GetMesh()->GetComponentLocation();
+                    if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+                    {
+                        HitLocation = ((const FPointDamageEvent&)DamageEvent).HitInfo.Location;
+                    }
+                    else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+                    {
+                        const FRadialDamageEvent& RadialEvent = (const FRadialDamageEvent&)DamageEvent;
+                        if (RadialEvent.ComponentHits.Num() > 0)
+                        {
+                            HitLocation = RadialEvent.ComponentHits[0].Location;
+                        }
+                    }
+                    GetMesh()->AddImpulseAtLocation(ResultMomentum, HitLocation);
+                }
+            }
+            else if (NZCharacterMovement != NULL)
+            {
+                NZCharacterMovement->AddDamagedImpulse(ResultMomentum, bIsSelfDamage);
+                if (NZDamageTypeCDO != NULL && NZDamageTypeCDO->WalkMovementReductionDuration > 0.0f)
+                {
+                    SetWalkMovementReduction(NZDamageTypeCDO->WalkMovementReductionPct, NZDamageTypeCDO->WalkMovementReductionDuration);
+                }
+            }
+            
+            
+        }
+    }
+    
     return 0.f;
 }
 

@@ -28,6 +28,30 @@ struct FNZPointDamageEvent : public FPointDamageEvent
     virtual bool IsOfType(int32 InID) const { return (FNZPointDamageEvent::ClassID == InID) || FPointDamageEvent::IsOfType(InID); }
 };
 
+USTRUCT(BlueprintType)
+struct FNZRadialDamageEvent : public FRadialDamageEvent
+{
+    GENERATED_BODY()
+    
+    FNZRadialDamageEvent()
+        : FRadialDamageEvent()
+        , bScaleMomentum(true)
+    {}
+    
+    /** Momentum magnitude */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage)
+    float BaseMomentumMag;
+    
+    /** Whether to scale the momentum to the percentage of damage received (i.e. due to distance) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Damage)
+    bool bScaleMomentum;
+    
+    /** ID for this class. NOTE this must be unique for all damage events. */
+    static const int32 ClassID = 102;
+    virtual int32 GetTypeID() const { return FNZRadialDamageEvent::ClassID; }
+    virtual bool IsOfType(int32 InID) const { return (FNZRadialDamageEvent::ClassID == InID) || FRadialDamageEvent::IsOfType(InID); }
+};
+
 /**
  * 
  */
