@@ -803,6 +803,55 @@ void ANZPlayerController::PlayerTick(float DeltaTime)
 	// todo:
 }
 
+void ANZPlayerController::NotifyTakeHit(AController* InstigatedBy, int32 Damage, FVector Momentum, const FDamageEvent& DamageEvent)
+{
+    APlayerState* InstigatedByState = (InstigatedBy != NULL) ? InstigatedBy->PlayerState : NULL;
+    FVector RelHitLocation(FVector::ZeroVector);
+    if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+    {
+        RelHitLocation = ((FPointDamageEvent*)&DamageEvent)->HitInfo.Location - GetViewTarget()->GetActorLocation();
+    }
+    else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID) && ((FRadialDamageEvent*)&DamageEvent)->ComponentHits.Num() > 0)
+    {
+        RelHitLocation = ((FRadialDamageEvent*)&DamageEvent)->ComponentHits[0].Location - GetViewTarget()->GetActorLocation();
+    }
+    ANZGameState* GS = GetWorld()->GetGameState<ANZGameState>();
+    bool bFriendlyFire = InstigatedByState != PlayerState && GS != NULL && GS->OnSameTeam(InstigatedByState, this);
+    uint8 RepDamage = FMath::Clamp(Damage, 0, 255);
+    ClientNotifyTakeHit(bFriendlyFire, RepDamage, RelHitLocation);
+}
+
+void ANZPlayerController::ClientNotifyTakeHit_Implementation(bool bFriendlyFire, uint8 Damage, FVector_NetQuantize RelHitLocation)
+{
+    if (MyNZHUD != NULL)
+    {
+        // todo:
+        //MyNZHUD->PawnDamaged(((GetPawn() != NULL) ? GetPawn()->GetActorLocation() : GetViewTarget()->GetActorLocation()) + RelHitLocation, Damage, bFriendlyFire);
+    }
+}
+
+void ANZPlayerController::ClientNotifyCausedHit_Implementation(APawn* HitPawn, uint8 Damage)
+{
+    if (HitPawn != NULL && HitPawn->GetRootComponent() != NULL && GetPawn() != NULL && MyNZHUD != NULL)
+    {
+        float VictimLastRenderTime = -1.0f;
+        TArray<USceneComponent*> Components;
+        HitPawn->GetRootComponent()->GetChildrenComponents(true, Components);
+        for (int32 i = 0; i < Components.Num(); i++)
+        {
+            UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(Components[i]);
+            if (Prim != NULL)
+            {
+                VictimLastRenderTime = FMath::Max<float>(VictimLastRenderTime, Prim->LastRenderTime);
+            }
+        }
+        if (GetWorld()->TimeSeconds - VictimLastRenderTime < 0.15f)
+        {
+            // todo:
+            //MyNZHUD->CausedDamage(HitPawn, Damage);
+        }
+    }
+}
 
 
 void ANZPlayerController::SetWeaponHand(EWeaponHand NewHand)

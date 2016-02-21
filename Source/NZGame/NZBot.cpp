@@ -7,14 +7,12 @@
 
 void ANZBot::SwitchToBestWeapon()
 {
-    // todo:
-    check(false);
+
 }
 
 void ANZBot::ReceiveInstantWarning(ANZCharacter* Shooter, const FVector& FireDir)
 {
-    // todo:
-    check(false);
+
 }
 
 void ANZBot::SeePawn(APawn* Other)
@@ -23,6 +21,16 @@ void ANZBot::SeePawn(APawn* Other)
 }
 
 void ANZBot::HearSound(APawn* Other, const FVector& SoundLoc, float SoundRadius)
+{
+    
+}
+
+void ANZBot::NotifyTakeHit(AController* InstigatedBy, int32 Damage, FVector Momentum, const FDamageEvent& DamageEvent)
+{
+    
+}
+
+void ANZBot::NotifyCausedHit(APawn* HitPawn, int32 Damage)
 {
     
 }

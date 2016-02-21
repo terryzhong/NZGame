@@ -38,4 +38,9 @@ public:
     virtual void SeePawn(APawn* Other);
     virtual void HearSound(APawn* Other, const FVector& SoundLoc, float SoundRadius);
     
+    virtual void NotifyTakeHit(AController* InstigatedBy, int32 Damage, FVector Momentum, const FDamageEvent& DamageEvent);
+    virtual void NotifyCausedHit(APawn* HitPawn, int32 Damage);
+    
+    
+    
 };

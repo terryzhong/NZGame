@@ -16,6 +16,11 @@ void ANZMutator::ModifyInventory_Implementation(ANZInventory* Inv, ANZCharacter*
 
 }
 
+void ANZMutator::AddDefaultInventory(TSubclassOf<ANZInventory> InventoryClass)
+{
+    
+}
+
 bool ANZMutator::ModifyDamage_Implementation(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType)
 {
 	if (NextMutator != NULL)
@@ -25,4 +30,7 @@ bool ANZMutator::ModifyDamage_Implementation(UPARAM(ref) int32& Damage, UPARAM(r
 	return true;
 }
 
-
+bool ANZMutator::PreventDeath_Implementation(APawn* KilledPawn, AController* Killer, TSubclassOf<UDamageType> DamageType, const FHitResult& HitInfo)
+{
+    return (NextMutator != NULL && NextMutator->PreventDeath(KilledPawn, Killer, DamageType, HitInfo));
+}

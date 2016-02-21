@@ -25,6 +25,24 @@ ANZGameMode::ANZGameMode()
     bDelayedStart = true;
 }
 
+void ANZGameMode::InitGameState()
+{
+    Super::InitGameState();
+    
+    NZGameState = Cast<ANZGameState>(GameState);
+    if (NZGameState != NULL)
+    {
+        // todo:
+    }
+}
+
+
+void ANZGameMode::ScoreDamage_Implementation(int32 DamageAmount, AController* Victim, AController* Attacker)
+{
+    
+}
+
+
 void ANZGameMode::RestartPlayer(AController* aPlayer)
 {
 	if ((aPlayer == NULL) || (aPlayer->PlayerState == NULL) || aPlayer->PlayerState->PlayerName.IsEmpty())
@@ -97,7 +115,7 @@ void ANZGameMode::GiveDefaultInventory(APawn* PlayerPawn)
     }
 }
 
-bool ANZGameMode::ModifyDamage(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType)
+bool ANZGameMode::ModifyDamage_Implementation(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType)
 {
 	ANZCharacter* InjuredChar = Cast<ANZCharacter>(Injured);
 	if (InjuredChar != NULL && InjuredChar->bSpawnProtectionEligible && InstigatedBy != NULL && InstigatedBy != Injured->Controller && GetWorld()->TimeSeconds - Injured->CreationTime < NZGameState->SpawnProtectionTime)
@@ -111,6 +129,11 @@ bool ANZGameMode::ModifyDamage(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& M
 	}
 
 	return true;
+}
+
+bool ANZGameMode::PreventDeath_Implementation(APawn* KilledPawn, AController* Killer, TSubclassOf<UDamageType> DamageType, const FHitResult& HitInfo)
+{
+    return (BaseMutator != NULL && BaseMutator->PreventDeath(KilledPawn, Killer, DamageType, HitInfo));
 }
 
 

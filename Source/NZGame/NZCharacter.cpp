@@ -743,6 +743,17 @@ bool ANZCharacter::ModifyDamageTaken_Implementation(UPARAM(ref) int32& AppliedDa
 	return false;
 }
 
+bool ANZCharacter::ModifyDamageCaused_Implementation(UPARAM(ref) int32& AppliedDamage, UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, const FHitResult& HitInfo, AActor* Victim, AController* EventInstigator, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType)
+{
+    if (DamageType && !DamageType->GetDefaultObject<UDamageType>()->bCausedByWorld)
+    {
+        Damage *= DamageScaling;
+        AppliedDamage *= DamageScaling;
+    }
+    return false;
+}
+
+
 FVector ANZCharacter::GetHeadLocation(float PredictionTime)
 {
     return FVector(0.f);
@@ -755,7 +766,54 @@ bool ANZCharacter::IsHeadShot(FVector HitLocation, FVector ShotDirection, float 
 
 void ANZCharacter::NotifyTakeHit(AController* InstigatedBy, int32 AppliedDamage, int32 Damage, FVector Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent)
 {
-    
+    if (Role == ROLE_Authority)
+    {
+        ANZPlayerController* InstigatedByPC = Cast<ANZPlayerController>(InstigatedBy);
+        if (InstigatedByPC != NULL)
+        {
+            InstigatedByPC->ClientNotifyCausedHit(this, FMath::Clamp(AppliedDamage, 0, 255));
+        }
+        else
+        {
+            ANZBot* InstigatedByBot = Cast<ANZBot>(InstigatedBy);
+            if (InstigatedByBot != NULL)
+            {
+                InstigatedByBot->NotifyCausedHit(this, Damage);
+            }
+        }
+        
+        // We do the sound here instead of via PlayTakeHitEffects() so it uses RPCs instead of variable raplication which is higher priority
+        // (at small bandwidth cost)
+        if (GetWorld()->TimeSeconds - LastPainSoundTime >= MinPainSoundInterval)
+        {
+            const UDamageType* const DamageTypeCDO = DamageEvent.DamageTypeClass ? DamageEvent.DamageTypeClass->GetDefaultObject<UDamageType>() : GetDefault<UDamageType>();
+            const UNZDamageType* const NZDamageTypeCDO = Cast<UNZDamageType>(DamageTypeCDO);    // Warning: may be NULL
+            if (HitArmor != NULL && HitArmor->ReceivedDamageSound != NULL && ((NZDamageTypeCDO == NULL) || NZDamageTypeCDO->bBlockedByArmor))
+            {
+                UNZGameplayStatics::NZPlaySound(GetWorld(), HitArmor->ReceivedDamageSound, this, SRT_All, false, FVector::ZeroVector, InstigatedByPC, NULL, false);
+            }
+            else if ((NZDamageTypeCDO == NULL) || NZDamageTypeCDO->bCausesBlood)
+            {
+                UNZGameplayStatics::NZPlaySound(GetWorld(), CharacterData.GetDefaultObject()->PainSound, this, SRT_All, false, FVector::ZeroVector, InstigatedByPC, NULL, false);
+            }
+            LastPainSoundTime = GetWorld()->TimeSeconds;
+        }
+        
+        ANZPlayerController* PC = Cast<ANZPlayerController>(Controller);
+        if (PC != NULL)
+        {
+            // Pass some damage even if armor absorbed all of it, so client will get visual hit indicator
+            PC->NotifyTakeHit(InstigatedBy, HitArmor ? FMath::Max(Damage, 1) : Damage, Momentum, DamageEvent);
+        }
+        else
+        {
+            ANZBot* B = Cast<ANZBot>(Controller);
+            if (B != NULL)
+            {
+                B->NotifyTakeHit(InstigatedBy, Damage, Momentum, DamageEvent);
+            }
+        }
+    }
 }
 
 void ANZCharacter::SetLastTakeHitInfo(int32 AttemptedDamage, int32 Damage, const FVector& Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent)
@@ -776,12 +834,45 @@ void ANZCharacter::PlayDamageEffects_Implementation()
 
 bool ANZCharacter::K2_Died(AController* EventInstigator, TSubclassOf<UDamageType> DamageType)
 {
-    return false;
+    return Died(EventInstigator, FNZPointDamageEvent(Health + 1, FHitResult(), FVector(0.0f, 0.0f, -1.0f), DamageType));
 }
 
-void ANZCharacter::Died(AController* EventInstigator, const FDamageEvent& DamageEvent)
+bool ANZCharacter::Died(AController* EventInstigator, const FDamageEvent& DamageEvent)
 {
-    
+    if (Role < ROLE_Authority || IsDead())
+    {
+        // Can't kill pawns on client
+        // Can't kill pawns that are already dead
+        return false;
+    }
+    else
+    {
+        // If this is an environmental death then refer to the previous killer so that they receive credit (knocked into lava pits, etc)
+        if (DamageEvent.DamageTypeClass != NULL && DamageEvent.DamageTypeClass.GetDefaultObject()->bCausedByWorld && (EventInstigator == NULL || EventInstigator == Controller) && LastHitBy != NULL)
+        {
+            EventInstigator = LastHitBy;
+        }
+        
+        FHitResult HitInfo;
+        {
+            FVector UnusedDir;
+            DamageEvent.GetBestHitInfo(this, NULL, HitInfo, UnusedDir);
+        }
+        
+        ANZGameMode* Game = GetWorld()->GetAuthGameMode<ANZGameMode>();
+        if (Game != NULL && Game->PreventDeath(this, EventInstigator, DamageEvent.DamageTypeClass, HitInfo))
+        {
+            Health = FMath::Max<int32>(Health, 1);
+            return false;
+        }
+        else
+        {
+            
+            
+            
+            return true;
+        }
+    }
 }
 
 

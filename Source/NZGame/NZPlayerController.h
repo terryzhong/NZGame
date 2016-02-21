@@ -183,6 +183,13 @@ public:
 	 We override player tick to keep updating the player's rotation when the game is over */
 	virtual void PlayerTick(float DeltaTime) override;
     
+    virtual void NotifyTakeHit(AController* InstigatedBy, int32 Damage, FVector Momentum, const FDamageEvent& DamageEvent);
+    
+    UFUNCTION(Client, Unreliable)
+    void ClientNotifyTakeHit(bool bFriendlyFire, uint8 Damage, FVector_NetQuantize RelHitLocation);
+    
+    UFUNCTION(Client, Unreliable)
+    void ClientNotifyCausedHit(APawn* HitPawn, uint8 Damage);
     
 protected:
     UPROPERTY(GlobalConfig, BlueprintReadOnly, Category = Weapon)

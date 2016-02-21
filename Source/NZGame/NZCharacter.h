@@ -260,7 +260,7 @@ public:
      */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DisplayName = "Died"), Category = Pawn)
     bool K2_Died(AController* EventInstigator, TSubclassOf<UDamageType> DamageType);
-    virtual void Died(AController* EventInstigator, const FDamageEvent& DamageEvent);
+    virtual bool Died(AController* EventInstigator, const FDamageEvent& DamageEvent);
     
 
     /** First person arm mesh */
@@ -773,6 +773,12 @@ public:
     
     virtual FVector GetLocationCenterOffset() const;
     
+    
+    UPROPERTY(BlueprintReadWrite, Category = Sounds)
+    float LastPainSoundTime;
+    
+    UPROPERTY(BlueprintReadWrite, Category = Sounds)
+    float MinPainSoundInterval;
     
     
     /** 1271 */

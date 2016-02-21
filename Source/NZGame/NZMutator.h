@@ -33,5 +33,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
 	bool ModifyDamage(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType);
 
+    /** Return true to prevent the passed in pawn from dying (i.e. from Died()) */
+    UFUNCTION(BlueprintNativeEvent)
+    bool PreventDeath(APawn* KilledPawn, AController* Killer, TSubclassOf<UDamageType> DamageType, const FHitResult& HitInfo);
 
 };

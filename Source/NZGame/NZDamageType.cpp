@@ -95,7 +95,7 @@ FVector NZGetDamageMomentum(const FDamageEvent& DamageEvent, const AActor* HitAc
 		FHitResult HitInfo;
 		FVector MomentumDir;
 		DamageEvent.GetBestHitInfo(HitActor, EventInstigator, HitInfo, MomentumDir);
-		return MomentumDir * DamageType->GetDefaultObject()->DamageImpulse;
+		return MomentumDir * DamageType.GetDefaultObject()->DamageImpulse;
 	}
 }
 

@@ -20,13 +20,17 @@ namespace MatchState
 /**
  * 
  */
-UCLASS()
+UCLASS(Abstract, Config = Game)
 class NZGAME_API ANZGameMode : public ANZBaseGameMode
 {
 	GENERATED_BODY()
 	
 public:
     ANZGameMode();
+    
+    /** Cached reference to our game state for quick access */
+    UPROPERTY()
+    class ANZGameState* NZGameState;
     
     
     UPROPERTY(EditDefaultsOnly, Category = Game)
@@ -64,6 +68,11 @@ public:
     UPROPERTY(Transient, BlueprintReadOnly)
     bool bSetPlayerDefaultsNewSpawn;
     
+    virtual void InitGameState() override;
+    
+    UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
+    void ScoreDamage(int32 DamageAmount, AController* Victim, AController* Attacker);
+    
     /** 416 */
     virtual void RestartPlayer(AController* aPlayer);
     
@@ -78,6 +87,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent)
 	bool ModifyDamage(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType);
 
+    UFUNCTION(BlueprintNativeEvent)
+    bool PreventDeath(APawn* KilledPawn, AController* Killer, TSubclassOf<UDamageType> DamageType, const FHitResult& HitInfo);
     
     
     /** 606
