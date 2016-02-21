@@ -393,6 +393,16 @@ void UNZCharacterMovementComponent::OnMovementModeChanged(EMovementMode Previous
 	// todo:
 }
 
+void UNZCharacterMovementComponent::AddDampedImpulse(FVector Impulse, bool bSelfInflicted)
+{
+	if (HasValidData() && !Impulse.IsZero())
+	{
+		// Handle scaling by mass
+
+	}
+}
+
+
 void UNZCharacterMovementComponent::HandleCrouchRequest()
 {
 	bWantsToCrouch = true;

@@ -26,4 +26,12 @@ public:
     
 	UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
     void ModifyInventory(ANZInventory* Inv, ANZCharacter* NewOwner);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Inventory)
+	void AddDefaultInventory(TSubclassOf<ANZInventory> InventoryClass);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
+	bool ModifyDamage(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType);
+
+
 };

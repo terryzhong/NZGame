@@ -63,6 +63,13 @@ void ANZPlayerState::NotifyTeamChanged_Implementation()
 	check(false);
 }
 
+void ANZPlayerState::OnRep_Deaths()
+{
+	// todo:
+	check(false);
+}
+
+
 float ANZPlayerState::GetStatsValue(FName StatsName) const
 {
     return StatsData.FindRef(StatsName);

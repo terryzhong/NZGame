@@ -45,6 +45,10 @@ public:
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Inventory)
     TArray<TSubclassOf<class ANZInventory> > DefaultInventory;
+
+	/** If true, characters taking damage lose health */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
+	bool bDamageHurtsHealth;
     
     /** 237
      If true, firing weapons costs ammo */
@@ -68,6 +72,12 @@ public:
     
     /** 421 */
     virtual void GiveDefaultInventory(APawn* PlayerPawn);
+
+
+	/** NOTE: Return value is a workaround for blueprint bugs involving ref parameters and is not used */
+	UFUNCTION(BlueprintNativeEvent)
+	bool ModifyDamage(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType);
+
     
     
     /** 606

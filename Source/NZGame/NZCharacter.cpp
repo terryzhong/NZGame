@@ -17,7 +17,7 @@
 #include "NZGameplayStatics.h"
 #include "NZCharacterContent.h"
 #include "NZWorldSettings.h"
-
+#include "NZProjectile.h"
 
 
 // Sets default values
@@ -522,6 +522,7 @@ float ANZCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
             {
                 Game->ModifyDamage(ResultDamage, ResultMomentum, this, EventInstigator, HitInfo, DamageCauser, DamageEvent.DamageTypeClass);
             }
+
             if (bRadialDamage)
             {
                 ANZProjectile* Proj = Cast<ANZProjectile>(DamageCauser);
@@ -529,11 +530,14 @@ float ANZCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
                 {
                     Proj->StatsHitCredit += ResultDamage;
                 }
-                else if (Cast<ANZRemoteRedeemer>(DamageCauser))
-                {
-                    Cast<ANZRemoteRedeemer>(DamageCauser)->StatsHitCredit += ResultDamage;
-                }
+
+				// todo:
+                //else if (Cast<ANZRemoteRedeemer>(DamageCauser))
+                //{
+                //    Cast<ANZRemoteRedeemer>(DamageCauser)->StatsHitCredit += ResultDamage;
+                //}
             }
+
             AppliedDamage = ResultDamage;
             ANZInventory* HitArmor = NULL;
             ModifyDamageTaken(AppliedDamage, ResultDamage, ResultMomentum, HitArmor, HitInfo, EventInstigator, DamageCauser, DamageEvent.DamageTypeClass);
@@ -552,7 +556,7 @@ float ANZCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
                 {
                     // This is partially copied from AActor::TakeDamage() (just the calls to the various delegates and K2 notifications)
                     
-                    float ActualDamage = float(ResultDamage);
+                    float ActualDamage = float(ResultDamage);	// Engine hooks want float
                     // Generic damage notifications sent for any damage
                     ReceiveAnyDamage(ActualDamage, DamageTypeCDO, EventInstigator, DamageCauser);
                     OnTakeAnyDamage.Broadcast(ActualDamage, DamageTypeCDO, EventInstigator, DamageCauser);
@@ -620,6 +624,7 @@ float ANZCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
             {
                 if (GetNetMode() != NM_Standalone)
                 {
+					// Intentionally always apply to root because that replicates better, and damp to prevent excessive team boost
                     ANZGameState* GS = EventInstigator ? Cast<ANZGameState>(GetWorld()->GetGameState()) : NULL;
                     float PushScaling = (GS && GS->OnSameTeam(this, EventInstigator)) ? 0.5f : 1.f;
                     GetMesh()->AddImpulseAtLocation(PushScaling * ResultMomentum, GetMesh()->GetComponentLocation());
@@ -644,18 +649,98 @@ float ANZCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
             }
             else if (NZCharacterMovement != NULL)
             {
-                NZCharacterMovement->AddDamagedImpulse(ResultMomentum, bIsSelfDamage);
+                NZCharacterMovement->AddDampedImpulse(ResultMomentum, bIsSelfDamage);
                 if (NZDamageTypeCDO != NULL && NZDamageTypeCDO->WalkMovementReductionDuration > 0.0f)
                 {
                     SetWalkMovementReduction(NZDamageTypeCDO->WalkMovementReductionPct, NZDamageTypeCDO->WalkMovementReductionDuration);
                 }
             }
+			else
+			{
+				GetCharacterMovement()->AddImpulse(ResultMomentum, false);
+			}
             
-            
+			NotifyTakeHit(EventInstigator, AppliedDamage, ResultDamage, ResultMomentum, HitArmor, DamageEvent);
+			SetLastTakeHitInfo(Damage, ResultDamage, ResultMomentum, HitArmor, DamageEvent);
+
+			if (Health <= 0)
+			{
+				// todo:
+				//ANZPlayerState* KillerPS = EventInstigator ? Cast<ANZPlayerState>(EventInstigator->PlayerState) : NULL;
+				//if (KillerPS)
+				//{
+				//	ANZProjectile* Proj = Cast<ANZProjectile>(DamageCauser);
+				//	KillerPS->bAnnounceWeaponReward = Proj && Proj->bPendingSpecialReward;
+				//}
+
+				Died(EventInstigator, DamageEvent);
+
+				// todo:
+				//if (KillerPS)
+				//{
+				//	KillerPS->bAnnounceWeaponReward = false;
+				//}
+			}
         }
+		else if (IsRagdoll())
+		{
+			FVector HitLocation = GetMesh()->GetComponentLocation();
+			if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+			{
+				HitLocation = ((const FPointDamageEvent&)DamageEvent).HitInfo.Location;
+			}
+			else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID))
+			{
+				const FRadialDamageEvent& RadialEvent = (const FRadialDamageEvent&)DamageEvent;
+				if (RadialEvent.ComponentHits.Num() > 0)
+				{
+					HitLocation = RadialEvent.ComponentHits[0].Location;
+				}
+			}
+			GetMesh()->AddImpulseAtLocation(ResultMomentum, HitLocation);
+			if (GetNetMode() != NM_DedicatedServer)
+			{
+				Health -= int32(Damage);
+				SetLastTakeHitInfo(Damage, Damage, ResultMomentum, NULL, DamageEvent);
+
+				// todo:
+				//TSubclassOf<UNZDamageType> NZDmg(*DamageEvent.DamageTypeClass);
+				//if (NZDmg != NULL && NZDmg.GetDefaultObject()->ShouldGib(this))
+				//{
+				//	GibExplosion();
+				//}
+			}
+		}
+
+		return float(ResultDamage);
     }
-    
-    return 0.f;
+}
+
+bool ANZCharacter::ModifyDamageTaken_Implementation(UPARAM(ref) int32& AppliedDamage, UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, UPARAM(ref) ANZInventory*& HitArmor, const FHitResult& HitInfo, AController* EventInstigator, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType)
+{
+	// Check for caused modifiers on instigator
+	ANZCharacter* InstigatorChar = NULL;
+	if (DamageCauser != NULL)
+	{
+		InstigatorChar = Cast<ANZCharacter>(DamageCauser->Instigator);
+	}
+	if (InstigatorChar == NULL && EventInstigator != NULL)
+	{
+		InstigatorChar = Cast<ANZCharacter>(EventInstigator->GetPawn());
+	}
+	if (InstigatorChar != NULL && !InstigatorChar->IsDead())
+	{
+		InstigatorChar->ModifyDamageCaused(AppliedDamage, Damage, Momentum, HitInfo, this, EventInstigator, DamageCauser, DamageType);
+	}
+	// Check inventory
+	for (TInventoryIterator<> It(this); It; ++It)
+	{
+		if (It->bCallDamageEvents)
+		{
+			It->ModifyDamageTaken(Damage, Momentum, HitArmor, EventInstigator, HitInfo, DamageCauser, DamageType);
+		}
+	}
+	return false;
 }
 
 FVector ANZCharacter::GetHeadLocation(float PredictionTime)
@@ -672,6 +757,12 @@ void ANZCharacter::NotifyTakeHit(AController* InstigatedBy, int32 AppliedDamage,
 {
     
 }
+
+void ANZCharacter::SetLastTakeHitInfo(int32 AttemptedDamage, int32 Damage, const FVector& Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent)
+{
+
+}
+
 
 void ANZCharacter::PlayTakeHitEffects_Implementation()
 {
@@ -834,6 +925,16 @@ bool ANZCharacter::DelayedShotFound()
     return false;
 }
 
+int32 ANZCharacter::GetArmorAmount()
+{
+	int32 TotalArmor = 0;
+	// todo:
+	//for (TInventoryIterator<ANZArmor> It(this); It; ++It)
+	//{
+	//	TotalArmor += It->ArmorAmount;
+	//}
+	return TotalArmor;
+}
 
 
 
@@ -1599,6 +1700,8 @@ void ANZCharacter::FireRateChanged()
         Weapon->UpdateTiming();
     }
 }
+
+
 
 void ANZCharacter::OnRep_DrivenVehicle()
 {

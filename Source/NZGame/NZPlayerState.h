@@ -51,7 +51,26 @@ public:
     
     UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
     uint32 bWaitingPlayer : 1;
+
+	UPROPERTY(BlueprintReadWrite, Replicated, Category = PlayerState)
+	uint32 bReadyToPlay : 1;
+
+
+
+	UPROPERTY(BlueprintReadWrite, Category = PlayerState)
+	float LastKillTime;
+
+	UPROPERTY(BlueprintReadWrite, Replicated, Category = PlayerState)
+	int32 Kills;
     
+	UPROPERTY(BlueprintReadWrite, Replicated, Category = PlayerState)
+	int32 DamageDone;
+
+	UPROPERTY(BlueprintReadOnly, Replicated, ReplicatedUsing = OnRep_Deaths, Category = PlayerState)
+	int32 Deaths;
+
+	UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
+	ANZPlayerState* LastKillerPlayerState;
     
     
 	UFUNCTION(BlueprintNativeEvent)
@@ -78,6 +97,9 @@ public:
     class APlayerState* RespawnChoiceB;
 	
 	
+	UFUNCTION()
+	void OnRep_Deaths();
+
     
 private:
     /** 633

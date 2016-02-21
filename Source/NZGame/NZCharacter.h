@@ -217,7 +217,21 @@ public:
     virtual bool ShouldTakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) const override;
     
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, class AController* EventInstigator, AActor* DamageCauser) override;
-    
+
+	/**
+	* Hook to modify damage taken by this Pawn
+	* NOTE: Return value is a workaround for blueprint bugs involving ref parameters and is not used
+	*/
+	UFUNCTION(BlueprintNativeEvent)
+	bool ModifyDamageTaken(UPARAM(ref) int32& AppliedDamage, UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, UPARAM(ref) ANZInventory*& HitArmor, const FHitResult& HitInfo, AController* EventInstigator, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType);
+
+	/** 
+	 * Hook to modify damage CAUSED by this Pawn - note that EventInstigator may not be equal to Controller if we're in a vehicle, etc
+	 * NOTE: Return value is a workaround for blueprint bugs involving ref parameters and is not used
+	 */
+	UFUNCTION(BlueprintNativeEvent)
+	bool ModifyDamageCaused(UPARAM(ref) int32& AppliedDamage, UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, const FHitResult& HitInfo, AActor* Victim, AController* EventInstigator, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType);
+
     /**
      * Returns location of head (origin of headshot zone)
      * Will force a skeleton update if mesh hasn't been rendered (or dedicated server) so the provided position is accurate
@@ -229,7 +243,10 @@ public:
     virtual bool IsHeadShot(FVector HitLocation, FVector ShotDirection, float WeaponHeadScaling, ANZCharacter* ShotInstigator, float PredictionTime = 0.f);
     
     virtual void NotifyTakeHit(AController* InstigatedBy, int32 AppliedDamage, int32 Damage, FVector Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent);
-    
+
+	/** Set LastTakeHitInfo from a damage event and call PlayTakeHitEffects() */
+	virtual void SetLastTakeHitInfo(int32 AttemptedDamage, int32 Damage, const FVector& Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent);
+
     UFUNCTION(BlueprintNativeEvent, BlueprintCosmetic)
     void PlayTakeHitEffects();
     
@@ -330,6 +347,10 @@ public:
     virtual bool DelayedShotFound();
     
     
+	/** Returns current total armor amount */
+	UFUNCTION(BlueprintCallable, Category = Pawn)
+	virtual int32 GetArmorAmount();
+
     
     
     /** Use this to iterator inventory */
@@ -669,6 +690,17 @@ public:
     
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Pawn)
     int32 HealthMax;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Pawn)
+	bool bDamageHurtsHealth;
+
+	/** Replicated to spectators, not authoritative */
+	UPROPERTY(BlueprintReadWrite, Replicated, Category = Pawn)
+	int32 ArmorAmount;
+
+	/** True if this character was falling when last took damage */
+	UPROPERTY()
+	bool bWasFallingWhenDamaged;
     
     UPROPERTY(BlueprintReadWrite, Replicated, Category = Pawn)
     float DamageScaling;
@@ -688,7 +720,7 @@ public:
     void FireRateChanged();
     
     
-    
+   
     
     
     /** 743

@@ -136,3 +136,6 @@ public:
 	
 	
 };
+
+/** Return the base momentum for the given damage event (before radial damage and any other modifiers) */
+extern FVector NZGetDamageMomentum(const FDamageEvent& DamageEvent, const AActor* HitActor, const AController* EventInstigator);

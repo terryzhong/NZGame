@@ -150,6 +150,11 @@ protected:
 
 public:
 
+	/** Add an impulse, damped if player would end up going too fast */
+	UFUNCTION(BlueprintCallable, Category = "Impulse")
+	virtual void AddDampedImpulse(FVector Impulse, bool bSelfInflicted);
+
+
 	virtual void HandleCrouchRequest();
 
 	virtual void HandleUnCrouchRequest();

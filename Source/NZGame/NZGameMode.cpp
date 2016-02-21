@@ -97,6 +97,25 @@ void ANZGameMode::GiveDefaultInventory(APawn* PlayerPawn)
     }
 }
 
+bool ANZGameMode::ModifyDamage(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType)
+{
+	ANZCharacter* InjuredChar = Cast<ANZCharacter>(Injured);
+	if (InjuredChar != NULL && InjuredChar->bSpawnProtectionEligible && InstigatedBy != NULL && InstigatedBy != Injured->Controller && GetWorld()->TimeSeconds - Injured->CreationTime < NZGameState->SpawnProtectionTime)
+	{
+		Damage = 0;
+	}
+
+	if (BaseMutator != NULL)
+	{
+		BaseMutator->ModifyDamage(Damage, Momentum, Injured, InstigatedBy, HitInfo, DamageCauser, DamageType);
+	}
+
+	return true;
+}
+
+
+
+
 bool ANZGameMode::OverridePickupQuery_Implementation(APawn* Other, TSubclassOf<ANZInventory> ItemClass, AActor* Pickup, bool& bAllowPickup)
 {
     return true;

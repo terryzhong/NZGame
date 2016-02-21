@@ -15,3 +15,14 @@ void ANZMutator::ModifyInventory_Implementation(ANZInventory* Inv, ANZCharacter*
 {
 
 }
+
+bool ANZMutator::ModifyDamage_Implementation(UPARAM(ref) int32& Damage, UPARAM(ref) FVector& Momentum, APawn* Injured, AController* InstigatedBy, const FHitResult& HitInfo, AActor* DamageCauser, TSubclassOf<UDamageType> DamageType)
+{
+	if (NextMutator != NULL)
+	{
+		NextMutator->ModifyDamage(Damage, Momentum, Injured, InstigatedBy, HitInfo, DamageCauser, DamageType);
+	}
+	return true;
+}
+
+
