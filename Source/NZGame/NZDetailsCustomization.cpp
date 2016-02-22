@@ -68,16 +68,65 @@ struct FMuzzleFlashItem : public TSharedFromThis<FMuzzleFlashItem>
 			}
 			else
 			{
-
+                ANZWeaponAttachment* Attachment = Cast<ANZWeaponAttachment>(Obj.Get());
+                if (Attachment != NULL)
+                {
+                    CurrentValue = Attachment->MuzzleFlash[Index];
+                }
 			}
+            for (int32 i = 0; i < Choices.Num(); i++)
+            {
+                if (Choices[i]->PSC == CurrentValue)
+                {
+                    CurrentText = Choices[i]->DisplayName.ToString();
+                }
+            }
 		}
 
-
+        return SNew(SComboBox<TSharedPtr<FMuzzleFlashChoice>>)
+        .OptionsSource(&Choices)
+        .OnGenerateWidget(this, &FMuzzleFlashItem::GenerateWidget)
+        .OnSelectionChanged(this, &FMuzzleFlashItem::ComboChanged)
+        .Content()
+        [
+            SAssignNew(TextBlock, STextBlock)
+            .Text(FText::FromString(CurrentText))
+        ];
+    }
+    
+    void ComboChanged(TSharedPtr<FMuzzleFlashChoice> NewSelection, ESelectInfo::Type SelectInfo)
+    {
+        if (Obj.IsValid())
+        {
+            UParticleSystemComponent* NewValue = NewSelection->PSC.Get();
+            ANZWeapon* Weap = Cast<ANZWeapon>(Obj.Get());
+            if (Weap != NULL)
+            {
+                if (Weap->MuzzleFlash.IsValidIndex(Index))
+                {
+                    Weap->MuzzleFlash[Index] = NewValue;
+                    TextBlock->SetText(NewSelection->DisplayName.ToString());
+                }
+            }
+            else
+            {
+                ANZWeaponAttachment* Attachment = Cast<ANZWeaponAttachment>(Obj.Get());
+                if (Attachment != NULL && Attachment->MuzzleFlash.IsValidIndex(Index))
+                {
+                    Attachment->MuzzleFlash[Index] = NewValue;
+                    TextBlock->SetText(NewSelection->DisplayName.ToString());                    
+                }
+            }
+        }
     }
     
     TSharedRef<SWidget> GenerateWidget(TSharedPtr<FMuzzleFlashChoice> InItem)
     {
-        return SNew(SBox).Padding(5)[SNew(STextBlock).Text(FText::FromName(InItem->DisplayName))];
+        return SNew(SBox).Padding(5)
+            [
+                SNew(STextBlock)
+                .Text(FText::FromName(InItem->DisplayName))
+            ];
     }
 };
 

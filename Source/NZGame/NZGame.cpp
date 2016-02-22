@@ -2,8 +2,59 @@
 
 #include "NZGame.h"
 
+class FNZModule : public FDefaultGameModuleImpl
+{
+    virtual void StartupModule() override;
+};
 
-IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, NZGame, "NZGame" );
+IMPLEMENT_PRIMARY_GAME_MODULE( FNZModule, NZGame, "NZGame" );
+
+#if WITH_EDITOR
+
+#include "NZDetailsCustomization.h"
+
+static uint32 NZGetNetworkVersion()
+{
+    return 3008042;
+}
+
+/*
+static void AddLevelSummaryAssetTags(const UWorld* InWorld, TArray<UObject::FAssetRegistryTag>& OutTags)
+{
+    // Add level summary data to the asset registry as part of the world
+    ANZWorldSettings* Settings = Cast<ANZWorldSettings>(InWorld->GetWorldSettings());
+    if (Settings != NULL && Settings->GetLevelSummary() != NULL)
+    {
+        Settings->GetLevelSummary()->GetAssetRegisterTags(OutTags);
+    }
+}
+*/
+
+void FNZModule::StartupModule()
+{
+    FDefaultGameModuleImpl::StartupModule();
+    
+    FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+    PropertyModule.RegisterCustomClassLayout("NZWeapon", FOnGetDetailCustomizationInstance::CreateStatic(&FNZDetailsCustomization::MakeInstance));
+    PropertyModule.RegisterCustomClassLayout("NZWeaponAttachment", FOnGetDetailCustomizationInstance::CreateStatic(&FNZDetailsCustomization::MakeInstance));
+    PropertyModule.NotifyCustomizationModuleChanged();
+    
+    //FWorldDelegates::GetAssetTags.AddStatic(&AddLevelSummaryAssetTags);
+    
+    // Set up our handler for network versioning
+    FNetworkVersion::GetLocalNetworkVersionOverride.BindStatic(&NZGetNetworkVersion);
+}
+
+#else
+
+void FNZModule::StartupModule()
+{
+    // Set up our handler for network versioning
+    FNetworkVersion::GetLocalNetworkVersionOverride.BindStatic(&NZGetNetworkVersion);
+}
+
+#endif
+
 
 
 

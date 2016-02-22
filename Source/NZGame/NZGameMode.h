@@ -20,7 +20,7 @@ namespace MatchState
 /**
  * 
  */
-UCLASS(Abstract, Config = Game)
+UCLASS()
 class NZGAME_API ANZGameMode : public ANZBaseGameMode
 {
 	GENERATED_BODY()

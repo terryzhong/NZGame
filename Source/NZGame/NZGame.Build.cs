@@ -8,7 +8,7 @@ public class NZGame : ModuleRules
 	{
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "NetworkReplayStreaming" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore", "Slate" });
         
         if (Target.Type == TargetRules.TargetType.Editor)
         {
