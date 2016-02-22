@@ -5,6 +5,7 @@
 
 #if WITH_EDITOR
 #include "SlateBasics.h"
+#include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "PropertyHandle.h"
 #include "PropertyCustomizationHelpers.h"
@@ -57,7 +58,21 @@ struct FMuzzleFlashItem : public TSharedFromThis<FMuzzleFlashItem>
     
     TSharedRef<SComboBox<TSharedPtr<FMuzzleFlashChoice>>> CreateWidget()
     {
-        
+		FString CurrentText;
+		{
+			UParticleSystemComponent* CurrentValue = NULL;
+			ANZWeapon* Weap = Cast<ANZWeapon>(Obj.Get());
+			if (Weap != NULL)
+			{
+				CurrentValue = Weap->MuzzleFlash[Index];
+			}
+			else
+			{
+
+			}
+		}
+
+
     }
     
     TSharedRef<SWidget> GenerateWidget(TSharedPtr<FMuzzleFlashChoice> InItem)
@@ -163,7 +178,7 @@ void FNZDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailLayou
             }
         }
         
-        WeaponCategory.AddCustomBuilder(MakeShareable(new FMFArrayBuilder(Object[0], MuzzleFlash, Choices, true)), false);
+        WeaponCategory.AddCustomBuilder(MakeShareable(new FMFArrayBuilder(Objects[0], MuzzleFlash, Choices, true)), false);
     }
 }
 
