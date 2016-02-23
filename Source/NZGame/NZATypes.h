@@ -87,6 +87,32 @@ struct FOverlayEffect
     }
 };
 
+USTRUCT(BlueprintType)
+struct FBloodDecalInfo
+{
+    GENERATED_BODY()
+    
+    /** Material to use for the decal */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DecalInfo)
+    UMaterialInterface* Material;
+    
+    /** Base scale of decal */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DecalInfo)
+    FVector2D BaseScale;
+    
+    /** Range of random scaling applied (always uniform) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = DecalInfo)
+    FVector2D ScaleMultRange;
+    
+    FBloodDecalInfo()
+        : Material(NULL)
+        , BaseScale(32.0f, 32.0f)
+        , ScaleMultRange(0.8f, 1.2f)
+    {}
+};
+
+
+
 /**
  *
  */

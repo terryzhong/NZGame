@@ -69,6 +69,7 @@ public:
     bool bSetPlayerDefaultsNewSpawn;
     
     virtual void InitGameState() override;
+    virtual void Killed(class AController* Killer, class AController* KilledPlayer, class APawn* KilledPawn, TSubclassOf<UDamageType> DamageType);
     
     UFUNCTION(BlueprintNativeEvent, BlueprintAuthorityOnly)
     void ScoreDamage(int32 DamageAmount, AController* Victim, AController* Attacker);

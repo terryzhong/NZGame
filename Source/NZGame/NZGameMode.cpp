@@ -36,6 +36,11 @@ void ANZGameMode::InitGameState()
     }
 }
 
+void ANZGameMode::Killed(class AController* Killer, class AController* KilledPlayer, class APawn* KilledPawn, TSubclassOf<UDamageType> DamageType)
+{
+    
+}
+
 
 void ANZGameMode::ScoreDamage_Implementation(int32 DamageAmount, AController* Victim, AController* Attacker)
 {

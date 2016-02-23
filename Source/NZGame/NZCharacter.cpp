@@ -18,6 +18,7 @@
 #include "NZCharacterContent.h"
 #include "NZWorldSettings.h"
 #include "NZProjectile.h"
+#include "Unrealnetwork.h"
 
 
 // Sets default values
@@ -306,7 +307,70 @@ void ANZCharacter::OnRep_NZReplicatedMovement()
 
 void ANZCharacter::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker)
 {
+    if (bReplicateMovement || AttachmentReplication.AttachParent)
+    {
+        if (GatherNZMovement())
+        {
+            DOREPLIFETIME_ACTIVE_OVERRIDE(ANZCharacter, NZReplicatedMovement, bReplicateMovement);
+            DOREPLIFETIME_ACTIVE_OVERRIDE(AActor, ReplicatedMovement, false);
+        }
+        else
+        {
+            DOREPLIFETIME_ACTIVE_OVERRIDE(ANZCharacter, NZReplicatedMovement, false);
+            DOREPLIFETIME_ACTIVE_OVERRIDE(AActor, ReplicatedMovement, bReplicateMovement);
+        }
+    }
+    else
+    {
+        DOREPLIFETIME_ACTIVE_OVERRIDE(ANZCharacter, NZReplicatedMovement, false);
+        DOREPLIFETIME_ACTIVE_OVERRIDE(AActor, ReplicatedMovement, false);
+    }
     
+    const FAnimMontageInstance* RootMotionMontageInstance = GetRootMotionAnimMontageInstance();
+    
+    if (RootMotionMontageInstance)
+    {
+        // Is position stored in local space?
+        RepRootMotion.bRelativePosition = BasedMovement.HasRelativeLocation();
+        RepRootMotion.bRelativeRotation = BasedMovement.HasRelativeRotation();
+        RepRootMotion.Location = RepRootMotion.bRelativePosition ? BasedMovement.Location : GetActorLocation();
+        RepRootMotion.Rotation = RepRootMotion.bRelativeRotation ? BasedMovement.Rotation : GetActorRotation();
+        RepRootMotion.MovementBase = BasedMovement.MovementBase;
+        RepRootMotion.MovementBaseBoneName = BasedMovement.BoneName;
+        RepRootMotion.AnimMontage = RootMotionMontageInstance->Montage;
+        RepRootMotion.Position = RootMotionMontageInstance->GetPosition();
+        
+        DOREPLIFETIME_ACTIVE_OVERRIDE(ACharacter, RepRootMotion, true);
+    }
+    else
+    {
+        RepRootMotion.Clear();
+        DOREPLIFETIME_ACTIVE_OVERRIDE(ACharacter, RepRootMotion, false);
+    }
+    
+    ReplicatedMovementMode = GetCharacterMovement()->PackNetworkMovementMode();
+    ReplicatedBasedMovement = BasedMovement;
+    
+    // Optimization: only update and replicate these values if they are actually going to be used.
+    if (BasedMovement.HasRelativeLocation())
+    {
+        // When velocity becomes zero, force replication so the position is updated to match the server (it may have moved due to simulation on the client).
+        ReplicatedBasedMovement.bServerHasVelocity = !GetCharacterMovement()->Velocity.IsZero();
+        
+        // Make sure absolute rotations are updated in case rotation occurred after the base info was saved.
+        if (!BasedMovement.HasRelativeRotation())
+        {
+            ReplicatedBasedMovement.Rotation = GetActorRotation();
+        }
+    }
+    
+    DOREPLIFETIME_ACTIVE_OVERRIDE(ANZCharacter, LastTakeHitInfo, GetWorld()->TimeSeconds - LastTakeHitTime < 0.5f);
+    //DOREPLIFETIME_ACTIVE_OVERRIDE(ANZCharacter, HeadArmorFlashCount, GetWorld()->TimeSeconds - LastHeadArmorFlashTime < 0.5f);
+    //DOREPLIFETIME_ACTIVE_OVERRIDE(ANZCharacter, CosmeticFlashCount, GetWorld()->TimeSeconds - LastCosmeticFlashTime < 0.5f);
+    
+    DOREPLIFETIME_ACTIVE_OVERRIDE(ACharacter, RemoteViewPitch, false);
+    
+    LastTakeHitReplicatedTime = GetWorld()->TimeSeconds;
 }
 
 bool ANZCharacter::GatherNZMovement()
@@ -829,6 +893,7 @@ void ANZCharacter::SetLastTakeHitInfo(int32 AttemptedDamage, int32 Damage, const
     }
     if ((LastTakeHitInfo.HitArmor == NULL) && (HitArmor == NULL) && (Health > 0) && (Damage == AttemptedDamage) && (Health + Damage > HealthMax) && ((Damage > 90) || (Health > 90)))
     {
+        // todo:
         //LastTakeHitInfo.HitArmor = ANZTimedPowerup::StaticClass();
     }
     LastTakeHitInfo.Momentum = Momentum;
@@ -837,15 +902,154 @@ void ANZCharacter::SetLastTakeHitInfo(int32 AttemptedDamage, int32 Damage, const
     FVector ShotDir(FVector::ZeroVector);
     if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
     {
-        
+        NewRelHitLocation = ((FPointDamageEvent*)&DamageEvent)->HitInfo.Location - GetActorLocation();
+        ShotDir = ((FPointDamageEvent*)&DamageEvent)->ShotDirection;
+    }
+    else if (DamageEvent.IsOfType(FRadialDamageEvent::ClassID) && ((FRadialDamageEvent*)&DamageEvent)->ComponentHits.Num() > 0)
+    {
+        NewRelHitLocation = ((FRadialDamageEvent*)&DamageEvent)->ComponentHits[0].Location - GetActorLocation();
+        ShotDir = (((FRadialDamageEvent*)&DamageEvent)->ComponentHits[0].ImpactPoint - ((FRadialDamageEvent*)&DamageEvent)->Origin).GetSafeNormal();
     }
 
+    // Make sure there's a difference from the last time so replication happens
+    if ((NewRelHitLocation - LastTakeHitInfo.RelHitLocation).IsNearlyZero(1.0f))
+    {
+        NewRelHitLocation.Z += 1.0f;
+    }
+    LastTakeHitInfo.RelHitLocation = NewRelHitLocation;
+    
+    // Set shot rotation
+    // This differs from momentum in cases of e.g. damage types that kick upwards
+    FRotator ShotRot = ShotDir.Rotation();
+    LastTakeHitInfo.ShotDirPitch = FRotator::CompressAxisToByte(ShotRot.Pitch);
+    LastTakeHitInfo.ShotDirYaw = FRotator::CompressAxisToByte(ShotRot.Yaw);
+    
+    if (bStackHit)
+    {
+        LastTakeHitInfo.Count++;
+    }
+    else
+    {
+        LastTakeHitInfo.Count = 1;
+    }
+    
+    LastTakeHitTime = GetWorld()->TimeSeconds;
+    
+    PlayTakeHitEffects();
 }
 
+void ANZCharacter::SpawnBloodDecal(const FVector& TraceStart, const FVector& TraceDir)
+{
+#if !UE_SERVER
+    ANZWorldSettings* Settings = Cast<ANZWorldSettings>(GetWorldSettings());
+    if (Settings != NULL)
+    {
+        if (BloodDecals.Num() > 0)
+        {
+            const FBloodDecalInfo& DecalInfo = BloodDecals[FMath::RandHelper(BloodDecals.Num())];
+            if (DecalInfo.Material != NULL)
+            {
+                static FName NAME_BloodDecal(TEXT("BloodDecal"));
+                FHitResult Hit;
+                if (GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceStart + TraceDir * (GetCapsuleComponent()->GetUnscaledCapsuleRadius() + 200.0f), ECC_Visibility, FCollisionQueryParams(NAME_BloodDecal, false, this)) && Hit.Component->bReceivesDecals)
+                {
+                    UDecalComponent* Decal = NewObject<UDecalComponent>(GetWorld(), UDecalComponent::StaticClass());
+                    if (Hit.Component.Get() != NULL && Hit.Component->Mobility == EComponentMobility::Movable)
+                    {
+                        Decal->SetAbsolute(false, false, true);
+                        Decal->AttachTo(Hit.Component.Get());
+                    }
+                    else
+                    {
+                        Decal->SetAbsolute(true, true, true);
+                    }
+                    FVector2D DecalScale = DecalInfo.BaseScale * FMath::FRandRange(DecalInfo.ScaleMultRange.X, DecalInfo.ScaleMultRange.Y);
+                    Decal->DecalSize = FVector(1.0f, DecalScale.X, DecalScale.Y);
+                    Decal->SetWorldLocation(Hit.Location);
+                    Decal->SetWorldRotation((-Hit.Normal).Rotation() + FRotator(0.0f, 0.0f, 360.0f * FMath::FRand()));
+                    Decal->SetDecalMaterial(DecalInfo.Material);
+                    Decal->RegisterComponentWithWorld(GetWorld());
+                    Settings->AddImpactEffect(Decal);
+                }
+            }
+        }
+    }
+#endif
+}
 
 void ANZCharacter::PlayTakeHitEffects_Implementation()
 {
-    
+    if (GetNetMode() != NM_DedicatedServer)
+    {
+        // Send hit notify for spectators
+        for (FLocalPlayerIterator It(GEngine, GetWorld()); It; ++It)
+        {
+            ANZPlayerController* PC = Cast<ANZPlayerController>(It->PlayerController);
+            if (PC != NULL && PC->GetViewTarget() == this && PC->GetPawn() != this)
+            {
+                PC->ClientNotifyTakeHit(false, FMath::Clamp(LastTakeHitInfo.Damage, 0, 255), LastTakeHitInfo.RelHitLocation);
+            }
+        }
+        
+        // Never play armor effect if dead, prefer blood
+        bool bPlayedArmorEffect = (LastTakeHitInfo.HitArmor != NULL && !bTearOff) ? LastTakeHitInfo.HitArmor.GetDefaultObject()->HandleArmorEffects(this) : false;
+        TSubclassOf<UNZDamageType> NZDmg(*LastTakeHitInfo.DamageType);
+        if (NZDmg != NULL)
+        {
+            NZDmg.GetDefaultObject()->PlayHitEffects(this, bPlayedArmorEffect);
+            if (!NZDmg.GetDefaultObject()->bCausedByWorld)
+            {
+                LastTakeHitTime = GetWorld()->TimeSeconds;
+            }
+        }
+        
+        // Check blood effects
+        if (!bPlayedArmorEffect && LastTakeHitInfo.Damage > 0 && (NZDmg == NULL || NZDmg.GetDefaultObject()->bCausesBlood))
+        {
+            bool bRecentlyRendered = GetWorld()->TimeSeconds - GetLastRenderTime() < 1.0f;
+            // TODO: gore setting check
+            if (bRecentlyRendered && BloodEffects.Num() > 0)
+            {
+                UParticleSystem* Blood = BloodEffects[FMath::RandHelper(BloodEffects.Num())];
+                if (Blood != NULL)
+                {
+                    // We want the PSC 'attached' to ourselves for 1P/3P visibility yet using an absolute transform, so the GameplayStatics function don't get the job done
+                    UParticleSystemComponent* PSC = NewObject<UParticleSystemComponent>(this, UParticleSystemComponent::StaticClass());
+                    PSC->bAutoDestroy = true;
+                    PSC->SecondsBeforeInactive = 0.0f;
+                    PSC->bAutoActivate = false;
+                    PSC->SetTemplate(Blood);
+                    PSC->bOverrideLODMethod = false;
+                    PSC->RegisterComponentWithWorld(GetWorld());
+                    PSC->AttachTo(GetMesh());
+                    PSC->SetAbsolute(true, true, true);
+                    PSC->SetWorldLocationAndRotation(LastTakeHitInfo.RelHitLocation + GetActorLocation(), LastTakeHitInfo.RelHitLocation.Rotation());
+                    PSC->SetRelativeScale3D(bPlayedArmorEffect ? FVector(0.7f) : FVector(1.f));
+                    PSC->ActivateSystem(true);
+                }
+            }
+            
+            // Spawn decal
+            bool bSpawnDecal = bRecentlyRendered;
+            if (!bSpawnDecal)
+            {
+                // Spawn blood decals for player locally viewed even in first person mode
+                for (FLocalPlayerIterator It(GEngine, GetWorld()); It; ++It)
+                {
+                    if (It->PlayerController != NULL && It->PlayerController->GetViewTarget() == this)
+                    {
+                        bSpawnDecal = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (bSpawnDecal)
+            {
+                SpawnBloodDecal(LastTakeHitInfo.RelHitLocation + GetActorLocation(), FRotator(FRotator::DecompressAxisFromByte(LastTakeHitInfo.ShotDirPitch), FRotator::DecompressAxisFromByte(LastTakeHitInfo.ShotDirYaw), 0.0f).Vector());
+            }
+        }
+    }
 }
 
 void ANZCharacter::PlayDamageEffects_Implementation()
@@ -888,8 +1092,41 @@ bool ANZCharacter::Died(AController* EventInstigator, const FDamageEvent& Damage
         }
         else
         {
+            bTearOff = true;
+            Health = FMath::Min<int32>(Health, 0);
             
+            AController* ControllerKilled = Controller;
+            if (ControllerKilled == NULL)
+            {
+                ControllerKilled = Cast<AController>(GetOwner());
+                if (ControllerKilled == NULL)
+                {
+                    if (DrivenVehicle != NULL)
+                    {
+                        ControllerKilled = DrivenVehicle->Controller;
+                    }
+                }
+            }
+
+            GetWorld()->GetAuthGameMode<ANZGameMode>()->Killed(EventInstigator, ControllerKilled, this, DamageEvent.DamageTypeClass);
             
+            // todo:
+            //ANZPlayerState* PS = Cast<ANZPlayerState>(PlayerState);
+            //if (PS != NULL && PS->CarriedObject != NULL)
+            //{
+            //    PS->CarriedObject->Drop(EventInstigator);
+            //}
+            
+            if (ControllerKilled)
+            {
+                ControllerKilled->PawnPendingDestroy(this);
+            }
+            
+            OnDied.Broadcast(EventInstigator, DamageEvent.DamageTypeClass ? DamageEvent.DamageTypeClass.GetDefaultObject() : NULL);
+            
+            PlayDying();
+            
+            // todo:
             
             return true;
         }

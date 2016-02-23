@@ -7,6 +7,8 @@
 #include "NZCharacter.generated.h"
 
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FCharacterDiedSignature, class AController*, Killer, const class UDamageType*, DamageType);
+
 /**
  * Replicated movement data of our RootComponent.
  * More efficient than engine's FRepMovement
@@ -291,12 +293,33 @@ public:
 
 	/** Set LastTakeHitInfo from a damage event and call PlayTakeHitEffects() */
 	virtual void SetLastTakeHitInfo(int32 AttemptedDamage, int32 Damage, const FVector& Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent);
+    
+    /** 
+     * Blood effects (chosen at random when spawning blood)
+     * Note that these are intentionally split instead of a NZImpactEffect because the sound, particles, and decals are all handled with separate logic
+     */
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Effects)
+    TArray<UParticleSystem*> BloodEffects;
+    
+    /** Blood decal materials placed on nearby world geometry */
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Effects)
+    TArray<FBloodDecalInfo> BloodDecals;
+    
+    /** Trace to nearest world geometry and spawn a blood decal at the hit location (if any) */
+    UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = Effects)
+    virtual void SpawnBloodDecal(const FVector& TraceStart, const FVector& TraceDir);
+    
+    /** Last time ragdolling corpse spawned a blood decal */
+    UPROPERTY(BlueprintReadWrite, Category = Effects)
+    float LastDeathDecalTime;
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCosmetic)
     void PlayTakeHitEffects();
     
     UFUNCTION(BlueprintNativeEvent, BlueprintCosmetic)
     void PlayDamageEffects();
+    
+    
     
     /**
      * Called when we die (generally, by running out of health)
@@ -306,6 +329,9 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Meta = (DisplayName = "Died"), Category = Pawn)
     bool K2_Died(AController* EventInstigator, TSubclassOf<UDamageType> DamageType);
     virtual bool Died(AController* EventInstigator, const FDamageEvent& DamageEvent);
+    
+    UPROPERTY(BlueprintAssignable)
+    FCharacterDiedSignature OnDied;
     
 
     /** First person arm mesh */
