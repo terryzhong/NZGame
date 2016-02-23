@@ -818,6 +818,27 @@ void ANZCharacter::NotifyTakeHit(AController* InstigatedBy, int32 AppliedDamage,
 
 void ANZCharacter::SetLastTakeHitInfo(int32 AttemptedDamage, int32 Damage, const FVector& Momentum, ANZInventory* HitArmor, const FDamageEvent& DamageEvent)
 {
+    // If we haven't replicated a previous hit yet (generally, multi hit within same frame), stack with it
+    bool bStackHit = (LastTakeHitTime > LastTakeHitReplicatedTime && DamageEvent.DamageTypeClass == LastTakeHitInfo.DamageType);
+
+    LastTakeHitInfo.Damage = Damage;
+    LastTakeHitInfo.DamageType = DamageEvent.DamageTypeClass;
+    if (!bStackHit || LastTakeHitInfo.HitArmor == NULL)
+    {
+        LastTakeHitInfo.HitArmor = ((HitArmor != NULL) && HitArmor->ShouldDisplayHitEffect(AttemptedDamage, Damage, Health, ArmorAmount)) ? HitArmor->GetClass() : NULL;    // The inventory object is bOnlyRelevantToOwner and wouldn't work on other clients
+    }
+    if ((LastTakeHitInfo.HitArmor == NULL) && (HitArmor == NULL) && (Health > 0) && (Damage == AttemptedDamage) && (Health + Damage > HealthMax) && ((Damage > 90) || (Health > 90)))
+    {
+        //LastTakeHitInfo.HitArmor = ANZTimedPowerup::StaticClass();
+    }
+    LastTakeHitInfo.Momentum = Momentum;
+    
+    FVector NewRelHitLocation(FVector::ZeroVector);
+    FVector ShotDir(FVector::ZeroVector);
+    if (DamageEvent.IsOfType(FPointDamageEvent::ClassID))
+    {
+        
+    }
 
 }
 

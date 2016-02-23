@@ -82,6 +82,51 @@ struct FRepNZMovement
 	}
 };
 
+USTRUCT(BlueprintType)
+struct FTakeHitInfo
+{
+    GENERATED_BODY()
+    
+    /** The amount of damage */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    int32 Damage;
+    
+    /** The location of the hit (relative to Pawn center) */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    FVector_NetQuantize RelHitLocation;
+    
+    /** How much momentum was imparted */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    FVector_NetQuantize Momentum;
+    
+    /** The damage type we were hit with */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    TSubclassOf<UDamageType> DamageType;
+    
+    /** Shot direction pitch, manually compressed */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    uint8 ShotDirPitch;
+    
+    /** Shot direction yaw, manually compressed */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    uint8 ShotDirYaw;
+    
+    /**
+     * Number of near-simultaneous shots of same damage type
+     * NOTE: On the server, on-hit functions (and effects, if applicable) will get called for every hit regardless of this value 
+     *       Therefore, this value should generally only be considered on clients
+     */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    uint8 Count;
+    
+    /**
+     * If damage was partially or completely absorbed by inventory, the item that did so 
+     * Used to play different effects
+     */
+    UPROPERTY(BlueprintReadWrite, Category = TakeHitInfo)
+    TSubclassOf<class ANZInventory> HitArmor;
+};
+
 /**
  * Ammo counter
  */
@@ -719,8 +764,16 @@ public:
     UFUNCTION()
     void FireRateChanged();
     
-    
+    UPROPERTY(BlueprintReadWrite, Replicated, ReplicatedUsing = PlayTakeHitEffects, Category = Pawn)
+    FTakeHitInfo LastTakeHitInfo;
    
+    /** Time of last SetLastTakeHitInfo() - authority only */
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    float LastTakeHitTime;
+    
+    /** Last time LastTakeHitInfo was checked for replication; used to combine multiple hits into one LastTakeHitInfo */
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    float LastTakeHitReplicatedTime;
     
     
     /** 743
