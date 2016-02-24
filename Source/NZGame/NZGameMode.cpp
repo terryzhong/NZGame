@@ -36,9 +36,32 @@ void ANZGameMode::InitGameState()
     }
 }
 
+bool ANZGameMode::IsEnemy(class AController* First, class AController* Second)
+{
+    return First && Second && !NZGameState->OnSameTeam(First, Second);
+}
+
 void ANZGameMode::Killed(class AController* Killer, class AController* KilledPlayer, class APawn* KilledPawn, TSubclassOf<UDamageType> DamageType)
 {
-    
+    if ((GetMatchState() != MatchState::MatchEnteringOvertime) && (GetMatchState() != MatchState::WaitingPostMatch) && (GetMatchState() != MatchState::MapVoteHappening))
+    {
+        ANZPlayerState* const KillerPlayerState = Killer ? Cast<ANZPlayerState>(Killer->PlayerState) : NULL;
+        ANZPlayerState* const KilledPlayerState = KilledPlayer ? Cast<ANZPlayerState>(KilledPlayer->PlayerState) : NULL;
+        
+        if (KilledPlayerState != NULL)
+        {
+            bool const bEnemyKill = IsEnemy(Killer, KilledPlayer);
+            KilledPlayerState->LastKillerPlayerState = KillerPlayerState;
+            KilledPlayerState->IncrementDeaths(DamageType, KillerPlayerState);
+            TSubclassOf<UNZDamageType> NZDamage(*DamageType);
+            if (NZDamage && bEnemyKill)
+            {
+                NZDamage.GetDefaultObject()->ScoreKill(KillerPlayerState, KilledPlayerState, KilledPawn);
+            }
+            
+            
+        }
+    }
 }
 
 

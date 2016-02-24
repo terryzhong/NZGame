@@ -708,6 +708,8 @@ public:
     void AmbientSoundUpdated();
     
     
+    
+    
     UPROPERTY()
     TArray<FStoredAmmo> SavedAmmo;
 
@@ -751,8 +753,38 @@ public:
     /** Particle component for high velocity jump landing */
     UPROPERTY(EditAnywhere, Category = Effects)
     UParticleSystem* LandEffect;
+    
+    /** Particle component for normal ground footstep */
+    UPROPERTY(EditAnywhere, Category = Effects)
+    UParticleSystem* GroundFootstepEffect;
+    
+    /** Particle component for water footstep */
+    UPROPERTY(EditAnywhere, Category = Effects)
+    UParticleSystem* WaterFootstepEffect;
 
+    /** Plays a footstep effect; called via animation when anims are active (in vis range and not server), otherwise on interval via Tick() */
+    UFUNCTION(BlueprintCallable, Category = Effects)
+    virtual void PlayFootstep(uint8 FootNum, bool bFirstPerson = false);
+    
+    /** Play jumping sound/effects; should be called on server and owning client */
+    UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = Effects)
+    void PlayJump(const FVector& JumpLocation, const FVector& JumpDir);
 
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sounds)
+    USoundBase* FootstepSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sounds)
+    USoundBase* OwnFootstepSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sounds)
+    USoundBase* WaterFootstepSound;
+
+    // Swimming
+    
+    virtual bool FeetAreInWater() const;
+    
+    virtual APhysicsVolume* PositionIsInWater(const FVector& Position) const;
     
     /** 630
      */
@@ -878,6 +910,12 @@ public:
     virtual void UpdateWeaponOverlays();
     
 protected:
+    /** Last time PlayFootstep() was called, for timing footsteps when animations are disabled */
+    float LastFootstepTime;
+    
+    /** Last FootNum for PlayFootstep(), for alternating when animations are disabled */
+    uint8 LastFoot;
+    
     /** Replicated overlays, bits match entries in NZGameState's OverlayMaterials array */
     UPROPERTY(Replicated, ReplicatedUsing = UpdateCharOverlays)
     uint16 CharOverlayFlags;

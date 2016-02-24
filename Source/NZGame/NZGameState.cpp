@@ -66,11 +66,12 @@ FName ANZGameState::OverrideCameraStyle(APlayerController* PCOwner, FName Curren
     {
         return FName(TEXT("FreeCam"));
     }
-    // FIXME: Shouldn't this come from the Pawn?
-    else if (Cast<ANZRemoteRedeemer>(PCOwner->GetPawn()) != NULL)
-    {
-        return FName(TEXT("FirstPerson"));
-    }
+    // todo:
+    //// FIXME: Shouldn't this come from the Pawn?
+    //else if (Cast<ANZRemoteRedeemer>(PCOwner->GetPawn()) != NULL)
+    //{
+    //    return FName(TEXT("FirstPerson"));
+    //}
     else
     {
         return CurrentCameraStyle;

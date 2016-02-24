@@ -56,11 +56,57 @@ void ANZPlayerState::CalculatePing(float NewPing)
 	}
 }
 
+void ANZPlayerState::HandleTeamChanged(AController* Controller)
+{
+    ANZCharacter* Pawn = Cast<ANZCharacter>(Controller->GetPawn());
+    if (Pawn != NULL)
+    {
+        Pawn->PlayerChangedTeam();
+    }
+    if (Team)
+    {
+        int32 Switch = (Team->TeamIndex == 0) ? 9 : 10;
+        ANZPlayerController* PC = Cast<ANZPlayerController>(Controller);
+        if (PC)
+        {
+            PC->ClientReceiveLocalizedMessage(UNZGameMessage::StaticClass(), Switch, this, NULL, NULL);
+        }
+    }
+}
 
 void ANZPlayerState::NotifyTeamChanged_Implementation()
 {
-	// todo:
-	check(false);
+    for (FConstPawnIterator It = GetWorld()->GetPawnIterator(); It; ++It)
+    {
+        ANZCharacter* P = Cast<ANZCharacter>(*It);
+        if (P != NULL && P->PlayerState == this && !P->bTearOff)
+        {
+            P->NotifyTeamChanged();
+        }
+    }
+    // HACK: Remember last team player got on the URL for travelling purposes
+    if (Team != NULL)
+    {
+        ANZPlayerController* PC = Cast<ANZPlayerController>(GetOwner());
+        if (PC != NULL)
+        {
+            UNZLocalPlayer* LP = Cast<UNZLocalPlayer>(PC->Player);
+            if (LP != NULL)
+            {
+                LP->SetDefaultURLOption(TEXT("Team"), FString::FromInt(Team->TeamIndex));
+            }
+        }
+    }
+}
+
+void ANZPlayerState::IncrementKills(TSubclassOf<UDamageType> DamageType, bool bEnemyKill, ANZPlayerState* VictimPS)
+{
+    
+}
+
+void ANZPlayerState::IncrementDeaths(TSubclassOf<UDamageType> DamageType, ANZPlayerState* KillerPlayerState)
+{
+    
 }
 
 void ANZPlayerState::OnRep_Deaths()

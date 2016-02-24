@@ -73,10 +73,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
 	ANZPlayerState* LastKillerPlayerState;
     
-    
-	UFUNCTION(BlueprintNativeEvent)
-	void NotifyTeamChanged();
-    
     /**
      * How long until this player can respawn.
      * It's not directly replicated to the clients instead it's set locally via OnDeathsReceived.
@@ -97,6 +93,22 @@ public:
     UPROPERTY(replicated)
     class APlayerState* RespawnChoiceB;
 	
+    
+    /** Team has changed, announce, tell pawn, etc. */
+    UFUNCTION()
+    virtual void HandleTeamChanged(AController* Controller);
+
+    UFUNCTION(BlueprintNativeEvent)
+    void NotifyTeamChanged();
+    
+    
+    
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = PlayerState)
+    virtual void IncrementKills(TSubclassOf<UDamageType> DamageType, bool bEnemyKill, ANZPlayerState* VictimPS = NULL);
+    
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = PlayerState)
+    virtual void IncrementDeaths(TSubclassOf<UDamageType> DamageType, ANZPlayerState* KillerPlayerState);
+    
 	
 	UFUNCTION()
 	void OnRep_Deaths();

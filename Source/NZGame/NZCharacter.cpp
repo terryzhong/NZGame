@@ -132,6 +132,18 @@ void ANZCharacter::BeginPlay()
 void ANZCharacter::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
+    
+    // todo:
+    
+    if (GetMesh()->MeshComponentUpdateFlag >= EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered && !GetMesh()->bRecentlyRendered && !IsLocallyControlled() && GetCharacterMovement()->MovementMode == MOVE_Walking && !IsDead())
+    {
+        // TODO: currently using an arbitrary made up interval and scale factor
+        float Speed = GetCharacterMovement()->Velocity.Size();
+        if (Speed > 0.0f && GetWorld()->TimeSeconds - LastFootstepTime > 0.35f * GetCharacterMovement()->MaxWalkSpeed / Speed)
+        {
+            PlayFootstep((LastFoot + 1) & 1, true);
+        }
+    }
 
 }
 
@@ -2019,7 +2031,7 @@ void ANZCharacter::Sprint()
 
 void ANZCharacter::UnSprint()
 {
-	bSprinting = false;
+    bSprinting = false;
 }
 
 
@@ -2028,6 +2040,70 @@ APlayerCameraManager* ANZCharacter::GetPlayerCameraManager()
     ANZPlayerController* PC = GetLocalViewer();
     return PC != NULL ? PC->PlayerCameraManager : NULL;
 }
+
+void ANZCharacter::PlayFootstep(uint8 FootNum, bool bFirstPerson)
+{
+    if ((GetWorld()->TimeSeconds - LastFootstepTime < 0.1f) || IsDead())
+    {
+        return;
+    }
+    
+    ANZPlayerController* NZPC = Cast<ANZPlayerController>(Controller);
+    if (NZPC && IsLocallyControlled() && !bFirstPerson && !NZPC->IsBehindView())
+    {
+        return;
+    }
+    
+    UParticleSystem* FootStepEffect = NULL;
+    float MaxParticleDist = 1500.f;
+    if (FeetAreInWater())
+    {
+        UNZGameplayStatics::NZPlaySound(GetWorld(), WaterFootstepSound, this, SRT_IfSourceNotReplicated);
+        FootStepEffect = WaterFootstepEffect;
+        MaxParticleDist = 5000.f;
+    }
+    else if (GetLocalViewer())
+    {
+        UNZGameplayStatics::NZPlaySound(GetWorld(), OwnFootstepSound, this, SRT_IfSourceNotReplicated);
+        FootStepEffect = GetLocalViewer()->IsBehindView() && (GetVelocity().Size() > 500.f) ? GroundFootstepEffect : NULL;
+    }
+    else
+    {
+        UNZGameplayStatics::NZPlaySound(GetWorld(), FootstepSound, this, SRT_IfSourceNotReplicated);
+        FootStepEffect = (GetVelocity().Size() > 500.f) ? GroundFootstepEffect : NULL;
+    }
+    if (FootStepEffect && GetMesh() && (GetWorld()->GetTimeSeconds() - GetMesh()->LastRenderTime < 0.05f) && (GetLocalViewer() || (GetCachedScalabilityCVars().DetailMode != 0)))
+    {
+        ANZWorldSettings* WS = Cast<ANZWorldSettings>(GetWorld()->GetWorldSettings());
+        if (WS->EffectIsRelevant(this, GetActorLocation(), true, true, MaxParticleDist, 0.f, false))
+        {
+            FVector EffectLocation = GetActorLocation();
+            EffectLocation.Z = EffectLocation.Z + 4.f - GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+            UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), FootStepEffect, EffectLocation, GetActorRotation(), true);
+        }
+    }
+    LastFoot = FootNum;
+    LastFootstepTime = GetWorld()->TimeSeconds;
+}
+
+void ANZCharacter::PlayJump(const FVector& JumpLocation, const FVector& JumpDir)
+{
+    
+}
+
+
+bool ANZCharacter::FeetAreInWater() const
+{
+    FVector FootLocation = GetActorLocation() - FVector(0.f, 0.f, GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
+    return (PositionIsInWater(FootLocation) != NULL);
+}
+
+APhysicsVolume* ANZCharacter::PositionIsInWater(const FVector& Position) const
+{
+    // todo:
+    return NULL;
+}
+
 
 
 

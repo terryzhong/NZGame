@@ -85,7 +85,7 @@ void UNZWeaponStateFiring::RefireCheckTimer()
         else if (GetOuterANZWeapon()->HandleContinuedFiring())
         {
             bDelayShot = GetOuterANZWeapon()->bNetDelayedShot && !GetNZOwner()->DelayedShotFound() && Cast<APlayerController>(GetNZOwner()->GetController());
-            if (bDelayShot)
+            if (!bDelayShot)
             {
                 FireShot();
             }
