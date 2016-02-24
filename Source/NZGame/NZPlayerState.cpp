@@ -69,6 +69,11 @@ void ANZPlayerState::OnRep_Deaths()
 	check(false);
 }
 
+uint8 ANZPlayerState::GetTeamNum() const
+{
+	return (Team != NULL) ? Team->GetTeamNum() : 255;
+}
+
 
 float ANZPlayerState::GetStatsValue(FName StatsName) const
 {

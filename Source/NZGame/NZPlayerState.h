@@ -3,13 +3,14 @@
 #pragma once
 
 #include "GameFramework/PlayerState.h"
+#include "NZTeamInterface.h"
 #include "NZPlayerState.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class NZGAME_API ANZPlayerState : public APlayerState
+class NZGAME_API ANZPlayerState : public APlayerState, public INZTeamInterface
 {
 	GENERATED_BODY()
 	
@@ -100,6 +101,13 @@ public:
 	UFUNCTION()
 	void OnRep_Deaths();
 
+	/** 485
+	 * Returns the team number of the team that owns this object
+	 */
+	UFUNCTION()
+	virtual uint8 GetTeamNum() const;
+
+	virtual void SetTeamForSideSwap_Implementation(uint8 NewTeamNum) override {}
     
 private:
     /** 633
