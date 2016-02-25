@@ -63,7 +63,7 @@ public:
     UPROPERTY()
     class ANZHUD* MyNZHUD;
     
-    
+    void UpdateCrosshairs(ANZHUD* HUD);
 
     
     virtual void BeginPlay() override;

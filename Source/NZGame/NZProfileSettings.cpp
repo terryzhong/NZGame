@@ -38,3 +38,12 @@ float UNZProfileSettings::GetWeaponPriority(FString WeaponClassName, float Defau
 
 	return DefaultPriority;
 }
+
+void UNZProfileSettings::UpdateCrosshairs(ANZHUD* HUD)
+{
+    HUD->LoadedCrosshairs.Empty();
+    HUD->CrosshairInfos = CrosshairInfos;
+    HUD->bCustomWeaponCrosshairs = bCustomWeaponCrosshairs;
+    HUD->SaveConfig();
+}
+

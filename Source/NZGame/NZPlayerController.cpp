@@ -41,7 +41,18 @@ void ANZPlayerController::OnRep_HUDClass()
     MyNZHUD = Cast<ANZHUD>(MyHUD);
 }
 
-
+void ANZPlayerController::UpdateCrosshairs(ANZHUD* HUD)
+{
+    UNZLocalPlayer* LocalPlayer = Cast<UNZLocalPlayer>(Player);
+    if (LocalPlayer)
+    {
+        UNZProfileSettings* Settings = LocalPlayer->GetProfileSettings();
+        if (Settings)
+        {
+            Settings->UpdateCrosshairs(HUD);
+        }
+    }
+}
 
 void ANZPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -1325,6 +1336,12 @@ bool ANZPlayerController::HasDeferredFireInputs()
 	}
 	return false;
 }
+
+void ANZPlayerController::SetViewedScorePS(ANZPlayerState* ViewedPS, uint8 NewStatsPage)
+{
+    
+}
+
 
 float ANZPlayerController::GetPredictionTime()
 {

@@ -4,11 +4,48 @@
 #include "NZHUD.h"
 #include "NZHUDWidget.h"
 #include "NZBasePlayerController.h"
+#include "Json.h"
 
+
+ANZHUD::ANZHUD()
+{
+    WidgetOpacity = 1.0f;
+    
+    LastKillTime = -100.f;
+    LastConfirmedHitTime = -100.0f;
+    LastPickupTime = -100.0f;
+    bFontsCached = false;
+    bShowOverlays = true;
+    bHaveAddedSpectatorWidgets = false;
+    
+    //TeamIconUV[0] = FVector2D(257.f, 940.f);
+    //TeamIconUV[0] = FVector2D(333.f, 940.f);
+    
+    // todo:
+    
+    bCustomWeaponCrosshairs = true;
+}
 
 void ANZHUD::CacheFonts()
 {
+    FText MessageText = NSLOCTEXT("ANZHUD", "FontCacheText", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';:-=+*(),.?!");
+    FFontRenderInfo TextRenderInfo;
+    TextRenderInfo.bEnableShadow = true;
+    float YPos = 0.f;
+    Canvas->DrawColor = FLinearColor::White.ToFColor(false);
+    Canvas->DrawText(TinyFont, MessageText, 0.f, YPos, 0.1f, 0.1f, TextRenderInfo);
+    Canvas->DrawText(SmallFont, MessageText, 0.f, YPos, 0.1f, 0.1f, TextRenderInfo);
+    Canvas->DrawText(MediumFont, MessageText, 0.f, YPos, 0.1f, 0.1f, TextRenderInfo);
+    Canvas->DrawText(LargeFont, MessageText, 0.f, YPos, 0.1f, 0.1f, TextRenderInfo);
+    Canvas->DrawText(HugeFont, MessageText, 0.f, YPos, 0.1f, 0.1f, TextRenderInfo);
+    Canvas->DrawText(ScoreFont, MessageText, 0.f, YPos, 0.1f, 0.1f, TextRenderInfo);
+    Canvas->DrawText(NumberFont, MessageText, 0.f, YPos, 0.1f, 0.1f, TextRenderInfo);
+    bFontsCached = true;
+}
 
+void ANZHUD::DrawDamageNumbers()
+{
+    
 }
 
 void ANZHUD::NotifyKill()
@@ -23,17 +60,59 @@ void ANZHUD::PlayKillNotification()
 
 void ANZHUD::AddSpectatorWidgets()
 {
-
+    if (bHaveAddedSpectatorWidgets)
+    {
+        return;
+    }
+    bHaveAddedSpectatorWidgets = true;
+    
+    // Parse the widgets found in the ini
+    for (int32 i = 0; i < SpectatorHudWidgetClasses.Num(); i++)
+    {
+        BuildHudWidget(*SpectatorHudWidgetClasses[i]);
+    }
+    
+    UNZLocalPlayer* NZLP = NZPlayerOwner ? Cast<UNZLocalPlayer>(NZPlayerOwner->Player) : NULL;
+    if (NZLP)
+    {
+        NZLP->OpenSpectatorWindow();
+    }
 }
 
 void ANZHUD::BeginPlay()
 {
 	Super::BeginPlay();
+    
+    // Parse the widgets found in the ini
+    for (int32 i = 0; i < RequiredHudWidgetClasses.Num(); i++)
+    {
+        BuildHudWidget(*RequiredHudWidgetClasses[i]);
+    }
+    
+    // Parse any hard coded widgets
+    for (int32 WidgetIndex = 0; WidgetIndex < HudWidgetClasses.Num(); WidgetIndex++)
+    {
+        BuildHudWidget(HudWidgetClasses[WidgetIndex]);
+    }
+
+    DamageIndicators.AddZeroed(MAX_DAMAGE_INDICATORS);
+    for (int32 i = 0; i < MAX_DAMAGE_INDICATORS; i++)
+    {
+        DamageIndicators[i].RotationAngle = 0.0f;
+        DamageIndicators[i].DamageAmount = 0.0f;
+        DamageIndicators[i].FadeTime = 0.0f;
+    }
 }
 
 void ANZHUD::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+    
+    NZPlayerOwner = Cast<ANZPlayerController>(GetOwner());
+    if (NZPlayerOwner)
+    {
+        NZPlayerOwner->UpdateCrosshairs(this);
+    }
 }
 
 TSubclassOf<UNZHUDWidget> ANZHUD::ResolveHudWidgetByName(const TCHAR* ResourceName)
@@ -59,6 +138,7 @@ void ANZHUD::PostRender()
 	{
 		GS->SortPSArray();
 	}
+    
 	Super::PostRender();
 }
 
@@ -85,6 +165,7 @@ void ANZHUD::DrawHUD()
 
 		for (int32 WidgetIndex = 0; WidgetIndex < HudWidgets.Num(); WidgetIndex++)
 		{
+            // If we aren't hidden then set the canvas and render
 			if (HudWidgets[WidgetIndex] && !HudWidgets[WidgetIndex]->IsHidden() && !HudWidgets[WidgetIndex]->IsPendingKill())
 			{
 				HudWidgets[WidgetIndex]->PreDraw(RenderDelta, this, Canvas, Center);
@@ -117,7 +198,7 @@ void ANZHUD::DrawHUD()
 				//	NZPlayerOwner->CurrentlyViewedStatsTab = 1;
 				//	NZPlayerOwner->SetViewedScorePS(GetScorerPlayerState(), NZPlayerOwner->CurrentlyViewedStatsTab);
 				//}
-				else
+				//else
 				{
 					NZPlayerOwner->SetViewedScorePS(NULL, 0);
 				}
@@ -145,24 +226,148 @@ void ANZHUD::ToggleScoreboard(bool bShow)
 
 }
 
+void ANZHUD::CreateScoreboard(TSubclassOf<class UNZScoreboard> NewScoreboardClass)
+{
+    
+}
+
+void ANZHUD::PawnDamaged(FVector HitLocation, int32 DamageAmount, bool bFriendlyFire)
+{
+    
+}
+
 void ANZHUD::DrawDamageIndicators()
 {
+    
+}
 
+void ANZHUD::CausedDamage(APawn* HitPawn, int32 Damage)
+{
+    
+}
+
+UFont* ANZHUD::GetFontFromSizeIndex(int32 FontSizeIndex) const
+{
+    switch (FontSizeIndex)
+    {
+        case 0: return TinyFont;
+        case 1: return SmallFont;
+        case 2: return MediumFont;
+        case 3: return LargeFont;
+    }
+    
+    return MediumFont;
+}
+
+FLinearColor ANZHUD::GetBaseHUDColor()
+{
+    return FLinearColor();
 }
 
 ANZPlayerState* ANZHUD::GetScorerPlayerState()
 {
-	return NULL;
+    ANZPlayerState* PS = NZPlayerOwner->NZPlayerState;
+    if (PS && !PS->bOnlySpectator)
+    {
+        // View your own score unless you are a spectator
+        return PS;
+    }
+    
+    APawn* PawnOwner = (NZPlayerOwner->GetPawn() != NULL) ? NZPlayerOwner->GetPawn() : Cast<APawn>(NZPlayerOwner->GetViewTarget());
+    if (PawnOwner != NULL && Cast<ANZPlayerState>(PawnOwner->PlayerState) != NULL)
+    {
+        PS = (ANZPlayerState*)PawnOwner->PlayerState;
+    }
+    
+    return NZPlayerOwner->LastSpectatedPlayerState ? NZPlayerOwner->LastSpectatedPlayerState : PS;
+}
+
+void ANZHUD::NotifyMatchStateChange()
+{
+    
+}
+
+void ANZHUD::OpenMatchSummary()
+{
+    
 }
 
 void ANZHUD::BuildHudWidget(FString NewWidgetString)
 {
-
+    if (NewWidgetString.Trim().Left(1) == TEXT("{"))
+    {
+        // It's a json command so we have to break it apart
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(NewWidgetString);
+        TSharedRef<FJsonObject> JSONObject;
+        if (FJsonSerializer::Deserialize(Reader, JSONObject) && JSONObject.IsValid())
+        {
+            // We have a valid JSON object
+            const TSharedPtr<FJsonValue>* ClassName = JSONObject->Values.Find(TEXT("Classname"));
+            if (ClassName->IsValid() && (*ClassName)->Type = EJson::String)
+            {
+                TSubclassOf<UNZHUDWidget> NewWidgetClass = ResolveHudWidgetByName(*(*ClassName)->AsString());
+                if (NewWidgetClass != NULL)
+                {
+                    UNZHUDWidget* NewWidget = AddHudWidget(NewWidgetClass);
+                    
+                    // Now look for position overrides
+                    const TSharedPtr<FJsonValue>* PositionVal = JSONObject->Values.Find(TEXT("Position"));
+                    if (PositionVal != NULL && (*PositionVal)->Type == EJson::Object)
+                    {
+                        NewWidget->Position = JSon2FVector2D((*PositionVal)->AsObject(), NewWidget->Position);
+                    }
+                    
+                    const TSharedPtr<FJsonValue>* OriginVal = JSONObject->Values.Find(TEXT("Origin"));
+                    if (OriginVal != NULL && (*OriginVal)->Type == EJson::Object)
+                    {
+                        NewWidget->Origin = JSon2FVector2D((*OriginVal)->AsObject(), NewWidget->Origin);
+                    }
+                    
+                    const TSharedPtr<FJsonValue>* ScreenPositionVal = JSONObject->Values.Find(TEXT("ScreenPosition"));
+                    if (ScreenPositionVal != NULL && (*ScreenPositionVal)->Type == EJson::Object)
+                    {
+                        NewWidget->ScreenPosition = JSon2FVector2D((*ScreenPositionVal)->AsObject(), NewWidget->ScreenPosition);
+                    }
+                    
+                    const TSharedPtr<FJsonValue>* SizeVal = JSONObject->Values.Find(TEXT("Size"));
+                    if (SizeVal != NULL && (*SizeVal)->Type == EJson::Object)
+                    {
+                        NewWidget->Size = JSon2FVector2D((*SizeVal)->AsObject(), NewWidget->Size);
+                    }
+                }
+            }
+        }
+        else
+        {
+            //UE_LOG(NZ, Log, TEXT("Failed to parse JSON HudWidget entry: %s"), *NewWidgetString);
+        }
+    }
+    else
+    {
+        TSubclassOf<UNZHUDWidget> NewWidgetClass = ResolveHudWidgetByName(*NewWidgetString);
+        if (NewWidgetString != NULL)
+        {
+            AddHudWidget(NewWidgetClass);
+        }
+    }
 }
 
 bool ANZHUD::HasHudWidget(TSubclassOf<UNZHUDWidget> NewWidgetClass)
 {
-	return false;
+	if ((NewWidgetClass == NULL) || (HudWidgets.Num() == 0))
+    {
+        return false;
+    }
+    
+    for (int32 i = 0; i < HudWidgets.Num(); i++)
+    {
+        if (HudWidgets[i] && (HudWidgets[i]->GetClass() == NewWidgetClass))
+        {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 FVector2D ANZHUD::JSon2FVector2D(const TSharedPtr<FJsonObject> Vector2DObject, FVector2D Default)

@@ -38,5 +38,10 @@ protected:
     class UNZProfileSettings* CurrentProfileSetttings;
     
     
+public:
+    virtual void OpenSpectatorWindow();
+    virtual void CloseSpectatorWindow();
+    
+    
     
 };

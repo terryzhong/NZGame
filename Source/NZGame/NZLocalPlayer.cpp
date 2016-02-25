@@ -45,3 +45,13 @@ void UNZLocalPlayer::ClearProfileSettings()
     
 }
 
+void UNZLocalPlayer::OpenSpectatorWindow()
+{
+    
+}
+
+void UNZLocalPlayer::CloseSpectatorWindow()
+{
+    
+}
+

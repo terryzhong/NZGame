@@ -72,6 +72,12 @@ public:
     UPROPERTY()
     FString CharacterPath;
     
+    UPROPERTY()
+    TArray<FCrosshairInfo> CrosshairInfos;
+    
+    UPROPERTY()
+    bool bCustomWeaponCrosshairs;
+    
     
     UPROPERTY()
     TArray<FName> Achievements;
@@ -105,5 +111,7 @@ protected:
 	UPROPERTY()
 	TArray<FStoredWeaponPriority> WeaponPriorities;
 
+public:
+    void UpdateCrosshairs(ANZHUD* HUD);
 
 };
