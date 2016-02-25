@@ -295,6 +295,18 @@ public:
 	void ApplyDeferredFireInputs();
 
 	bool HasDeferredFireInputs();
+
+public:
+	/** PlayerState whose details are currently being displayed on scoreboard */
+	UPROPERTY()
+	ANZPlayerState* CurrentlyViewedScorePS;
+
+	UPROPERTY()
+	uint8 CurrentlyViewedStatsTab;
+
+	UFUNCTION()
+	virtual void SetViewedScorePS(ANZPlayerState* ViewedPS, uint8 NewStatsPage);
+
     
 
     // Perceived latency reduction

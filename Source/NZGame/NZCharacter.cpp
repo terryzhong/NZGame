@@ -2086,7 +2086,7 @@ void ANZCharacter::PlayFootstep(uint8 FootNum, bool bFirstPerson)
     LastFootstepTime = GetWorld()->TimeSeconds;
 }
 
-void ANZCharacter::PlayJump(const FVector& JumpLocation, const FVector& JumpDir)
+void ANZCharacter::PlayJump_Implementation(const FVector& JumpLocation, const FVector& JumpDir)
 {
     
 }

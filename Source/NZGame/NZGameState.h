@@ -32,6 +32,28 @@ public:
      Determines if a player is on the same team */
     UFUNCTION(BlueprintCallable, Category = GameState)
     virtual bool OnSameTeam(const AActor* Actor1, const AActor* Actor2);
+
+	/** Determines if 2 PlayerState are in score order */
+	virtual bool InOrder(class ANZPlayerState* P1, class ANZPlayerState* P2);
+
+	/** Sorts the Player State Array */
+	virtual void SortPSArray();
+
+	/** Returns true if the match state is InProgress or later */
+	UFUNCTION(BlueprintCallable, Category = GameState)
+	virtual bool HasMatchStarted() const;
+
+	UFUNCTION(BlueprintCallable, Category = GameState)
+	virtual bool IsMatchInProgress() const;
+
+	UFUNCTION(BlueprintCallable, Category = GameState)
+	virtual bool IsMatchInOvertime() const;
+
+	UFUNCTION(BlueprintCallable, Category = GameState)
+	virtual bool IsMatchInCountdown() const;
+
+	UFUNCTION(BlueprintCallable, Category = GameState)
+	virtual bool IsMatchIntermission() const;
     
     /** 246
      Returns first active overlay material given the passed in flags */

@@ -41,6 +41,94 @@ bool ANZGameState::OnSameTeam(const AActor* Actor1, const AActor* Actor2)
 	}
 }
 
+/** Returns true if P1 should be sorted before P2 */
+bool ANZGameState::InOrder(class ANZPlayerState* P1, class ANZPlayerState* P2)
+{
+	// Spectators are sorted last
+	if (P1->bOnlySpectator)
+	{
+		return P2->bOnlySpectator;
+	}
+	else if (P2->bOnlySpectator)
+	{
+		return true;
+	}
+
+	if (P1->Score < P2->Score)
+	{
+		return false;
+	}
+
+	if (P1->Score == P2->Score)
+	{
+		// If score tied, use deaths to sort
+		if (P1->Deaths > P2->Deaths)
+		{
+			return false;
+		}
+
+		// Keep local player highest on list
+		if ((P1->Deaths == P2->Deaths) && (Cast<APlayerController>(P2->GetOwner()) != NULL))
+		{
+			ULocalPlayer* LP2 = Cast<ULocalPlayer>(Cast<APlayerController>(P2->GetOwner())->Player);
+			if (LP2 != NULL)
+			{
+				// Make sure ordering is consistent for splitscreen players
+				ULocalPlayer* LP1 = Cast<ULocalPlayer>(Cast<APlayerController>(P1->GetOwner())->Player);
+				return (LP1 != NULL);
+			}
+		}
+	}
+
+	return true;
+}
+
+void ANZGameState::SortPSArray()
+{
+	for (int32 i = 0; i < PlayerArray.Num() - 1; i++)
+	{
+		ANZPlayerState* P1 = Cast<ANZPlayerState>(PlayerArray[i]);
+		for (int32 j = i + 1; j < PlayerArray.Num(); j++)
+		{
+			ANZPlayerState* P2 = Cast<ANZPlayerState>(PlayerArray[j]);
+			if (!InOrder(P1, P2))
+			{
+				PlayerArray[i] = P2;
+				PlayerArray[j] = P1;
+				P1 = P2;
+			}
+		}
+	}
+}
+
+bool ANZGameState::HasMatchStarted() const
+{
+	return Super::HasMatchStarted() && GetMatchState() != MatchState::CountdownToBegin && GetMatchState() != MatchState::PlayerIntro;
+}
+
+bool ANZGameState::IsMatchInProgress() const
+{
+	FName MatchState = GetMatchState();
+	return (MatchState == MatchState::InProgress || MatchState == MatchState::MatchIsInOvertime);
+}
+
+bool ANZGameState::IsMatchInOvertime() const
+{
+	FName MatchState = GetMatchState();
+	return (MatchState == MatchState::MatchEnteringOvertime || MatchState == MatchState::MatchIsInOvertime);
+}
+
+bool ANZGameState::IsMatchInCountdown() const
+{
+	return GetMatchState() == MatchState::CountdownToBegin;
+}
+
+bool ANZGameState::IsMatchIntermission() const
+{
+	return GetMatchState() == MatchState::MatchIntermission;
+}
+
+
 FOverlayEffect ANZGameState::GetFirstOverlay(uint16 Flags, bool bFirstPerson)
 {
     if (Flags == 0)
