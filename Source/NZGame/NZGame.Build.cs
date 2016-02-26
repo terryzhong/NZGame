@@ -6,7 +6,7 @@ public class NZGame : ModuleRules
 {
 	public NZGame(TargetInfo Target)
 	{
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "NetworkReplayStreaming" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "NetworkReplayStreaming", "Json" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore", "Slate" });
         

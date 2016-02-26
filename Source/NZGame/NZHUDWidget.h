@@ -7,10 +7,18 @@
 
 
 
+namespace ERenderObjectType
+{
+	extern const FName TextureObject;
+	extern const FName TextObject;
+}
+
+class ANZHUD;
+
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class NZGAME_API UNZHUDWidget : public UObject
 {
 	GENERATED_BODY()
@@ -21,40 +29,56 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	float DesignedResolution;
 
+	/** This is the position of the widget relative to the screen position and origin */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	FVector2D Position;
 
+	/** The size of the widget as designed. NOTE: Currently no clipping occurs so it's very possible to blow out beyond the bounds */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	FVector2D Size;
 
+	/** The widget's position is relative to this origin. Normalized */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	FVector2D Origin;
 
+	/**
+	 * Holds widget's normalized position relative to the actual display
+	 * Useful for quickly snapping the widget to the right or bottom edge and can be used with Negative position
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	FVector2D ScreenPosition;
 
+	/** If true, then this widget will attempt to scale itself by to the designed resolution */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	uint32 bScaleByDesignedResolution : 1;
 
+	/** If true, any scaling will maintain the aspect ratio of the widget */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	uint32 bMaintainAspectRatio : 1;
 
+	/** The opacity of this widget */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	float Opacity;
 
+	/** Whether to colorize this widget using base HUD color (like team color) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)
 	uint32 bIgnoreHUDBaseColor : 1;
 
+	/** Will be called as soon as the widget is created and tracked by the hud */
 	virtual void InitializeWidget(ANZHUD* Hud);
 
+	/** Hide/show this widget */
 	virtual bool IsHidden();
 
+	/** Sets the visibility of this widget */
 	UFUNCTION(BlueprintCallable, Category = Widgets)
 	virtual void SetHidden(bool bIsHidden);
 
+	/** Return true if this widget should be drawn */
 	UFUNCTION(BlueprintNativeEvent)
 	bool ShouldDraw(bool bShowScores);
 
+	/** Predraw is called before the main drawing function in order to perform any needed scaling / positioning / etc as well as cache the canvas and owner */
 	virtual void PreDraw(float DeltaTime, ANZHUD* InNZHUDOwner, UCanvas* InCanvas, FVector2D InCanvasCenter);
 
 	UFUNCTION(BlueprintNativeEvent)
@@ -83,6 +107,7 @@ public:
 	virtual FVector2D GetRenderSize();
 	virtual float GetRenderScale();
 
+	/**  */
 	UFUNCTION(BlueprintCallable, Category = Widgets)
 	virtual FLinearColor ApplyHUDColor(FLinearColor DrawColor);
 
@@ -91,27 +116,35 @@ public:
 	virtual FString GetClampedName(ANZPlayerState* PS, UFont* NameFont, float NameScale, float MaxWidth);
 
 protected:
+	/** If true, this widget will not be rendered */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	uint32 bHidden : 1;
 
+	/** The last time this widget was rendered */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	float LastRenderTime;
 
+	/** RenderPosition is only valid during the rendering potion and holds the position in screen space at the current resolution */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	FVector2D RenderPosition;
 
+	/** Scaled sizing. NOTE: respects bMaintainAspectRatio */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	FVector2D RenderSize;
-
+	
+	/** The scale based on the designed resolution */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	float RenderScale;
 
+	/** The precalculated center of the canvas */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	FVector2D CanvasCenter;
 
+	/** The cached reference to the UCanvas object. ONLY VALID during the render phase */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	class UCanvas* Canvas;
 
+	/** The scale needed to maintain aspect ratio */
 	UPROPERTY(BlueprintReadOnly, Category = "Widgets Live")
 	float AspectScale;
 
@@ -158,9 +191,11 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Render Objects")
 	virtual FVector2D RenderObj_TextAt(FHUDRenderObject_Text& TextObject, float X, float Y);
 
+	/** Get any scaling overrides */
 	virtual float GetDrawScaleOverride();
 
 private:
+	/** This is a sorted list of all RenderObject in this widget */
 	UPROPERTY()
 	TArray<UStructProperty*> RenderObjectList;
 

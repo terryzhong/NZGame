@@ -5,4 +5,8 @@
 
 
 
+void UNZHUDWidgetMessage::ReceiveLocalMessage(TSubclassOf<class UNZLocalMessage> MessageClass, APlayerState* RelatedPlayerState_1, APlayerState* RelatedPlayerState_2, uint32 MessageIndex, FText LocalMessageText, UObject* OptionalObject)
+{
+
+}
 

@@ -182,6 +182,9 @@ public:
     /** Crosshair asset pointer */
 	UTexture2D* DefaultCrosshairTex;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Scoreboard)
+	UTexture2D* HUDAtlas;
+
     /** Last time we hit an enemy in LOS */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HUD)
     float LastConfirmedHitTime;
@@ -276,7 +279,40 @@ public:
     virtual void OpenMatchSummary();
     
 public:
+	UPROPERTY(globalconfig)
+	float HUDWidgetOpacity;
     
+	UPROPERTY(globalconfig)
+	float HUDWidgetBorderOpacity;
+
+	UPROPERTY(globalconfig)
+	float HUDWidgetSlateOpacity;
+
+	UPROPERTY(globalconfig)
+	float HUDWidgetWeaponBarInactiveOpacity;
+
+	UPROPERTY(globalconfig)
+	float HUDWidgetWeaponBarScaleOverride;
+
+	UPROPERTY(globalconfig)
+	float HUDWidgetWeaponBarInactiveIconOpacity;
+
+	UPROPERTY(globalconfig)
+	float HUDWidgetWeaponBarEmptyOpacity;
+
+	UPROPERTY(globalconfig)
+	float HUDWidgetScaleOverride;
+
+	UPROPERTY(globalconfig)
+	bool bUseWeaponColors;
+
+
+	int32 NumActualPlayers;
+
+	UPROPERTY()
+	TArray<ANZPlayerState*> Leaderboard;
+
+
 
 public:
 	virtual void BuildHudWidget(FString NewWidgetString);

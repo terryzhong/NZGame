@@ -3,6 +3,7 @@
 #include "NZGame.h"
 #include "NZHUD.h"
 #include "NZHUDWidget.h"
+#include "NZHUDWidgetMessage.h"
 #include "NZBasePlayerController.h"
 #include "Json.h"
 
@@ -10,6 +11,9 @@
 ANZHUD::ANZHUD()
 {
     WidgetOpacity = 1.0f;
+
+	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT(""));
+	DefaultCrosshairTex = CrosshairTexObj.Object;
     
     LastKillTime = -100.f;
     LastConfirmedHitTime = -100.0f;
@@ -117,16 +121,67 @@ void ANZHUD::PostInitializeComponents()
 
 TSubclassOf<UNZHUDWidget> ANZHUD::ResolveHudWidgetByName(const TCHAR* ResourceName)
 {
-	return NULL;
+	UClass* WidgetClass = LoadClass<UNZHUDWidget>(NULL, ResourceName, NULL, LOAD_NoWarn | LOAD_Quiet, NULL);
+	if (WidgetClass != NULL)
+	{
+		return WidgetClass;
+	}
+	FString BlueprintResourceName = FString::Printf(TEXT("%s_C"), ResourceName);
+
+	WidgetClass = LoadClass<UNZHUDWidget>(NULL, *BlueprintResourceName, NULL, LOAD_NoWarn | LOAD_Quiet, NULL);
+	return WidgetClass;
 }
 
 UNZHUDWidget* ANZHUD::AddHudWidget(TSubclassOf<UNZHUDWidget> NewWidgetClass)
 {
-	return NULL;
+	if (NewWidgetClass == NULL)
+	{
+		return NULL;
+	}
+
+	UNZHUDWidget* Widget = NewObject<UNZHUDWidget>(GetTransientPackage(), NewWidgetClass);
+	HudWidgets.Add(Widget);
+
+	UNZHUDWidgetMessage* MessageWidget = Cast<UNZHUDWidgetMessage>(Widget);
+	if (MessageWidget != NULL)
+	{
+		HudMessageWidgets.Add(MessageWidget->ManagedMessageArea, MessageWidget);
+	}
+
+	// todo:
+	//// Cache ref to scoreboard (NOTE: only one!)
+	//if (Widget->IsA(UNZScoreboard::StaticClass()))
+	//{
+	//	MyNZScoreboard = Cast<UNZScoreboard>(Widget);
+	//}
+
+	Widget->InitializeWidget(this);
+	if (Cast<UNZHUDWidget_Spectator>(Widget))
+	{
+		SpectatorMessageWidget = Cast<UNZHUDWidget_Spectator>(Widget);
+	}
+	// todo:
+	//if (Cast<UNZHUDWidget_ReplayTimeSlider>(Widget))
+	//{
+	//	ReplayTimeSliderWidget = Cast<UNZHUDWidget_ReplayTimeSlider>(Widget);
+	//}
+	//if (Cast<UNZHUDWidget_SpectatorSlideOut>(Widget))
+	//{
+	//	SpectatorSlideOutWidget = Cast<UNZHUDWidget_SpectatorSlideOut>(Widget);
+	//}
+
+	return Widget;
 }
 
 UNZHUDWidget* ANZHUD::FindHudWidgetByClass(TSubclassOf<UNZHUDWidget> SearchWidgetClass, bool bExactClass)
 {
+	for (int32 i = 0; i < HudWidgets.Num(); i++)
+	{
+		if (bExactClass ? HudWidgets[i]->GetClass() == SearchWidgetClass : HudWidgets[i]->IsA(SearchWidgetClass))
+		{
+			return HudWidgets[i];
+		}
+	}
 	return NULL;
 }
 
@@ -218,7 +273,15 @@ void ANZHUD::DrawHUD()
 
 void ANZHUD::ReceiveLocalMessage(TSubclassOf<class UNZLocalMessage> MessageClass, APlayerState* RelatedPlayerState_1, APlayerState* RelatedPlayerState_2, uint32 MessageIndex, FText LocalMessageText, UObject* OptionalObject)
 {
-
+	UNZHUDWidgetMessage* DestinationWidget = (HudMessageWidgets.FindRef(MessageClass->GetDefaultObject<UNZLocalMessage>()->MessageArea));
+	if (DestinationWidget != NULL)
+	{
+		DestinationWidget->ReceiveLocalMessage(MessageClass, RelatedPlayerState_1, RelatedPlayerState_2, MessageIndex, LocalMessageText, OptionalObject);
+	}
+	else
+	{
+		//UE_LOG(NZ, Verbose, TEXT("No Message Widget to Display Text"));
+	}
 }
 
 void ANZHUD::ToggleScoreboard(bool bShow)
@@ -298,12 +361,12 @@ void ANZHUD::BuildHudWidget(FString NewWidgetString)
     {
         // It's a json command so we have to break it apart
         TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(NewWidgetString);
-        TSharedRef<FJsonObject> JSONObject;
+        TSharedPtr<FJsonObject> JSONObject;
         if (FJsonSerializer::Deserialize(Reader, JSONObject) && JSONObject.IsValid())
         {
             // We have a valid JSON object
             const TSharedPtr<FJsonValue>* ClassName = JSONObject->Values.Find(TEXT("Classname"));
-            if (ClassName->IsValid() && (*ClassName)->Type = EJson::String)
+            if (ClassName->IsValid() && (*ClassName)->Type == EJson::String)
             {
                 TSubclassOf<UNZHUDWidget> NewWidgetClass = ResolveHudWidgetByName(*(*ClassName)->AsString());
                 if (NewWidgetClass != NULL)
@@ -345,7 +408,7 @@ void ANZHUD::BuildHudWidget(FString NewWidgetString)
     else
     {
         TSubclassOf<UNZHUDWidget> NewWidgetClass = ResolveHudWidgetByName(*NewWidgetString);
-        if (NewWidgetString != NULL)
+        if (NewWidgetClass != NULL)
         {
             AddHudWidget(NewWidgetClass);
         }
@@ -442,12 +505,55 @@ FLinearColor ANZHUD::GetCrosshairColor(FLinearColor CrosshairColor) const
 
 UNZCrosshair* ANZHUD::GetCrosshair(ANZWeapon* Weapon)
 {
+	FCrosshairInfo* CrosshairInfo = GetCrosshairInfo(Weapon);
+	if (CrosshairInfo != NULL)
+	{
+		for (int32 i = 0; i < LoadedCrosshairs.Num(); i++)
+		{
+			if (LoadedCrosshairs[i]->GetClass()->GetPathName() == CrosshairInfo->CrosshairClassName)
+			{
+				return LoadedCrosshairs[i];
+			}
+		}
+
+		// Didn't find it so create a new one
+		UClass* TestClass = LoadObject<UClass>(NULL, *CrosshairInfo->CrosshairClassName);
+		if (TestClass != NULL && !TestClass->HasAnyClassFlags(CLASS_Abstract) && TestClass->IsChildOf(UNZCrosshair::StaticClass()))
+		{
+			UNZCrosshair* NewCrosshair = NewObject<UNZCrosshair>(this, TestClass);
+			LoadedCrosshairs.Add(NewCrosshair);
+		}
+	}
 	return NULL;
 }
 
 FCrosshairInfo* ANZHUD::GetCrosshairInfo(ANZWeapon* Weapon)
 {
-	return NULL;
+	FString WeaponClass = (!bCustomWeaponCrosshairs || Weapon == NULL) ? TEXT("Global") : Weapon->GetClass()->GetPathName();
+
+	FCrosshairInfo* FoundInfo = CrosshairInfos.FindByPredicate([WeaponClass](const FCrosshairInfo& Info) { return Info.WeaponClassName == WeaponClass;  });
+	if (FoundInfo != NULL)
+	{
+		return FoundInfo;
+	}
+
+	// Make a Global one if we couldn't find one
+	if (WeaponClass == TEXT("Global"))
+	{
+		return &CrosshairInfos[CrosshairInfos.Add(FCrosshairInfo())];
+	}
+	else
+	{
+		// Create a new crosshair for this weapon based off the global one
+		FCrosshairInfo NewInfo;
+		FCrosshairInfo* GlobalCrosshair = CrosshairInfos.FindByPredicate([](const FCrosshairInfo& Info) { return Info.WeaponClassName == TEXT("Global"); });
+		if (GlobalCrosshair != NULL)
+		{
+			NewInfo = *GlobalCrosshair;
+		}
+		NewInfo.WeaponClassName = WeaponClass;
+		return &CrosshairInfos[CrosshairInfos.Add(NewInfo)];
+	}
 }
 
 void ANZHUD::UpdateMinimapTexture(UCanvas* C, int32 Width, int32 Height)
