@@ -12,8 +12,32 @@ ANZHUD::ANZHUD()
 {
     WidgetOpacity = 1.0f;
 
-	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT(""));
+	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("Texture2D'/Game/Weapons/Crosshair_Default.Crosshair_Default'"));
 	DefaultCrosshairTex = CrosshairTexObj.Object;
+    
+    static ConstructorHelpers::FObjectFinder<UFont> TFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Tiny.fntScoreboard_Tiny'"));
+    TinyFont = TFont.Object;
+    
+    static ConstructorHelpers::FObjectFinder<UFont> SFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Small.fntScoreboard_Small'"));
+    SmallFont = SFont.Object;
+    
+    static ConstructorHelpers::FObjectFinder<UFont> MFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Medium.fntScoreboard_Medium'"));
+    MediumFont = MFont.Object;
+    
+    static ConstructorHelpers::FObjectFinder<UFont> LFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Large.fntScoreboard_Large'"));
+    LargeFont = LFont.Object;
+    
+    static ConstructorHelpers::FObjectFinder<UFont> HFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Huge.fntScoreboard_Huge'"));
+    HugeFont = HFont.Object;
+    
+    static ConstructorHelpers::FObjectFinder<UFont> ScFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Score.fntScoreboard_Score'"));
+    ScoreFont = ScFont.Object;
+    
+    static ConstructorHelpers::FObjectFinder<UFont> CFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Clock.fntScoreboard_Clock'"));
+    NumberFont = CFont.Object;
+    
+    
+    
     
     LastKillTime = -100.f;
     LastConfirmedHitTime = -100.0f;

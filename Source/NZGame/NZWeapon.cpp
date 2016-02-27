@@ -1652,14 +1652,72 @@ float ANZWeapon::GetCrosshairScale(class ANZHUD* HUD)
 
 void ANZWeapon::DrawWeaponCrosshair_Implementation(UNZHUDWidget* WeaponHudWidget, float RenderDelta)
 {
-    // todo:
-    check(false);
+	bool bDrawCrosshair = true;
+	for (int32 i = 0; i < FiringState.Num(); i++)
+	{
+		bDrawCrosshair = FiringState[i]->DrawHUD(WeaponHudWidget) && bDrawCrosshair;
+	}
+
+	if (bDrawCrosshair && WeaponHudWidget && WeaponHudWidget->NZHUDOwner)
+	{
+		UTexture2D* CrosshairTexture = WeaponHudWidget->NZHUDOwner->DefaultCrosshairTex;
+		if (CrosshairTexture != NULL)
+		{
+			float W = CrosshairTexture->GetSurfaceWidth();
+			float H = CrosshairTexture->GetSurfaceHeight();
+			float CrosshairScale = GetCrosshairScale(WeaponHudWidget->NZHUDOwner);
+
+			// Draw a different indicator if there is a friendly where the camera is pointing
+			ANZPlayerState* PS;
+			if (ShouldDrawFFIndicator(WeaponHudWidget->NZHUDOwner->PlayerOwner, PS))
+			{
+				WeaponHudWidget->DrawTexture(WeaponHudWidget->NZHUDOwner->HUDAtlas, 0, 0, W * CrosshairScale, H * CrosshairScale, 407, 940, 72, 72, 1.0, FLinearColor::Green, FVector2D(0.5f, 0.5f));
+			}
+			else
+			{
+				UNZCrosshair* Crosshair = WeaponHudWidget->NZHUDOwner->GetCrosshair(this);
+				FCrosshairInfo* CrosshairInfo = WeaponHudWidget->NZHUDOwner->GetCrosshairInfo(this);
+
+				if (Crosshair != NULL && CrosshairInfo != NULL)
+				{
+					Crosshair->DrawCrosshair(WeaponHudWidget->GetCanvas(), this, RenderDelta, GetCrosshairScale(WeaponHudWidget->NZHUDOwner) * CrosshairInfo->Scale, WeaponHudWidget->NZHUDOwner->GetCrosshairColor(CrosshairInfo->Color));
+				}
+				else
+				{
+					WeaponHudWidget->DrawTexture(CrosshairTexture, 0, 0, W * CrosshairScale, H * CrosshairScale, 0.0, 0.0, 16, 16, 1.0, GetCrosshairColor(WeaponHudWidget), FVector2D(0.5f, 0.5f));
+				}
+				UpdateCrosshairTarget(PS, WeaponHudWidget, RenderDelta);
+			}
+		}
+	}
 }
 
 void ANZWeapon::UpdateCrosshairTarget(ANZPlayerState* NewCrosshairTarget, UNZHUDWidget* WeaponHudWidget, float RenderDelta)
 {
-    // todo:
-    check(false);
+	if (NewCrosshairTarget != NULL)
+	{
+		TargetPlayerState = NewCrosshairTarget;
+		TargetLastSeenTime = GetWorld()->GetTimeSeconds();
+	}
+
+	if (TargetPlayerState != NULL)
+	{
+		float TimeSinceSeen = GetWorld()->GetTimeSeconds() - TargetLastSeenTime;
+		static float MAXNAMEDRAWTIME = 0.3f;
+		if (TimeSinceSeen < MAXNAMEDRAWTIME)
+		{
+			static float MAXNAMEFULLALPHA = 0.22f;
+			float Alpha = (TimeSinceSeen < MAXNAMEFULLALPHA) ? 1.f : (1.f - ((TimeSinceSeen - MAXNAMEFULLALPHA) / (MAXNAMEDRAWTIME - MAXNAMEFULLALPHA)));
+
+			float H = WeaponHudWidget->NZHUDOwner->DefaultCrosshairTex->GetSurfaceHeight();
+			FText PlayerName = FText::FromString(TargetPlayerState->PlayerName);
+			WeaponHudWidget->DrawText(PlayerName, 0.f, H * 2.f, WeaponHudWidget->NZHUDOwner->SmallFont, false, FVector2D(0.f, 0.f), FLinearColor::Black, true, FLinearColor::Black, 1.0f, Alpha, FLinearColor::Red, ETextHorzPos::Center);
+		}
+		else
+		{
+			TargetPlayerState = NULL;
+		}
+	}
 }
 
 void ANZWeapon::UpdateOverlaysShared(AActor* WeaponActor, ANZCharacter* InOwner, USkeletalMeshComponent* InMesh, const TArray<struct FParticleSysParam>& InOverlayEffectParams, USkeletalMeshComponent*& InOverlayMesh) const

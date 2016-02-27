@@ -15,7 +15,7 @@ ANZGameMode::ANZGameMode()
 {
 	PlayerPawnObject = FStringAssetReference(TEXT("/Game/Characters/Nicholas/Nicholas.Nicholas_C"));
 
-    //HUDClass = ANZHUD::StaticClass();
+    HUDClass = ANZHUD::StaticClass();
     
     GameStateClass = ANZGameState::StaticClass();
     PlayerStateClass = ANZPlayerState::StaticClass();

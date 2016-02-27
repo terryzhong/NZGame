@@ -145,6 +145,18 @@ void ANZCharacter::Tick( float DeltaTime )
         }
     }
 
+	// todo:
+
+	if (GetWeapon())
+	{
+		GetWeapon()->UpdateViewBob(DeltaTime);
+	}
+	else
+	{
+		GetWeaponBobOffset(DeltaTime, NULL);
+	}
+
+
 }
 
 // Called to bind functionality to input
@@ -2212,7 +2224,11 @@ void ANZCharacter::UpdateSkin()
     
 }
 
-
+float ANZCharacter::GetWeaponBobScaling()
+{
+	ANZPlayerController* PC = Cast<ANZPlayerController>(GetController());
+	return PC ? PC->WeaponBobGlobalScaling : 1.f;
+}
 
 FVector ANZCharacter::GetWeaponBobOffset(float DeltaTime, ANZWeapon* MyWeapon)
 {
@@ -2271,14 +2287,48 @@ FVector ANZCharacter::GetWeaponBobOffset(float DeltaTime, ANZWeapon* MyWeapon)
 	CurrentJumpBob.Z = (1.f - InterpTime) * CurrentJumpBob.Z + InterpTime * DesiredJumpBob.Z;
 
 	ANZPlayerController* MyPC = Cast<ANZPlayerController>(GetController());
-	float WeaponBobGlobalScaling = (MyWeapon ? MyWeapon->WeaponBobScaling : 1.f)/* * (MyPC ? MyPC->WeaponBobGlobalScaling) : 1.f)*/;
+	float WeaponBobGlobalScaling = (MyWeapon ? MyWeapon->WeaponBobScaling : 1.f) * (MyPC ? MyPC->WeaponBobGlobalScaling : 1.f);
 	return WeaponBobGlobalScaling * (CurrentWeaponBob.Y + CurrentJumpBob.Y) * Y + WeaponBobGlobalScaling * (CurrentWeaponBob.Z + CurrentJumpBob.Z) * Z + CrouchEyeOffset + GetTransformedEyeOffset();
 }
 
 FVector ANZCharacter::GetTransformedEyeOffset() const
 {
-	return FVector(0.f);
+	FRotationMatrix ViewRotMatrix = FRotationMatrix(GetViewRotation());
+	FVector XTransform = ViewRotMatrix.GetScaledAxis(EAxis::X) * EyeOffset.X;
+	if ((XTransform.Z > KINDA_SMALL_NUMBER) && (XTransform.Z + EyeOffset.Z + BaseEyeHeight + CrouchEyeOffset.Z > GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - 12.f))
+	{
+		float MaxZ = FMath::Max(0.f, GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - 12.f - EyeOffset.Z - BaseEyeHeight - CrouchEyeOffset.Z);
+		XTransform = XTransform * MaxZ / XTransform.Z;
+	}
+	return GetEyeOffsetScaling() * (XTransform + ViewRotMatrix.GetScaledAxis(EAxis::Y) * EyeOffset.Y) + FVector(0.f, 0.f, EyeOffset.Z);
 }
+
+float ANZCharacter::GetEyeOffsetScaling() const
+{
+	float EyeOffsetGlobalScaling = Cast<ANZPlayerController>(GetController()) ? Cast<ANZPlayerController>(GetController())->EyeOffsetGlobalScaling : 1.f;
+	return FMath::Clamp(EyeOffsetGlobalScaling, 0.f, 1.f);
+}
+
+FVector ANZCharacter::GetPawnViewLocation() const
+{
+	return GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight) + CrouchEyeOffset + GetTransformedEyeOffset();
+}
+
+void ANZCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
+{
+	if (bFindCameraComponentWhenViewTarget && CharacterCameraComponent && CharacterCameraComponent->bIsActive)
+	{
+		float SavedFOV = OutResult.FOV;
+		CharacterCameraComponent->GetCameraView(DeltaTime, OutResult);
+		OutResult.FOV = SavedFOV;
+		OutResult.Location = OutResult.Location + CrouchEyeOffset + GetTransformedEyeOffset();
+	}
+	else
+	{
+		GetActorEyesViewPoint(OutResult.Location, OutResult.Rotation);
+	}
+}
+
 
 
 ANZPlayerController* ANZCharacter::GetLocalViewer()

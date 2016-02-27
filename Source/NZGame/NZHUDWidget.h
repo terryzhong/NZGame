@@ -7,6 +7,36 @@
 
 
 
+struct FNZCanvasTextItem : public FCanvasTextItem
+{
+    FNZCanvasTextItem(const FVector2D& InPosition, const FText& InText, class UFont* InFont, const FLinearColor& InColor, const TSharedPtr<FCanvasWordWrapper> InWordWrapper = NULL)
+        : FCanvasTextItem(InPosition, InText, InFont, InColor)
+        , CharIncrement(0.0f)
+        , WrapXL(0.0f)
+        , WordWrapper(InWordWrapper)
+    {
+    }
+    
+    virtual void Draw(class FCanvas* InCanvas) override;
+    
+    float CharIncrement;
+    
+    // Word wrap size, if render info has !bClipText
+    float WrapXL;
+    
+    TSharedPtr<FCanvasWordWrapper> WordWrapper;
+    
+protected:
+    // NZ version appropriately handles distance field fonts by slightly overlapping triangles to give the shadows more space
+    void NZDrawStringInternal(class FCanvas* InCanvas, const FVector2D& DrawPos, const FLinearColor& DrawColor);
+    
+private:
+    void DrawStringInternal(class FCanvas* InCanvas, const FVector2D& DrawPos, const FLinearColor& DrawColor)
+    {
+        NZDrawStringInternal(InCanvas, DrawPos, DrawColor);
+    }
+};
+
 namespace ERenderObjectType
 {
 	extern const FName TextureObject;

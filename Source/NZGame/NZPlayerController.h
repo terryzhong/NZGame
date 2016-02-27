@@ -190,6 +190,14 @@ public:
     
     UFUNCTION(Client, Unreliable)
     void ClientNotifyCausedHit(APawn* HitPawn, uint8 Damage);
+
+	/** Global scaling for weapon bob */
+	UPROPERTY(EditAnywhere, GlobalConfig, Category = WeaponBob)
+	float WeaponBobGlobalScaling;
+
+	/** Global scaling for eye offset */
+	UPROPERTY(EditAnywhere, GlobalConfig, Category = WeaponBob)
+	float EyeOffsetGlobalScaling;
     
 protected:
     UPROPERTY(GlobalConfig, BlueprintReadOnly, Category = Weapon)
