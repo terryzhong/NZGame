@@ -13,6 +13,8 @@
 #include "NZProjectile.h"
 #include "NZCarriedObject.h"
 #include "NZTeamInfo.h"
+#include "AudioDevice.h"
+#include "ActiveSound.h"
 
 
 ANZPlayerController::ANZPlayerController()
@@ -23,6 +25,15 @@ ANZPlayerController::ANZPlayerController()
 	PlayerCameraManagerClass = ANZPlayerCameraManager::StaticClass();
     
 	ConfigDefaultFOV = 100.0f;
+    
+    WeaponBobGlobalScaling = 1.f;
+    EyeOffsetGlobalScaling = 1.f;
+    
+    //LastEmoteTime = 0.0f;
+    //EmoteCooldownTime = 0.3f;
+    bSpectateBehindView = true;
+    StylizedPPIndex = INDEX_NONE;
+    
 }
 
 ANZCharacter* ANZPlayerController::GetNZCharacter()
@@ -263,9 +274,79 @@ void ANZPlayerController::HearSound(USoundBase* InSoundCue, AActor* SoundPlayer,
     }
 }
 
-void ANZPlayerController::ClientHearSound_Implementation(USoundBase* TheSound, AActor* SoundPlayer, FVector_NetQuantize SoundLocation, bool bStopWhenOwnerDestroyed, bool bOccluded, bool bAmplifyVolume)
+void ANZPlayerController::ClientHearSound_Implementation(USoundBase* TheSound, AActor* SoundPlayer, FVector_NetQuantize SoundLocation, bool bStopWhenOwnerDestroyed, bool bIsOccluded, bool bAmplifyVolume)
 {
-    
+    if (TheSound != NULL && (SoundPlayer != NULL || !SoundLocation.IsZero()))
+    {
+        bool bHRTFEnabled = false;
+        if (GetWorld()->GetAudioDevice() != NULL && GetWorld()->GetAudioDevice()->IsHRTFEnabledForAll())
+        {
+            bHRTFEnabled = true;
+        }
+        
+        if (!bHRTFEnabled && (SoundPlayer == this || SoundPlayer == GetViewTarget()))
+        {
+            // No attenuation/spatialization, full volume
+            FActiveSound NewActiveSound;
+            NewActiveSound.World = GetWorld();
+            NewActiveSound.Sound = TheSound;
+            
+            NewActiveSound.VolumeMultiplier = 1.0f;
+            NewActiveSound.PitchMultiplier = 1.0f;
+            
+            NewActiveSound.RequestedStartTime = 0.0f;
+            
+            NewActiveSound.bLocationDefined = false;
+            NewActiveSound.bIsUISound = false;
+            NewActiveSound.bHasAttenuationSettings = false;
+            NewActiveSound.bAllowSpatialization = false;
+            
+            if (GetWorld()->GetAudioDevice() != NULL)
+            {
+                GetWorld()->GetAudioDevice()->AddNewActiveSound(NewActiveSound);
+            }
+        }
+        else
+        {
+            USoundAttenuation* AttenuationOverride = NULL;
+            if (bAmplifyVolume)
+            {
+                // the UGameplayStatics function copy the FAttenuationSettings by value so no need to create more than one, just reuse
+                static USoundAttenuation* OverrideObj = [](){ USoundAttenuation* Result = NewObject<USoundAttenuation>(); Result->AddToRoot(); return Result; }();
+                
+                AttenuationOverride = OverrideObj;
+                const FAttenuationSettings* DefaultAttenuation = TheSound->GetAttenuationSettingsToApply();
+                if (DefaultAttenuation != NULL)
+                {
+                    AttenuationOverride->Attenuation = *DefaultAttenuation;
+                }
+                // Set minimum volume
+                // We're assuming that the radius was already checked via HearSound() and thus this won't cause hearing the audio level-wide
+                AttenuationOverride->Attenuation.dBAttenuationAtMax = 50.0f;
+                // Move sound closer
+                AActor* ViewTarget = GetViewTarget();
+                if (ViewTarget != NULL)
+                {
+                    if (SoundLocation.IsZero())
+                    {
+                        SoundLocation = SoundPlayer->GetActorLocation();
+                    }
+                    FVector SoundOffset = GetViewTarget()->GetActorLocation() - SoundLocation;
+                    SoundLocation = SoundLocation + SoundOffset.GetSafeNormal() * FMath::Min<float>(SoundOffset.Size() * 0.25f, 2000.0f);
+                }
+            }
+            
+            float VolumeMultiplier = bIsOccluded ? 0.5f : 1.0f;
+            if (!SoundLocation.IsZero() && (SoundPlayer == NULL || SoundLocation != SoundPlayer->GetActorLocation()))
+            {
+                UGameplayStatics::PlaySoundAtLocation(GetWorld(), TheSound, SoundLocation, VolumeMultiplier, 1.0f, 0.0f, AttenuationOverride);
+            }
+            else if (SoundPlayer != NULL)
+            {
+                UGameplayStatics::SpawnSoundAttached(TheSound, SoundPlayer->GetRootComponent(), NAME_None, FVector::ZeroVector, EAttachLocation::KeepRelativeOffset, bStopWhenOwnerDestroyed, VolumeMultiplier, 1.0f, 0.0f, AttenuationOverride);
+            }
+        }
+    }
 }
 
 static void HideComponentTree(const UPrimitiveComponent* Primitive, TSet<FPrimitiveComponentId>& HiddenComponents)
@@ -716,6 +797,10 @@ void ANZPlayerController::ViewCamera(int32 Index)
     
 }
 
+FRotator ANZPlayerController::GetSpectatingRotation(const FVector& ViewLoc, float DeltaTime)
+{
+    return FRotator();
+}
 
 
 
@@ -863,6 +948,20 @@ void ANZPlayerController::ClientNotifyCausedHit_Implementation(APawn* HitPawn, u
         }
     }
 }
+
+
+void ANZPlayerController::SetStylizedPP(int32 NewPP)
+{
+    ANZPlayerCameraManager* NZCM = Cast<ANZPlayerCameraManager>(PlayerCameraManager);
+    if (NZCM)
+    {
+        if (NewPP == INDEX_NONE || NewPP < NZCM->StylizedPPSettings.Num())
+        {
+            StylizedPPIndex = NewPP;
+        }
+    }
+}
+
 
 
 void ANZPlayerController::SetWeaponHand(EWeaponHand NewHand)
@@ -1436,6 +1535,23 @@ void ANZPlayerController::FOV(float NewFOV)
         SaveConfig();
     }
 }
+
+void ANZPlayerController::SetMouseSensitivityNZ(float NewSensitivity)
+{
+    PlayerInput->SetMouseSensitivity(NewSensitivity);
+    
+    UInputSettings* InputSettings = UInputSettings::StaticClass()->GetDefaultObject<UInputSettings>();
+    for (FInputAxisConfigEntry& Entry : InputSettings->AxisConfig)
+    {
+        if (Entry.AxisKeyName == EKeys::MouseX || Entry.AxisKeyName == EKeys::MouseY)
+        {
+            Entry.AxisProperties.Sensitivity = NewSensitivity;
+        }
+    }
+    
+    InputSettings->SaveConfig();
+}
+
 
 void ANZPlayerController::ServerViewPawn_Implementation(APawn* PawnToView)
 {

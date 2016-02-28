@@ -197,7 +197,7 @@ struct FSavedPosition
 };
 
 
-UCLASS()
+UCLASS(Config = Game)
 class NZGAME_API ANZCharacter : public ACharacter
 {
 	GENERATED_BODY()

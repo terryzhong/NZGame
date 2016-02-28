@@ -76,4 +76,15 @@ protected:
     
     UFUNCTION()
     virtual void OnRep_OverlayEffects();
+    
+public:
+    
+    
+    
+    /** Game specific rating of a player as a desireable camera focus for spectators */
+    virtual float ScoreCameraView(ANZPlayerState* InPS, ANZCharacter* Character)
+    {
+        return 0.f;
+    }
+    
 };

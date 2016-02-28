@@ -36,7 +36,7 @@ enum EWeaponHand
 /**
  * 
  */
-UCLASS()
+UCLASS(Config = Game)
 class NZGAME_API ANZPlayerController : public ANZBasePlayerController
 {
 	GENERATED_BODY()
@@ -170,6 +170,11 @@ public:
     UFUNCTION(exec)
     virtual void ViewCamera(int32 Index);
     
+    /** Returns updated rotation for third person camera view */
+    UFUNCTION()
+    virtual FRotator GetSpectatingRotation(const FVector& ViewLoc, float DeltaTime);
+    
+    
     
     /** Enables auto best camera for spectators */
     UPROPERTY(BlueprintReadWrite)
@@ -198,6 +203,14 @@ public:
 	/** Global scaling for eye offset */
 	UPROPERTY(EditAnywhere, GlobalConfig, Category = WeaponBob)
 	float EyeOffsetGlobalScaling;
+    
+    
+    UPROPERTY(EditAnywhere, GlobalConfig, Category = Camera)
+    int32 StylizedPPIndex;
+    
+    UFUNCTION(exec)
+    virtual void SetStylizedPP(int32 NewPP);
+    
     
 protected:
     UPROPERTY(GlobalConfig, BlueprintReadOnly, Category = Weapon)
@@ -427,6 +440,17 @@ public:
     virtual void FOV(float NewFOV) override;
     
     
+    UFUNCTION(Exec)
+    virtual void SetMouseSensitivityNZ(float NewSensitivity);
+    
+    UPROPERTY()
+    FVector2D SavedMouseCursorLocation;
+    
+    UPROPERTY()
+    float MouseButtonPressTime;
+    
+    UPROPERTY()
+    float MouseButtonPressCount;
     
     UPROPERTY()
     class ANZPlayerState* LastSpectatedPlayerState;

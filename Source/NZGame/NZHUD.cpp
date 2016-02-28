@@ -12,7 +12,7 @@ ANZHUD::ANZHUD()
 {
     WidgetOpacity = 1.0f;
 
-	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("Texture2D'/Game/Weapons/Crosshair_Default.Crosshair_Default'"));
+	static ConstructorHelpers::FObjectFinder<UTexture2D> CrosshairTexObj(TEXT("Texture2D'/Game/UI/Crosshair/Crosshair_Default.Crosshair_Default'"));
 	DefaultCrosshairTex = CrosshairTexObj.Object;
     
     static ConstructorHelpers::FObjectFinder<UFont> TFont(TEXT("Font'/Game/UI/Fonts/fntScoreboard_Tiny.fntScoreboard_Tiny'"));
