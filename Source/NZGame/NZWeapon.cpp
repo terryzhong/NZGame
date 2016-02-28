@@ -816,6 +816,11 @@ void ANZWeapon::ClientRemoved_Implementation()
 
 void ANZWeapon::FireShot()
 {
+    if (ViewKickComponent)
+    {
+        ViewKickComponent->FireShot();
+    }
+    
     NZOwner->DeactivateSpawnProtection();
     ConsumeAmmo(CurrentFireMode);
     

@@ -1032,12 +1032,12 @@ public:
 	virtual FVector GetPawnViewLocation() const override;
 
 	/** View kick relevant */
-	int PunchAnglePitch;
-	int PunchAngleYaw;
+	float PunchAnglePitch;
+	float PunchAngleYaw;
 	float PitchParam;
 	float YawParam;
-	int LastPitchAngle;
-	int LastYawAngle;
+	float LastPitchAngle;
+	float LastYawAngle;
 	
 	virtual void SetPunchAngle(FRotator Angle);
 	virtual FRotator GetPunchAngle();

@@ -27,155 +27,157 @@ public:
 
 public:
 	UPROPERTY()
-		int FireCount;
+    int FireCount;
 
 	UPROPERTY()
-		int CDFireCount;
+    int CDFireCount;
 
 	UPROPERTY()
-		float DeltaYawParam;
+    float DeltaYawParam;
 
 	UPROPERTY()
-		float DeltaPitchParam;
+    float DeltaPitchParam;
 
 	UPROPERTY()
-		float RecordDeltaYawParam;
+    float RecordDeltaYawParam;
 
 	UPROPERTY()
-		float RecordDeltaPitchParam;
+    float RecordDeltaPitchParam;
 
 	UPROPERTY()
-		float CurrentFireTime;
+    float CurrentFireTime;
 
 	UPROPERTY()
-		float CurrentStopFireTime;
+    float CurrentStopFireTime;
 
 	UPROPERTY()
-		float ReactParam;
+    float ReactParam;
 
 	UPROPERTY()
-		float RecordReactParam;
+    float RecordReactParam;
 
 	//
 	UPROPERTY()
-		TArray<float> ReactParamCoefficient;
+    TArray<float> ReactParamCoefficient;
 
 	UPROPERTY()
-		TArray<float> FireCounterInterval;
+    TArray<float> FireCounterInterval;
 
 	UPROPERTY()
-		TArray<float> ChangeMovingRealSize;
+    TArray<float> ChangeMovingRealSize;
 
 	UPROPERTY()
-		TArray<float> DetailReactYawShot;
+    TArray<float> DetailReactYawShot;
 
 	UPROPERTY()
-		TArray<float> DetailReactPitchShot;
+    TArray<float> DetailReactPitchShot;
 
 	UPROPERTY()
-		TArray<float> FullReactYawCoefficient;
+    TArray<float> FullReactYawCoefficient;
 
 	UPROPERTY()
-		TArray<float> FullReactPitchCoefficient;
+    TArray<float> FullReactPitchCoefficient;
 
 	UPROPERTY()
-		TArray<float> PertunrbMax;
+    TArray<float> PerturbMax;
 
 	UPROPERTY()
-		TArray<float> PertunrbMin;
+    TArray<float> PerturbMin;
 
 	UPROPERTY()
-		TArray<float> CrosshairRatioPerRealSize;
+    TArray<float> CrosshairRatioPerRealSize;
 
 	//
 	UPROPERTY()
-		int SideReactDirectSectionNum;
+    int SideReactDirectSectionNum;
 
 	UPROPERTY()
-		int SideReactDirectOneSectionNum;
+    int SideReactDirectOneSectionNum;
 
 	UPROPERTY()
-		TArray<int> SideReactDirectSection;
+    TArray<int> SideReactDirectSection;
 
 	UPROPERTY()
-		TArray<float> SideReactDirect;
+    TArray<float> SideReactDirect;
 
 	//
 	UPROPERTY()
-		int ShotReactYawSectionNum;
+    int ShotReactYawSectionNum;
 
 	UPROPERTY()
-		int ShotReactYawOneSectionNum;
+    int ShotReactYawOneSectionNum;
 
 	UPROPERTY()
-		TArray<int> ShotReactYawSection;
+    TArray<int> ShotReactYawSection;
 
 	UPROPERTY()
-		TArray<float> ShotReactYaw;
+    TArray<float> ShotReactYaw;
 
 	//
 	UPROPERTY()
-		int ShotReactPitchSectionNum;
+    int ShotReactPitchSectionNum;
 
 	UPROPERTY()
-		int ShotReactPitchOneSectionNum;
+    int ShotReactPitchOneSectionNum;
 
 	UPROPERTY()
-		TArray<int> ShotReactPitchSection;
+    TArray<int> ShotReactPitchSection;
 
 	UPROPERTY()
-		TArray<float> ShotReactPitch;
+    TArray<float> ShotReactPitch;
 
 	//
 	UPROPERTY()
-		int CameraYawAndPitchSectionNum;
+    int CameraYawAndPitchSectionNum;
 
 	UPROPERTY()
-		int CameraYawAndPitchOneSectionNum;
+    int CameraYawAndPitchOneSectionNum;
 
 	UPROPERTY()
-		TArray<int> CameraYawAndPitchSection;
+    TArray<int> CameraYawAndPitchSection;
 
 	UPROPERTY()
-		TArray<float> CameraYawAndPitch;
+    TArray<float> CameraYawAndPitch;
 
 
 	UPROPERTY()
-		bool bReachYawMax;
+    bool bReachYawMax;
 
 	UPROPERTY()
-		int DelayFrameCount;
+    int DelayFrameCount;
 
 	UPROPERTY()
-		int FireCountDelayFrameCount;
+    int FireCountDelayFrameCount;
 
 	UPROPERTY()
-		float RecordEndFireReactParam;
+    float RecordEndFireReactParam;
 
 	UPROPERTY()
-		FQuat FireRotationQuat;
+    FQuat FireRotationQuat;
 
 	UPROPERTY()
-		int AdjustDeltaYawDirection;
+    int AdjustDeltaYawDirection;
 
 	UPROPERTY()
-		int ChangeDirectionFlag3;
+    int ChangeDirectionFlag3;
 
 	UPROPERTY()
-		int ShotSpreadFlag;
+    int ShotSpreadFlag;
 
 	UPROPERTY()
-		bool bChangeDirectionFlag1;
+    bool bChangeDirectionFlag1;
 
 	UPROPERTY()
-		float DamageFactorByDistance;
+    float DamageFactorByDistance;
 
 	UPROPERTY()
-		float DamageVariantionFactor;
+    float DamageVariantionFactor;
 
 
 	virtual void SetPunchAngle(FRotator Angle);
 	virtual FRotator GetPunchAngle();
+    
+    virtual void FireShot();
 
 	virtual void KickBackTheView();
 

@@ -4,6 +4,11 @@
 #include "NZWeaponViewKickComponent.h"
 
 
+
+//const double xxxxx = xxxxx;
+const double xxxxx = 0.001000000047497451;
+const double RadToDeg = 57.295779513082321600;
+
 // Sets default values for this component's properties
 UNZWeaponViewKickComponent::UNZWeaponViewKickComponent()
 {
@@ -12,18 +17,142 @@ UNZWeaponViewKickComponent::UNZWeaponViewKickComponent()
 	bWantsBeginPlay = false;
 	PrimaryComponentTick.bCanEverTick = false;
 
-	// ...
-	DetailReactYawShot.Add(0.0723);
+    
+    //
+    AdjustDeltaYawDirection = 1;
+	//
+    SideReactDirectSectionNum = 9;
+    SideReactDirectOneSectionNum = 3;
+    SideReactDirectSection.Add(0);
+    SideReactDirectSection.Add(1);
+    SideReactDirectSection.Add(2);
+    SideReactDirectSection.Add(3);
+    SideReactDirectSection.Add(7);
+    SideReactDirectSection.Add(13);
+    SideReactDirectSection.Add(18);
+    SideReactDirectSection.Add(24);
+    SideReactDirectSection.Add(30);
+    SideReactDirect.Add(50);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(50);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(100);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(100);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(100);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(100);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(100);
+    SideReactDirect.Add(70);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(30);
+    SideReactDirect.Add(70);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(30);
+    SideReactDirect.Add(50);
+    SideReactDirect.Add(0);
+    SideReactDirect.Add(50);
+    
+    ShotReactYawSectionNum = 3;
+    ShotReactYawOneSectionNum = 2;
+    ShotReactYawSection.Add(3);
+    ShotReactYawSection.Add(13);
+    ShotReactYawSection.Add(30);
+    ShotReactYaw.Add(0.0015);
+    ShotReactYaw.Add(0.0063);
+    ShotReactYaw.Add(0.0015);
+    ShotReactYaw.Add(0.0063);
+    ShotReactYaw.Add(0.0008);
+    ShotReactYaw.Add(0.0308);
+    
+    ShotReactPitchSectionNum = 4;
+    ShotReactPitchOneSectionNum = 2;
+    ShotReactPitchSection.Add(1);
+    ShotReactPitchSection.Add(3);
+    ShotReactPitchSection.Add(8);
+    ShotReactPitchSection.Add(30);
+    ShotReactPitch.Add(0.0026);
+    ShotReactPitch.Add(0.0263);
+    ShotReactPitch.Add(0.0016);
+    ShotReactPitch.Add(0.0523);
+    ShotReactPitch.Add(0.0022);
+    ShotReactPitch.Add(0.0443);
+    ShotReactPitch.Add(0.0);
+    ShotReactPitch.Add(0.03);
+    
+    CameraYawAndPitchSectionNum = 4;
+    CameraYawAndPitchOneSectionNum = 2;
+    CameraYawAndPitchSection.Add(3);
+    CameraYawAndPitchSection.Add(6);
+    CameraYawAndPitchSection.Add(13);
+    CameraYawAndPitchSection.Add(30);
+    CameraYawAndPitch.Add(0.85);
+    CameraYawAndPitch.Add(0.85);
+    CameraYawAndPitch.Add(0.75);
+    CameraYawAndPitch.Add(0.85);
+    CameraYawAndPitch.Add(0.55);
+    CameraYawAndPitch.Add(0.55);
+    CameraYawAndPitch.Add(0.7);
+    CameraYawAndPitch.Add(0.55);
+    
+    PerturbMax.Add(0.150);
+    PerturbMax.Add(0.150);
+    PerturbMax.Add(0.195);
+    PerturbMax.Add(0.155);
+    PerturbMax.Add(0.205);
+    
+    PerturbMin.Add(0.0043);
+    PerturbMin.Add(0.004);
+    PerturbMin.Add(0.0053);
+    PerturbMin.Add(0.0048);
+    PerturbMin.Add(0.0063);
+    
+    FullReactYawCoefficient.Add(-0.0265);
+    FullReactYawCoefficient.Add(-0.0265);
+    FullReactYawCoefficient.Add(-0.0305);
+    FullReactYawCoefficient.Add(-0.0265);
+    FullReactYawCoefficient.Add(-0.033);
+
+    FullReactPitchCoefficient.Add(-0.125);
+    FullReactPitchCoefficient.Add(-0.132);
+    FullReactPitchCoefficient.Add(-0.15);
+    FullReactPitchCoefficient.Add(-0.135);
+    FullReactPitchCoefficient.Add(-0.17);
+    
+    ReactParamCoefficient.Add(0.968);
+    ReactParamCoefficient.Add(0.97);
+    ReactParamCoefficient.Add(0.92);
+    ReactParamCoefficient.Add(0.96);
+    ReactParamCoefficient.Add(0.85);
+    
+	DetailReactYawShot.Add(0.0623);
 	DetailReactYawShot.Add(0.072);
 	DetailReactYawShot.Add(0.13);
 	DetailReactYawShot.Add(0.073);
 	DetailReactYawShot.Add(0.20);
 
-	DetailReactPitchShot.Add(0.13);
-	DetailReactPitchShot.Add(0.117);
-	DetailReactPitchShot.Add(0.22);
-	DetailReactPitchShot.Add(0.16);
+	DetailReactPitchShot.Add(0.18);
+	DetailReactPitchShot.Add(0.17);
+	DetailReactPitchShot.Add(0.29);
+	DetailReactPitchShot.Add(0.19);
 	DetailReactPitchShot.Add(0.35);
+    
+    ChangeMovingRealSize.Add(0.27);
+    ChangeMovingRealSize.Add(0.00065);
+    ChangeMovingRealSize.Add(0.0063);
+    ChangeMovingRealSize.Add(0.0245);
+    ChangeMovingRealSize.Add(0.14);
+    
+    FireCounterInterval.Add(50);
+    FireCounterInterval.Add(500);
+    FireCounterInterval.Add(7);
 }
 
 void UNZWeaponViewKickComponent::SetPunchAngle(FRotator Angle)
@@ -44,14 +173,19 @@ FRotator UNZWeaponViewKickComponent::GetPunchAngle()
 	Character = Cast<ANZCharacter>(GetOwner() ? GetOwner()->Instigator : NULL);
 	if (Character != NULL)
 	{
-		PunchRotator.Yaw = Character->PitchParam * 65536 / (PI * 2.f);
-		PunchRotator.Pitch = -Character->PitchParam * 65536 / (PI * 2.f);
+        PunchRotator.Pitch = -Character->PitchParam * RadToDeg;
+        PunchRotator.Yaw = Character->YawParam * RadToDeg;
 		return PunchRotator;
 	}
 	else
 	{
 		return ZeroRotator;
 	}
+}
+
+void UNZWeaponViewKickComponent::FireShot()
+{
+    FireCount++;
 }
 
 void UNZWeaponViewKickComponent::KickBackTheView()
@@ -68,9 +202,7 @@ void UNZWeaponViewKickComponent::KickBackTheView()
 		return;
 	}
 
-	check(DetailReactPitchShot.Num() == 5 && DetailReactYawShot.Num() == 5);
-
-	if (Character->GetCharacterMovement()->MovementMode == MOVE_Falling)
+    if (Character->GetCharacterMovement()->MovementMode == MOVE_Falling)
 	{
 		CurrentDetailReactPitchShot = DetailReactPitchShot[4];
 		CurrentDetailReactYawShot = DetailReactYawShot[4];
@@ -111,9 +243,9 @@ void UNZWeaponViewKickComponent::KickBackTheView()
 	{
 		if (FireCount - 1 <= SideReactDirectSection[i])
 		{
-			for (int j = 0; j < SideReactDirectSectionNum; j++)
+			for (int j = 0; j < SideReactDirectOneSectionNum; j++)
 			{
-				CurrentSideReactDirect[j] = SideReactDirect[i * SideReactDirectOneSectionNum + j];
+				CurrentSideReactDirect.Add(SideReactDirect[i * SideReactDirectOneSectionNum + j]);
 			}
 			break;
 		}
@@ -213,7 +345,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
 	float TimeTick = 0.f;
 
 	Character = Cast<ANZCharacter>(GetOwner() ? GetOwner()->Instigator : NULL);
-	if (Character == NULL)
+	if (Character == NULL || Character->GetCharacterMovement() == NULL)
 	{
 		return;
 	}
@@ -221,7 +353,255 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
 	InitPunchAngle = GetPunchAngle();
 	DeltaPunchAngle2 = InitPunchAngle;
 
-	// todo:
+    if (DeltaTime != 0.f)
+    {
+        if (true)
+        {
+            if (DelayFrameCount == 1)
+            {
+                ReactParam = RecordEndFireReactParam;
+                FireCount = 0;
+            }
+            if (DelayFrameCount != 1 && FireCountDelayFrameCount == 1)
+            {
+                FireCount = 0;
+            }
+            DelayFrameCount++;
+            FireCountDelayFrameCount++;
+            
+            if (Character->GetCharacterMovement()->MovementMode == MOVE_Falling)
+            {
+                CurrentReactParamCoefficient = ReactParamCoefficient[4];
+                CurrentFullReactYawCoefficient = FullReactYawCoefficient[4];
+                CurrentFullReactPitchCoefficient = FullReactPitchCoefficient[4];
+            }
+            else if (Character->bIsCrouched)
+            {
+                if (Character->GetCharacterMovement()->Velocity.Size() > 0)
+                {
+                    CurrentReactParamCoefficient = ReactParamCoefficient[3];
+                    CurrentFullReactYawCoefficient = FullReactYawCoefficient[3];
+                    CurrentFullReactPitchCoefficient = FullReactPitchCoefficient[3];
+                }
+                else
+                {
+                    CurrentReactParamCoefficient = ReactParamCoefficient[1];
+                    CurrentFullReactYawCoefficient = FullReactYawCoefficient[1];
+                    CurrentFullReactPitchCoefficient = FullReactPitchCoefficient[1];
+                }
+            }
+            else if (Character->GetCharacterMovement()->Velocity.Size() > 200)
+            {
+                CurrentReactParamCoefficient = ReactParamCoefficient[2];
+                CurrentFullReactYawCoefficient = FullReactYawCoefficient[2];
+                CurrentFullReactPitchCoefficient = FullReactPitchCoefficient[2];
+            }
+            else
+            {
+                CurrentReactParamCoefficient = ReactParamCoefficient[0];
+                CurrentFullReactYawCoefficient = FullReactYawCoefficient[0];
+                CurrentFullReactPitchCoefficient = FullReactPitchCoefficient[0];
+            }
+        }
+        
+        for (int i = 0; i < ShotReactYawSectionNum; i++)
+        {
+            if (FireCount <= ShotReactYawSection[i])
+            {
+                for (int j = 0; j < ShotReactYawOneSectionNum; j++)
+                {
+                    CurrentShotReactYaw.Add(ShotReactYaw[i * ShotReactYawOneSectionNum + j]);
+                }
+                break;
+            }
+        }
+        
+        for (int i = 0; i < ShotReactPitchSectionNum; i++)
+        {
+            if (FireCount <= ShotReactPitchSection[i])
+            {
+                for (int j = 0; j < ShotReactPitchOneSectionNum; j++)
+                {
+                    CurrentShotReactPitch.Add(ShotReactPitch[i * ShotReactPitchOneSectionNum + j]);
+                }
+                break;
+            }
+        }
+        
+        if (CurrentReactParamCoefficient == 0.0f)
+        {
+            check(false);
+        }
+        
+        RecordReactParam = ReactParam;
+        
+        RemainDeltaTime = DeltaTime;
+        while (RemainDeltaTime > 0)
+        {
+            TimeTick = (RemainDeltaTime > 0.005) ? 0.005 : RemainDeltaTime;
+            RemainDeltaTime -= TimeTick;
+            ReactParam = ReactParam - ChangeMovingRealSize[0] * TimeTick;
+            
+            if (Character->YawParam != 0 || DeltaYawParam != 0)
+            {
+                if (DeltaYawParam > 0)
+                {
+                    if (Character->YawParam > 0)
+                    {
+                        if (FMath::Abs(Character->YawParam) < FMath::Abs(CurrentFullReactYawCoefficient))
+                        {
+                            if (Character->YawParam > DeltaYawParam)
+                            {
+                                Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                if (Character->YawParam <= DeltaYawParam)
+                                {
+                                    Character->YawParam = DeltaYawParam;
+                                    DeltaYawParam = 0.0f;
+                                }
+                            }
+                            else if (Character->YawParam < DeltaYawParam)
+                            {
+                                Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                if (Character->YawParam >= DeltaYawParam)
+                                {
+                                    Character->YawParam = DeltaYawParam;
+                                    DeltaYawParam = 0.0f;
+                                }
+                            }
+                            else
+                            {
+                                Character->YawParam = DeltaYawParam;
+                                DeltaYawParam = 0.0f;
+                            }
+                        }
+                        else
+                        {
+                            if (FMath::Abs(Character->YawParam) < FMath::Abs(DeltaYawParam) && FMath::Abs(Character->YawParam) >= FMath::Abs(CurrentFullReactYawCoefficient))
+                            {
+                                DeltaYawParam = 0.0f;
+                            }
+                            
+                            Character->YawParam = Character->YawParam - CurrentShotReactYaw[0] * TimeTick * 1000 * xxxxx * 100.0;
+                            if (FireCount == 0)
+                            {
+                                if (Character->YawParam < 0.0f)
+                                {
+                                    Character->YawParam = 0.0f;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                        if (Character->YawParam > DeltaYawParam)
+                        {
+                            Character->YawParam = DeltaYawParam;
+                        }
+                    }
+                }
+                else if (DeltaYawParam < 0)
+                {
+                    if (Character->YawParam < 0)
+                    {
+                        if (FMath::Abs(Character->YawParam) < FMath::Abs(CurrentFullReactYawCoefficient))
+                        {
+                            if (Character->YawParam > DeltaYawParam)
+                            {
+                                Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                if (Character->YawParam <= DeltaYawParam)
+                                {
+                                    Character->YawParam = DeltaYawParam;
+                                    DeltaYawParam = 0.0f;
+                                }
+                            }
+                            else if (Character->YawParam < DeltaYawParam)
+                            {
+                                Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                if (Character->YawParam >= DeltaYawParam)
+                                {
+                                    Character->YawParam = DeltaYawParam;
+                                    DeltaYawParam = 0.0f;
+                                }
+                            }
+                            else
+                            {
+                                Character->YawParam = DeltaYawParam;
+                                DeltaYawParam = 0.0f;
+                            }
+                        }
+                        else
+                        {
+                            if (FMath::Abs(Character->YawParam) < FMath::Abs(DeltaYawParam) && FMath::Abs(Character->YawParam) >= FMath::Abs(CurrentFullReactYawCoefficient))
+                            {
+                                DeltaYawParam = 0.0f;
+                            }
+                            
+                            Character->YawParam = Character->YawParam + CurrentShotReactYaw[0] * TimeTick * 1000 * xxxxx * 100.0;
+                            if (FireCount == 0)
+                            {
+                                if (Character->YawParam > 0.0f)
+                                {
+                                    Character->YawParam = 0.0f;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                        if (Character->YawParam < DeltaYawParam)
+                        {
+                            Character->YawParam = DeltaYawParam;
+                        }
+                    }
+                }
+                else
+                {
+                    if (Character->YawParam != 0)
+                    {
+                        YawSign = FMath::Abs(Character->YawParam) / Character->YawParam;
+                        Character->YawParam = YawSign * (FMath::Abs(Character->YawParam) - CurrentShotReactYaw[0] * TimeTick * 1000 * xxxxx * 100.0);
+                        if (Character->YawParam * YawSign < 0)
+                        {
+                            Character->YawParam = 0.0f;
+                        }
+                    }
+                }
+            }
+            
+            if (FireCount != 0 || Character->PitchParam != 0)
+            {
+                if (FMath::Abs(Character->PitchParam) < FMath::Abs(DeltaPitchParam) && FMath::Abs(Character->PitchParam) < FMath::Abs(CurrentFullReactPitchCoefficient))
+                {
+                    Character->PitchParam = Character->PitchParam - CurrentShotReactPitch[1] * TimeTick * 1000 * xxxxx * 100.0;
+                    if (DeltaPitchParam >= Character->PitchParam)
+                    {
+                        Character->PitchParam = DeltaPitchParam;
+                        DeltaPitchParam = 0.0f;
+                    }
+                }
+                else
+                {
+                    if (FMath::Abs(Character->PitchParam) <= FMath::Abs(DeltaPitchParam) || FMath::Abs(Character->PitchParam) > FMath::Abs(CurrentFullReactPitchCoefficient))
+                    {
+                        DeltaPitchParam = 0.0f;
+                    }
+                    Character->PitchParam = Character->PitchParam + CurrentShotReactPitch[0] * TimeTick * 1000 * xxxxx * 100.0;
+                }
+                
+                if (Character->PitchParam > 0)
+                {
+                    Character->PitchParam = 0;
+                }
+            }
+            
+            if (ReactParam < 1 - CurrentReactParamCoefficient)
+            {
+                ReactParam  = 1 - CurrentReactParamCoefficient;
+            }
+        }
+    }
 
 	for (int i = 0; i < CameraYawAndPitchSectionNum; i++)
 	{
@@ -236,7 +616,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
 		}
 	}
 
-	Character->LastPitchAngle = CurrentYawAndPitchPitchFactor * InitPunchAngle.Pitch;
+    Character->LastPitchAngle = CurrentYawAndPitchPitchFactor * InitPunchAngle.Pitch;
 	Character->LastYawAngle = CurrentYawAndPitchYawFactor * InitPunchAngle.Yaw;
 
 	DeltaPunchAngle2.Pitch = CurrentYawAndPitchPitchFactor * InitPunchAngle.Pitch;
