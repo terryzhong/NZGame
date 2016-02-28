@@ -1031,8 +1031,18 @@ public:
 
 	virtual FVector GetPawnViewLocation() const override;
 
-	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
+	/** View kick relevant */
+	int PunchAnglePitch;
+	int PunchAngleYaw;
+	float PitchParam;
+	float YawParam;
+	int LastPitchAngle;
+	int LastYawAngle;
+	
+	virtual void SetPunchAngle(FRotator Angle);
+	virtual FRotator GetPunchAngle();
 
+	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
 
 
     

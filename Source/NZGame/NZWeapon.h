@@ -1046,6 +1046,13 @@ public:
     
     virtual void TickZoom(float DeltaTime);
 
+	/** Component that kick back the view */
+	UPROPERTY(EditAnywhere, Category = "Weapon")
+	class UNZWeaponViewKickComponent* ViewKickComponent;
+
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	virtual void WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot);
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	UAnimMontage* ReloadAnim;
@@ -1060,4 +1067,6 @@ public:
 	virtual float GetReloadTime();
 
 	virtual void Reload();
+
+
 };

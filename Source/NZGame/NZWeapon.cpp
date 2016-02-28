@@ -26,6 +26,7 @@
 #include "UnrealNetwork.h"
 #include "NZDamageType.h"
 #include "NZPlayerCameraManager.h"
+#include "NZWeaponViewKickComponent.h"
 
 
 ANZWeapon::ANZWeapon()
@@ -101,6 +102,8 @@ ANZWeapon::ANZWeapon()
 	BaseAISelectRating = 0.55f;
 	DisplayName = NSLOCTEXT("PickupMessage", "WeaponPickedUp", "Weapon");
 	bShowPowerupTimer = false;
+
+	ViewKickComponent = CreateDefaultSubobject<UNZWeaponViewKickComponent>(TEXT("ViewKickComponent"));
 }
 
 void ANZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -1185,6 +1188,11 @@ void ANZWeapon::FireInstantHit(bool bDealDamage, FHitResult* OutHit)
 
     checkSlow(InstantHitInfo.IsValidIndex(CurrentFireMode));
     
+	if (ViewKickComponent != NULL)
+	{
+		ViewKickComponent->KickBackTheView();
+	}
+
     const FVector SpawnLocation = GetFireStartLoc();
     const FRotator SpawnRotation = GetAdjustedAim(SpawnLocation);
     const FVector FireDir = SpawnRotation.Vector();
@@ -2300,6 +2308,15 @@ void ANZWeapon::TickZoom(float DeltaTime)
         }
     }
 }
+
+void ANZWeapon::WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot)
+{
+	if (ViewKickComponent != NULL)
+	{
+		ViewKickComponent->CalcCamera(DeltaTime, OutCamLoc, OutCamRot);
+	}
+}
+
 
 float ANZWeapon::GetReloadTime()
 {

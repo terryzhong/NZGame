@@ -2314,6 +2314,22 @@ FVector ANZCharacter::GetPawnViewLocation() const
 	return GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight) + CrouchEyeOffset + GetTransformedEyeOffset();
 }
 
+void ANZCharacter::SetPunchAngle(FRotator Angle)
+{
+	PunchAnglePitch = Angle.Pitch;
+	PunchAngleYaw = Angle.Yaw;
+}
+
+FRotator ANZCharacter::GetPunchAngle()
+{
+	FRotator PunchAngle;
+	PunchAngle.Pitch = PunchAnglePitch;
+	PunchAngle.Yaw = PunchAngleYaw;
+	PunchAngle.Roll = 0;
+	return PunchAngle;
+}
+
+
 void ANZCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 {
 	if (bFindCameraComponentWhenViewTarget && CharacterCameraComponent && CharacterCameraComponent->bIsActive)
@@ -2326,6 +2342,11 @@ void ANZCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 	else
 	{
 		GetActorEyesViewPoint(OutResult.Location, OutResult.Rotation);
+	}
+
+	if (Weapon != NULL)
+	{
+		Weapon->WeaponCalcCamera(DeltaTime, OutResult.Location, OutResult.Rotation);
 	}
 }
 

@@ -5,6 +5,33 @@
 
 
 
+void ANZRealGun::SetPunchAngle(FRotator Angle)
+{
+	ANZCharacter* Character = Cast<ANZCharacter>(Instigator);
+	if (Character != NULL)
+	{
+		Character->SetPunchAngle(Angle);
+	}
+}
+
+FRotator ANZRealGun::GetPunchAngle()
+{
+	ANZCharacter* Character = NULL;
+	FRotator ZeroRotator = FRotator::ZeroRotator;
+	FRotator PunchRotator = FRotator::ZeroRotator;
+
+	Character = Cast<ANZCharacter>(Instigator);
+	if (Character != NULL)
+	{
+		PunchRotator.Yaw = Character->PitchParam * 65536 / (PI * 2.f);
+		PunchRotator.Pitch = -Character->PitchParam * 65536 / (PI * 2.f);
+		return PunchRotator;
+	}
+	else
+	{
+		return ZeroRotator;
+	}
+}
 
 void ANZRealGun::KickBackTheView()
 {
@@ -21,39 +48,39 @@ void ANZRealGun::KickBackTheView()
         return;
     }
     
-        if (Character->GetCharacterMovement()->MovementMode == MOVE_Falling)
+    if (Character->GetCharacterMovement()->MovementMode == MOVE_Falling)
+    {
+        CurrentDetailReactYawShot = DetailReactYawShot[4];
+        CurrentDetailReactPitchShot = DetailReactPitchShot[4];
+    }
+    //else if (Character->bSnake && Character->Acceleration.Size() > 0)
+    //{
+    //    CurrentDetailReactYawShot = DetailReactYawShot[3];
+    //    CurrentDetailReactPitchShot = DetailReactPitchShot[3];
+    //}
+    else if (Character->bIsCrouched)
+    {
+        if (Character->GetCharacterMovement()->Velocity.Size() > 0)
         {
-            CurrentDetailReactYawShot = DetailReactYawShot[4];
-            CurrentDetailReactPitchShot = DetailReactPitchShot[4];
-        }
-        //else if (Character->bSnake && Character->Acceleration.Size() > 0)
-        //{
-        //    CurrentDetailReactYawShot = DetailReactYawShot[3];
-        //    CurrentDetailReactPitchShot = DetailReactPitchShot[3];
-        //}
-        else if (Character->bIsCrouched)
-        {
-            if (Character->Velocity.Size() > 0)
-            {
-                CurrentDetailReactYawShot = DetailReactYawShot[3];
-                CurrentDetailReactPitchShot = DetailReactPitchShot[3];
-            }
-            else
-            {
-                CurrentDetailReactYawShot = DetailReactYawShot[1];
-                CurrentDetailReactPitchShot = DetailReactPitchShot[1];
-            }
-        }
-        else if (Character->Velocity.Size() > 200)
-        {
-            CurrentDetailReactYawShot = DetailReactYawShot[2];
-            CurrentDetailReactPitchShot = DetailReactPitchShot[2];
+            CurrentDetailReactYawShot = DetailReactYawShot[3];
+            CurrentDetailReactPitchShot = DetailReactPitchShot[3];
         }
         else
         {
-            CurrentDetailReactYawShot = DetailReactYawShot[0];
-            CurrentDetailReactPitchShot = DetailReactPitchShot[0];
+            CurrentDetailReactYawShot = DetailReactYawShot[1];
+            CurrentDetailReactPitchShot = DetailReactPitchShot[1];
         }
+    }
+    else if (Character->GetCharacterMovement()->Velocity.Size() > 200)
+    {
+        CurrentDetailReactYawShot = DetailReactYawShot[2];
+        CurrentDetailReactPitchShot = DetailReactPitchShot[2];
+    }
+    else
+    {
+        CurrentDetailReactYawShot = DetailReactYawShot[0];
+        CurrentDetailReactPitchShot = DetailReactPitchShot[0];
+    }
     
     DeltaYawParam = CurrentDetailReactYawShot * (RecordReactParam + 0.1500000059604645) * -1.0f * AdjustDeltaYawDirection;
     DeltaPitchParam = CurrentDetailReactPitchShot * (RecordReactParam + 0.1500000059604645) * -1.0f;
@@ -97,7 +124,7 @@ void ANZRealGun::KickBackTheView()
             }
         }
         
-        if (ChangeDirectionFlag1)
+        if (bChangeDirectionFlag1)
         {
             FireCountRefer = CurrentSideReactDirect[0];
         }
@@ -142,7 +169,60 @@ void ANZRealGun::KickBackTheView()
     }
     
     DeltaYawParam = DeltaYawParam + Character->YawParam;
-    DeltaPitchParam = DeltaPitchParam + Chacacter->PitchParam;
+    DeltaPitchParam = DeltaPitchParam + Character->PitchParam;
     
     bDelayOneFrameForCamera = true;
+}
+
+void ANZRealGun::WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot)
+{
+	FRotator InitPunchAngle = FRotator::ZeroRotator;
+	FRotator DeltaPunchAngle2 = FRotator::ZeroRotator;
+	ANZCharacter* Character = NULL;
+	float CurrentYawAndPitchPitchFactor = 0.f;
+	float CurrentYawAndPitchYawFactor = 0.f;
+	float CurrentReactParamCoefficient = 0.f;
+	float CurrentFullReactYawCoefficient = 0.f;
+	float CurrentFullReactPitchCoefficient = 0.f;
+	TArray<float> CurrentShotReactYaw;
+	TArray<float> CurrentShotReactPitch;
+	float YawSign = 0.f;
+	float RemainDeltaTime = 0.f;
+	float TimeTick = 0.f;
+
+	Character = Cast<ANZCharacter>(Instigator);
+	if (Character == NULL)
+	{
+		return;
+	}
+
+
+	InitPunchAngle = GetPunchAngle();
+	DeltaPunchAngle2 = InitPunchAngle;
+
+	// todo:
+
+	for (int i = 0; i < CameraYawAndPitchSectionNum; i++)
+	{
+		if (FireCount <= CameraYawAndPitchSection[i])
+		{
+			for (int j = 0; j < CameraYawAndPitchOneSectionNum; j++)
+			{
+				CurrentYawAndPitchPitchFactor = CameraYawAndPitch[i * CameraYawAndPitchOneSectionNum + 1];
+				CurrentYawAndPitchYawFactor = CameraYawAndPitch[i * CameraYawAndPitchOneSectionNum];
+			}
+			break;
+		}
+	}
+
+	Character->LastPitchAngle = CurrentYawAndPitchPitchFactor * InitPunchAngle.Pitch;
+	Character->LastYawAngle = CurrentYawAndPitchYawFactor * InitPunchAngle.Yaw;
+
+	DeltaPunchAngle2.Pitch = CurrentYawAndPitchPitchFactor * InitPunchAngle.Pitch;
+	DeltaPunchAngle2.Yaw = CurrentYawAndPitchYawFactor * InitPunchAngle.Yaw;
+
+	SetPunchAngle(DeltaPunchAngle2);
+
+	OutCamRot.Pitch += CurrentYawAndPitchPitchFactor * InitPunchAngle.Pitch;
+	OutCamRot.Yaw += CurrentYawAndPitchYawFactor * InitPunchAngle.Yaw;
 }

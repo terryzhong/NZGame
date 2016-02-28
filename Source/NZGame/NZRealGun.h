@@ -14,6 +14,17 @@ class NZGAME_API ANZRealGun : public ANZWeapon
 	GENERATED_BODY()
 	
 public:
+	int ShotsFired;
+
+	int GunTurnRedStartShots;
+
+	bool bIsNoTarget;
+
+	float StartNoTargetTime;
+
+	bool bDelayOneFrameForCamera;
+
+public:
     UPROPERTY()
     int FireCount;
     
@@ -161,11 +172,13 @@ public:
     UPROPERTY()
     float DamageVariantionFactor;
     
+
+	virtual void SetPunchAngle(FRotator Angle);
+	virtual FRotator GetPunchAngle();
+
+	virtual void KickBackTheView();
     
-    
-    UFUNCTION()
-    virtual void KickBackTheView();
-    
-    
+	virtual void WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot) override;
+
     
 };
