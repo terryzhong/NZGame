@@ -635,10 +635,10 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
 bool UNZWeaponViewKickComponent::DrawCrosshair_Normal(UNZCrosshair* Crosshair, UCanvas* Canvas, float DeltaTime, float Scale, FLinearColor Color)
 {
     ANZCharacter* Character = NULL;
-    float X = 0.f, Y = 0.f, ScreenX = 0.f, ScreenY = 0.f;
     float CurrentPerturbMin = 0.f;
     float CurrentPerturbMax = 0.f;
-    float CurrentCrosshairRatioPerRealSize = 0.f, CurrentReactParamCoefficient = 0.f;
+    float CurrentCrosshairRatioPerRealSize = 0.f;
+    float CurrentReactParamCoefficient = 0.f;
     FLinearColor TempShadowColor;
     
     if (Crosshair == NULL || Canvas == NULL)
@@ -711,14 +711,14 @@ bool UNZWeaponViewKickComponent::DrawCrosshair_Normal(UNZCrosshair* Crosshair, U
     
     int32 CrosshairSize = int32(Crosshair_LenRatio1 - 1);
     int32 CrosshairLineLength = int32((Crosshair_LenRatio2 - Crosshair_LenRatio1) * ScaleCrosshair);
-    X = Canvas->ClipX * 0.5;
-    Y = Canvas->ClipY * 0.5;
+    float X = Canvas->ClipX * 0.5;
+    float Y = Canvas->ClipY * 0.5;
     
-    Canvas->SetDrawColor(0, 255, 0);
+    Canvas->SetLinearDrawColor(Color);
     
     // UpSide
-    ScreenX = X;
-    ScreenY = Y - CrosshairSize - CrosshairLineLength;
+    float ScreenX = X;
+    float ScreenY = Y - CrosshairSize - CrosshairLineLength;
     Canvas->DrawTile(Crosshair->CrosshairIcon.Texture, ScreenX, ScreenY, 1, CrosshairLineLength, 395, 489, 16, 16, BLEND_Opaque);
     
     // LeftSide
