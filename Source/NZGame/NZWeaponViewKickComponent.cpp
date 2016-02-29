@@ -5,8 +5,6 @@
 
 
 
-//const double xxxxx = xxxxx;
-const double xxxxx = 0.001000000047497451;
 const double RadToDeg = 57.295779513082321600;
 
 // Sets default values for this component's properties
@@ -113,6 +111,12 @@ UNZWeaponViewKickComponent::UNZWeaponViewKickComponent()
     PerturbMin.Add(0.0053);
     PerturbMin.Add(0.0048);
     PerturbMin.Add(0.0063);
+    
+    CrosshairRatioPerRealSize.Add(1.25);
+    CrosshairRatioPerRealSize.Add(1.1);
+    CrosshairRatioPerRealSize.Add(1.0);
+    CrosshairRatioPerRealSize.Add(1.0);
+    CrosshairRatioPerRealSize.Add(1.0);
     
     FullReactYawCoefficient.Add(-0.0265);
     FullReactYawCoefficient.Add(-0.0265);
@@ -452,7 +456,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                         {
                             if (Character->YawParam > DeltaYawParam)
                             {
-                                Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                                 if (Character->YawParam <= DeltaYawParam)
                                 {
                                     Character->YawParam = DeltaYawParam;
@@ -461,7 +465,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                             }
                             else if (Character->YawParam < DeltaYawParam)
                             {
-                                Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                                 if (Character->YawParam >= DeltaYawParam)
                                 {
                                     Character->YawParam = DeltaYawParam;
@@ -481,7 +485,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                                 DeltaYawParam = 0.0f;
                             }
                             
-                            Character->YawParam = Character->YawParam - CurrentShotReactYaw[0] * TimeTick * 1000 * xxxxx * 100.0;
+                            Character->YawParam = Character->YawParam - CurrentShotReactYaw[0] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                             if (FireCount == 0)
                             {
                                 if (Character->YawParam < 0.0f)
@@ -493,7 +497,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                     }
                     else
                     {
-                        Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                        Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                         if (Character->YawParam > DeltaYawParam)
                         {
                             Character->YawParam = DeltaYawParam;
@@ -508,7 +512,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                         {
                             if (Character->YawParam > DeltaYawParam)
                             {
-                                Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                                 if (Character->YawParam <= DeltaYawParam)
                                 {
                                     Character->YawParam = DeltaYawParam;
@@ -517,7 +521,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                             }
                             else if (Character->YawParam < DeltaYawParam)
                             {
-                                Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                                Character->YawParam = Character->YawParam + CurrentShotReactYaw[1] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                                 if (Character->YawParam >= DeltaYawParam)
                                 {
                                     Character->YawParam = DeltaYawParam;
@@ -537,7 +541,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                                 DeltaYawParam = 0.0f;
                             }
                             
-                            Character->YawParam = Character->YawParam + CurrentShotReactYaw[0] * TimeTick * 1000 * xxxxx * 100.0;
+                            Character->YawParam = Character->YawParam + CurrentShotReactYaw[0] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                             if (FireCount == 0)
                             {
                                 if (Character->YawParam > 0.0f)
@@ -549,7 +553,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                     }
                     else
                     {
-                        Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * xxxxx * 100.0;
+                        Character->YawParam = Character->YawParam - CurrentShotReactYaw[1] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                         if (Character->YawParam < DeltaYawParam)
                         {
                             Character->YawParam = DeltaYawParam;
@@ -561,7 +565,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                     if (Character->YawParam != 0)
                     {
                         YawSign = FMath::Abs(Character->YawParam) / Character->YawParam;
-                        Character->YawParam = YawSign * (FMath::Abs(Character->YawParam) - CurrentShotReactYaw[0] * TimeTick * 1000 * xxxxx * 100.0);
+                        Character->YawParam = YawSign * (FMath::Abs(Character->YawParam) - CurrentShotReactYaw[0] * TimeTick * 1000 * 0.001000000047497451 * 100.0);
                         if (Character->YawParam * YawSign < 0)
                         {
                             Character->YawParam = 0.0f;
@@ -574,7 +578,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
             {
                 if (FMath::Abs(Character->PitchParam) < FMath::Abs(DeltaPitchParam) && FMath::Abs(Character->PitchParam) < FMath::Abs(CurrentFullReactPitchCoefficient))
                 {
-                    Character->PitchParam = Character->PitchParam - CurrentShotReactPitch[1] * TimeTick * 1000 * xxxxx * 100.0;
+                    Character->PitchParam = Character->PitchParam - CurrentShotReactPitch[1] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                     if (DeltaPitchParam >= Character->PitchParam)
                     {
                         Character->PitchParam = DeltaPitchParam;
@@ -587,7 +591,7 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
                     {
                         DeltaPitchParam = 0.0f;
                     }
-                    Character->PitchParam = Character->PitchParam + CurrentShotReactPitch[0] * TimeTick * 1000 * xxxxx * 100.0;
+                    Character->PitchParam = Character->PitchParam + CurrentShotReactPitch[0] * TimeTick * 1000 * 0.001000000047497451 * 100.0;
                 }
                 
                 if (Character->PitchParam > 0)
@@ -627,3 +631,111 @@ void UNZWeaponViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc,
 	OutCamRot.Pitch += CurrentYawAndPitchPitchFactor * InitPunchAngle.Pitch;
 	OutCamRot.Yaw += CurrentYawAndPitchYawFactor * InitPunchAngle.Yaw;
 }
+
+bool UNZWeaponViewKickComponent::DrawCrosshair_Normal(UNZCrosshair* Crosshair, UCanvas* Canvas, float DeltaTime, float Scale, FLinearColor Color)
+{
+    ANZCharacter* Character = NULL;
+    float X = 0.f, Y = 0.f, ScreenX = 0.f, ScreenY = 0.f;
+    float CurrentPerturbMin = 0.f;
+    float CurrentPerturbMax = 0.f;
+    float CurrentCrosshairRatioPerRealSize = 0.f, CurrentReactParamCoefficient = 0.f;
+    FLinearColor TempShadowColor;
+    
+    if (Crosshair == NULL || Canvas == NULL)
+    {
+        return false;
+    }
+    
+    Character = Cast<ANZCharacter>(GetOwner() ? GetOwner()->Instigator : NULL);
+    if (Character == NULL || Character->GetCharacterMovement() == NULL)
+    {
+        return false;
+    }
+  
+    if (Character->GetCharacterMovement()->MovementMode == MOVE_Falling)
+    {
+        CurrentPerturbMin = PerturbMin[4];
+        CurrentPerturbMax = PerturbMax[4];
+        CurrentCrosshairRatioPerRealSize = CrosshairRatioPerRealSize[4];
+        CurrentReactParamCoefficient = ReactParamCoefficient[4];
+    }
+    else if (Character->bIsCrouched)
+    {
+        if (Character->GetCharacterMovement()->Velocity.Size() > 0)
+        {
+            CurrentPerturbMin = PerturbMin[3];
+            CurrentPerturbMax = PerturbMax[3];
+            CurrentCrosshairRatioPerRealSize = CrosshairRatioPerRealSize[3];
+            CurrentReactParamCoefficient = ReactParamCoefficient[3];
+        }
+        else
+        {
+            CurrentPerturbMin = PerturbMin[1];
+            CurrentPerturbMax = PerturbMax[1];
+            CurrentCrosshairRatioPerRealSize = CrosshairRatioPerRealSize[1];
+            CurrentReactParamCoefficient = ReactParamCoefficient[1];
+        }
+    }
+    else if (Character->GetCharacterMovement()->Velocity.Size() > 200)
+    {
+        CurrentPerturbMin = PerturbMin[2];
+        CurrentPerturbMax = PerturbMax[2];
+        CurrentCrosshairRatioPerRealSize = CrosshairRatioPerRealSize[2];
+        CurrentReactParamCoefficient = ReactParamCoefficient[2];
+    }
+    else
+    {
+        CurrentPerturbMin = PerturbMin[0];
+        CurrentPerturbMax = PerturbMax[0];
+        CurrentCrosshairRatioPerRealSize = CrosshairRatioPerRealSize[0];
+        CurrentReactParamCoefficient = ReactParamCoefficient[0];
+    }
+    
+    float ScaleCrosshair = Canvas->ClipX / 1024;
+    float DefaultReactParam = 1.0 - CurrentReactParamCoefficient;
+    
+    float TestShotCircle = (DefaultReactParam * (CurrentPerturbMax - CurrentPerturbMin) + CurrentPerturbMin) * (Canvas->ClipX * 1.330000042915344);
+    float TestShotCircleMin = Canvas->ClipX * 1.330000042915344 * (CurrentPerturbMin + (CurrentPerturbMax - CurrentPerturbMin) * RecordReactParam);
+    
+    float Param1 = TestShotCircle * 0.5 * CurrentCrosshairRatioPerRealSize;
+    float Param2 = TestShotCircleMin * 0.5 * CurrentCrosshairRatioPerRealSize;
+    
+    float Crosshair_LenSize = 5;
+    float Crosshair_LenRatio1 = 0.800000011920929 * Param2;
+    float Crosshair_LenRatio2 = Crosshair_LenSize + Crosshair_LenRatio1 + (Param2 - Param1) * 0.300000011920929;
+    
+    if (Crosshair_LenRatio1 < 1)
+    {
+        Crosshair_LenRatio1 = 1;
+    }
+    
+    int32 CrosshairSize = int32(Crosshair_LenRatio1 - 1);
+    int32 CrosshairLineLength = int32((Crosshair_LenRatio2 - Crosshair_LenRatio1) * ScaleCrosshair);
+    X = Canvas->ClipX * 0.5;
+    Y = Canvas->ClipY * 0.5;
+    
+    Canvas->SetDrawColor(0, 255, 0);
+    
+    // UpSide
+    ScreenX = X;
+    ScreenY = Y - CrosshairSize - CrosshairLineLength;
+    Canvas->DrawTile(Crosshair->CrosshairIcon.Texture, ScreenX, ScreenY, 1, CrosshairLineLength, 395, 489, 16, 16, BLEND_Opaque);
+    
+    // LeftSide
+    ScreenX = X - CrosshairSize - CrosshairLineLength;
+    ScreenY = Y;
+    Canvas->DrawTile(Crosshair->CrosshairIcon.Texture, ScreenX, ScreenY, CrosshairLineLength, 1, 395, 489, 16, 16, BLEND_Opaque);
+
+    // RightSide
+    ScreenX = X + CrosshairSize + 1;
+    ScreenY = Y;
+    Canvas->DrawTile(Crosshair->CrosshairIcon.Texture, ScreenX, ScreenY, CrosshairLineLength, 1, 395, 489, 16, 16, BLEND_Opaque);
+
+    // DownSide
+    ScreenX = X;
+    ScreenY = Y + CrosshairSize + 1;
+    Canvas->DrawTile(Crosshair->CrosshairIcon.Texture, ScreenX, ScreenY, 1, CrosshairLineLength, 395, 489, 16, 16, BLEND_Opaque);
+    
+    return true;
+}
+

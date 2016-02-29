@@ -182,5 +182,7 @@ public:
 	virtual void KickBackTheView();
 
 	virtual void CalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot);
+    
+    virtual bool DrawCrosshair_Normal(class UNZCrosshair* Crosshair, UCanvas* Canvas, float DeltaTime, float Scale, FLinearColor Color);
 	
 };
