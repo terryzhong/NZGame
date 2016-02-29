@@ -2,7 +2,6 @@
 
 #include "NZGame.h"
 #include "NZGameState.h"
-#include "NZRemoteRedeemer.h"
 #include "NZWeapon.h"
 #include "NZTeamInterface.h"
 
