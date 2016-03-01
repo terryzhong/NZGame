@@ -667,7 +667,7 @@ public:
     }
 
 	UFUNCTION(BlueprintCallable, Category = Pawn)
-	virtual void Reload();
+	virtual void ChangeClip();
     
     /** 1682
      Weapon and attachments */

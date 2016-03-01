@@ -19,7 +19,6 @@
 #include "NZWeaponStateEquipping.h"
 #include "NZWeaponStateUnequipping.h"
 #include "NZWeaponStateZooming.h"
-#include "NZWeaponStateReloading.h"
 #include "NZWeaponAttachment.h"
 #include "NZGameViewportClient.h"
 #include "NZImpactEffect.h"
@@ -67,7 +66,6 @@ ANZWeapon::ANZWeapon()
 	EquippingState = CreateDefaultSubobject<UNZWeaponStateEquipping>(TEXT("StateEquipping"));
 	UnequippingStateDefault = CreateDefaultSubobject<UNZWeaponStateUnequipping>(TEXT("StateUnequipping"));
 	UnequippingState = UnequippingStateDefault;
-	ReloadingState = CreateDefaultSubobject<UNZWeaponStateReloading>(TEXT("StateReloading"));
 
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
 	Mesh->SetOnlyOwnerSee(true);
@@ -102,8 +100,6 @@ ANZWeapon::ANZWeapon()
 	BaseAISelectRating = 0.55f;
 	DisplayName = NSLOCTEXT("PickupMessage", "WeaponPickedUp", "Weapon");
 	bShowPowerupTimer = false;
-
-	ViewKickComponent = CreateDefaultSubobject<UNZWeaponViewKickComponent>(TEXT("ViewKickComponent"));
 }
 
 void ANZWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -542,6 +538,11 @@ bool ANZWeapon::ServerStopFire_Validate(uint8 FireModeNum)
 
 bool ANZWeapon::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
 {
+    if (ViewKickComponent != NULL)
+    {
+        ViewKickComponent->BeginFiringSequence(FireModeNum, bClientFired);
+    }
+    
     if (NZOwner)
     {
         NZOwner->SetPendingFire(FireModeNum, true);
@@ -561,6 +562,11 @@ bool ANZWeapon::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
 
 void ANZWeapon::EndFiringSequence(uint8 FireModeNum)
 {
+    if (ViewKickComponent != NULL)
+    {
+        ViewKickComponent->EndFiringSequence(FireModeNum);
+    }
+    
     if (NZOwner)
     {
         NZOwner->SetPendingFire(FireModeNum, false);
@@ -816,7 +822,7 @@ void ANZWeapon::ClientRemoved_Implementation()
 
 void ANZWeapon::FireShot()
 {
-    if (ViewKickComponent)
+    if (ViewKickComponent != NULL)
     {
         ViewKickComponent->FireShot();
     }
@@ -2320,15 +2326,4 @@ void ANZWeapon::WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& 
 	{
 		ViewKickComponent->CalcCamera(DeltaTime, OutCamLoc, OutCamRot);
 	}
-}
-
-
-float ANZWeapon::GetReloadTime()
-{
-	return ReloadTime;
-}
-
-void ANZWeapon::Reload()
-{
-	GotoState(ReloadingState);
 }

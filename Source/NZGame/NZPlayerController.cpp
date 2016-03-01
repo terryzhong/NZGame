@@ -188,7 +188,7 @@ void ANZPlayerController::SetupInputComponent()
 	InputComponent->BindAction("StartAltFire", IE_Pressed, this, &ANZPlayerController::OnAltFire);
 	InputComponent->BindAction("StopAltFire", IE_Released, this, &ANZPlayerController::OnStopAltFire);
 
-	InputComponent->BindAction("Reload", IE_Pressed, this, &ANZPlayerController::Reload);
+	InputComponent->BindAction("ChangeClip", IE_Pressed, this, &ANZPlayerController::ChangeClip);
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &ANZPlayerController::Sprint);
 	InputComponent->BindAction("UnSprint", IE_Released, this, &ANZPlayerController::UnSprint);
 
@@ -1261,11 +1261,11 @@ void ANZPlayerController::OnStopAltFire()
     }
 }
 
-void ANZPlayerController::Reload()
+void ANZPlayerController::ChangeClip()
 {
 	if (NZCharacter != NULL)
 	{
-		NZCharacter->Reload();
+		NZCharacter->ChangeClip();
 	}
 }
 

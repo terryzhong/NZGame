@@ -125,7 +125,6 @@ class NZGAME_API ANZWeapon : public ANZInventory
     friend class UNZWeaponStateActive;
     friend class UNZWeaponStateEquipping;
     friend class UNZWeaponStateUnequipping;
-	friend class UNZWeaponStateReloading;
     
 public:
     ANZWeapon();
@@ -938,9 +937,6 @@ protected:
     
     UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
     UNZWeaponState* InactiveState;
-
-	UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
-	UNZWeaponState* ReloadingState;
     
     /** Overlay mesh for overlay effects */
     UPROPERTY()
@@ -1054,19 +1050,6 @@ public:
 	virtual void WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot);
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	UAnimMontage* ReloadAnim;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	UAnimMontage* ReloadAnimHands;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
-	float ReloadTime;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	virtual float GetReloadTime();
-
-	virtual void Reload();
 
 
 };

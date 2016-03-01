@@ -274,7 +274,7 @@ public:
     virtual void OnAltFire();
     virtual void OnStopAltFire();
 
-	virtual void Reload();
+	virtual void ChangeClip();
 
 	virtual void Sprint();
 	virtual void UnSprint();

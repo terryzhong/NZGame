@@ -19,6 +19,7 @@
 #include "NZWorldSettings.h"
 #include "NZProjectile.h"
 #include "Unrealnetwork.h"
+#include "NZGun.h"
 
 
 // Sets default values
@@ -1953,11 +1954,12 @@ void ANZCharacter::StopFiring()
     }
 }
 
-void ANZCharacter::Reload()
+void ANZCharacter::ChangeClip()
 {
-	if (Weapon != NULL)
+    ANZGun* Gun = Cast<ANZGun>(Weapon);
+	if (Gun != NULL)
 	{
-		Weapon->Reload();
+        Gun->ChangeClip();
 	}
 }
 
