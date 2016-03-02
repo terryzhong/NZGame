@@ -3,12 +3,13 @@
 #include "NZGame.h"
 #include "NZCrosshair_Normal.h"
 #include "NZWeapon.h"
-#include "NZWeaponViewKickComponent.h"
+#include "NZGunViewKickComponent.h"
 
 
 void UNZCrosshair_Normal::DrawCrosshair_Implementation(UCanvas* Canvas, ANZWeapon* Weapon, float DeltaTime, float Scale, FLinearColor Color)
 {
-    if (Weapon != NULL && Weapon->ViewKickComponent && Weapon->ViewKickComponent->DrawCrosshair_Normal(this, Canvas, DeltaTime, Scale, Color))
+    ANZGun* Gun = Cast<ANZGun>(Weapon);
+    if (Gun != NULL && Gun->ViewKickComponent && Gun->ViewKickComponent->DrawCrosshair_Normal(this, Canvas, DeltaTime, Scale, Color))
     {
         return;
     }

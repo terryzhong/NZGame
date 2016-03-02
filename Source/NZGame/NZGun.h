@@ -44,17 +44,24 @@ public:
     }
     
     virtual void ChangeClip();
-
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fire)
     bool bIsContinousFire;
     
-    virtual bool BeginFiringSequence(uint8 FireModeNum, bool bClientFired);
-    virtual void EndFiringSequence(uint8 FireModeNum);
+    /** Override fire interfaces */
+    virtual bool BeginFiringSequence(uint8 FireModeNum, bool bClientFired) override;
+    virtual void EndFiringSequence(uint8 FireModeNum) override;
+    virtual void FireShot() override;
+    virtual void FireInstantHit(bool bDealDamage = true, FHitResult* OutHit = NULL) override;
+    virtual FVector InstantFireEndTrace(FVector StartTrace) override;
+    virtual bool HandleContinuedFiring() override;
+    virtual FRotator GetAdjustedAim_Implementation(FVector StartFireLoc) override;
+    virtual void WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot) override;
     
-    virtual void FireShot();
+    virtual FVector ModifyForwardDirection(FRotator AimAngle);
 
-    virtual bool HandleContinuedFiring();
-    
-	
+    /** Component that kick back the view */
+    UPROPERTY(EditAnywhere, Category = "Gun")
+    class UNZGunViewKickComponent* ViewKickComponent;
+
 };

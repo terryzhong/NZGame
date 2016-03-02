@@ -5,6 +5,8 @@
 #include "Engine.h"
 #include "NZATypes.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(NZ, Log, All);
+
 #define COLLISION_PROJECTILE    ECC_GameTraceChannel1
 #define COLLISION_TRACE_WEAPON  ECC_GameTraceChannel2
 #define COLLISION_PROJECTILE_SHOOTABLE  ECC_GameTraceChannel3

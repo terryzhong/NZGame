@@ -195,14 +195,19 @@ void UNZGunViewKickComponent::BeginFiringSequence(uint8 FireModeNum, bool bClien
 void UNZGunViewKickComponent::EndFiringSequence(uint8 FireModeNum)
 {
     ANZGun* Gun = Cast<ANZGun>(GetOwner());
-    if (Gun != NULL && Gun->bIsContinousFire)
+    if (Gun != NULL)
     {
-        DelayFrameCount = 0;
-        RecordEndFireReactParam = ChangeMovingRealSize[2] * FireCount + ReactParam;
-        if (RecordEndFireReactParam > ChangeMovingRealSize[4])
+        if (Gun->bIsContinousFire)
         {
-            RecordEndFireReactParam = ChangeMovingRealSize[4];
+            DelayFrameCount = 0;
+            RecordEndFireReactParam = ChangeMovingRealSize[2] * FireCount + ReactParam;
+            if (RecordEndFireReactParam > ChangeMovingRealSize[4])
+            {
+                RecordEndFireReactParam = ChangeMovingRealSize[4];
+            }
         }
+        
+        FireCountDelayFrameCount = 0;
     }
 }
 
@@ -382,6 +387,101 @@ void UNZGunViewKickComponent::KickBackTheView()
     bDelayOneFrameForCamera = true;
 }
 
+void UNZGunViewKickComponent::ModifyAdjustedAim(FRotator& BaseAim)
+{
+    ANZCharacter* Character = Cast<ANZCharacter>(GetOwner() ? GetOwner()->Instigator : NULL);
+    if (Character != NULL)
+    {
+        BaseAim.Pitch += (-Character->PitchParam * RadToDeg);
+        BaseAim.Yaw += (Character->YawParam * RadToDeg);
+    }
+}
+
+FVector UNZGunViewKickComponent::ModifyForwardDirection(FRotator AimAngle)
+{
+    float CurrentPerturbMin = 0.f;
+    float CurrentPerturbMax = 0.f;
+    
+    ANZCharacter* Character = Cast<ANZCharacter>(GetOwner() ? GetOwner()->Instigator : NULL);
+    if (Character == NULL || Character->GetCharacterMovement() == NULL)
+    {
+        return AimAngle.Vector();
+    }
+    
+    if (Character->GetCharacterMovement()->MovementMode == MOVE_Falling)
+    {
+        CurrentPerturbMin = PerturbMin[4];
+        CurrentPerturbMax = PerturbMax[4];
+    }
+    else if (Character->bIsCrouched)
+    {
+        if (Character->GetCharacterMovement()->Velocity.Size() > 0)
+        {
+            CurrentPerturbMin = PerturbMin[3];
+            CurrentPerturbMax = PerturbMax[3];
+        }
+        else
+        {
+            CurrentPerturbMin = PerturbMin[1];
+            CurrentPerturbMax = PerturbMax[1];
+        }
+    }
+    else if (Character->GetCharacterMovement()->Velocity.Size() > 200)
+    {
+        CurrentPerturbMin = PerturbMin[2];
+        CurrentPerturbMax = PerturbMax[2];
+    }
+    else
+    {
+        CurrentPerturbMin = PerturbMin[0];
+        CurrentPerturbMax = PerturbMax[0];
+    }
+    
+    float RSead2 = CurrentPerturbMin + (CurrentPerturbMax - CurrentPerturbMin) * RecordReactParam;
+    float RSead1 = -(CurrentPerturbMin + (CurrentPerturbMax - CurrentPerturbMin) * RecordReactParam);
+    float RandX = FMath::RandRange(RSead1, RSead2);
+    float RandY = FMath::RandRange(RSead1, RSead2);
+    
+    if (ShotSpreadFlag == 0)
+    {
+        if (RandX <= 0.0)
+        {
+            RandY = 0.5 * RandX;
+        }
+        else
+        {
+            RandY = 0.5 * RandY;
+            RandX = -RandX;
+        }
+    }
+    else if (ShotSpreadFlag == 1)
+    {
+        RandY = 0.0;
+        RandX = RandX * 0.300000011920929;
+    }
+    else if (ShotSpreadFlag == 2)
+    {
+        if (RandX < 0.0)
+        {
+            RandY = 0.5 * RandY;
+            RandX = -RandX;
+        }
+        else
+        {
+            RandY = 0.5 * RandY;
+        }
+    }
+    
+    AimAngle.Yaw += RandX * RadToDeg;
+    AimAngle.Pitch += RandY * RadToDeg;
+
+    FRotationMatrix Mat(AimAngle);
+    FVector X, Y, Z;
+    Mat.GetScaledAxes(X, Y, Z);
+    
+    return X;
+}
+
 void UNZGunViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot)
 {
     FRotator InitPunchAngle = FRotator::ZeroRotator;
@@ -397,6 +497,7 @@ void UNZGunViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc, FR
     float YawSign = 0.f;
     float RemainDeltaTime = 0.f;
     float TimeTick = 0.f;
+    DeltaTime = 0.1;
     
     Character = Cast<ANZCharacter>(GetOwner() ? GetOwner()->Instigator : NULL);
     if (Character == NULL || Character->GetCharacterMovement() == NULL)
@@ -652,7 +753,7 @@ void UNZGunViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc, FR
             
             if (ReactParam < 1 - CurrentReactParamCoefficient)
             {
-                ReactParam  = 1 - CurrentReactParamCoefficient;
+                ReactParam = 1 - CurrentReactParamCoefficient;
             }
         }
     }

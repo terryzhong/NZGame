@@ -2,14 +2,13 @@
 
 #pragma once
 
-#include "NZWeaponViewKickComponent.h"
 #include "NZGunViewKickComponent.generated.h"
 
 /**
  * 
  */
-UCLASS()
-class NZGAME_API UNZGunViewKickComponent : public UNZWeaponViewKickComponent
+UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+class NZGAME_API UNZGunViewKickComponent : public UActorComponent
 {
 	GENERATED_BODY()
 	
@@ -186,6 +185,10 @@ public:
     virtual void FireShot();
     
     virtual void KickBackTheView();
+    
+    virtual void ModifyAdjustedAim(FRotator& BaseAim);
+    
+    virtual FVector ModifyForwardDirection(FRotator AimAngle);
     
     virtual void CalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot);
     

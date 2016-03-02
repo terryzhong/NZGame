@@ -7,28 +7,27 @@
 
 void UNZGunStateChangeClip::BeginState(const UNZWeaponState* PrevState)
 {
- /*	ChangeClipTime = GetOuterANZWeapon()->GetChangeClipTime();
-     ChangeClipTimeElapsed = 0.0f;
-     if (ChangeClipTime <= 0.0f)
-     {
-     ChangeClipFinished();
-     }
-     else
-     {
-     GetOuterANZWeapon()->GetWorldTimerManager().SetTimer(ChangeClipFinishedHandle, this, &UNZWeaponStateChangeCliping::ChangeClipFinished, ChangeClipTime);
-     GetOuterANZWeapon()->PlayWeaponAnim(GetOuterANZWeapon()->ChangeClipAnim, GetOuterANZWeapon()->ChangeClipAnimHands,
-     GetAnimLengthForScaling(GetOuterANZWeapon()->ChangeClipAnim, GetOuterANZWeapon()->ChangeClipAnimHands) / ChangeClipTime);
-     }*/
+    ChangeClipTime = GetOuterANZGun()->GetChangeClipTime();
+    ChangeClipTimeElapsed = 0.0f;
+    if (ChangeClipTime <= 0.0f)
+    {
+        ChangeClipFinished();
+    }
+    else
+    {
+        GetOuterANZGun()->GetWorldTimerManager().SetTimer(ChangeClipFinishedHandle, this, &UNZGunStateChangeClip::ChangeClipFinished, ChangeClipTime);
+        GetOuterANZGun()->PlayWeaponAnim(GetOuterANZGun()->ChangeClipAnim, GetOuterANZGun()->ChangeClipAnimHands, GetAnimLengthForScaling(GetOuterANZGun()->ChangeClipAnim, GetOuterANZGun()->ChangeClipAnimHands) / ChangeClipTime);
+    }
 }
 
 void UNZGunStateChangeClip::EndState()
 {
-    GetOuterANZWeapon()->GetWorldTimerManager().ClearTimer(ChangeClipFinishedHandle);
+    GetOuterANZGun()->GetWorldTimerManager().ClearTimer(ChangeClipFinishedHandle);
 }
 
 void UNZGunStateChangeClip::ChangeClipFinished()
 {
-    GetOuterANZWeapon()->GotoActiveState();
+    GetOuterANZGun()->GotoActiveState();
 }
 
 void UNZGunStateChangeClip::Tick(float DeltaTime)

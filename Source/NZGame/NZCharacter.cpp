@@ -2318,6 +2318,11 @@ FVector ANZCharacter::GetPawnViewLocation() const
 
 void ANZCharacter::SetPunchAngle(FRotator Angle)
 {
+    if (PunchAnglePitch != Angle.Pitch)
+    {
+        UE_LOG(NZ, Log,  TEXT("PunchAnglePitch:%d, Angle.Pitch:%d"), int32(PunchAnglePitch * 182.0444), int32(Angle.Pitch * 182.0444));
+    }
+    
 	PunchAnglePitch = Angle.Pitch;
 	PunchAngleYaw = Angle.Yaw;
 }

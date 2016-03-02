@@ -676,6 +676,8 @@ public:
     virtual void ConsumeAmmo(uint8 FireModeNum);
     
     virtual void FireInstantHit(bool bDealDamage = true, FHitResult* OutHit = NULL);
+    virtual FVector InstantFireStartTrace();
+    virtual FVector InstantFireEndTrace(FVector StartTrace);
     
     UFUNCTION(BlueprintCallable, Category = Firing)
     void K2_FireInstantHit(bool bDealDamage, FHitResult& OutHit);
@@ -1042,14 +1044,6 @@ public:
     
     virtual void TickZoom(float DeltaTime);
 
-	/** Component that kick back the view */
-	UPROPERTY(EditAnywhere, Category = "Weapon")
-	class UNZWeaponViewKickComponent* ViewKickComponent;
-
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
-	virtual void WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot);
-
-
-
-
+    UFUNCTION(BlueprintCallable, Category = "Camera")
+    virtual void WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot) {}
 };

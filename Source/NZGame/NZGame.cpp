@@ -2,6 +2,9 @@
 
 #include "NZGame.h"
 
+
+DEFINE_LOG_CATEGORY(NZ);
+
 class FNZModule : public FDefaultGameModuleImpl
 {
     virtual void StartupModule() override;

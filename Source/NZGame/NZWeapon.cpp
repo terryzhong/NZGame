@@ -25,7 +25,6 @@
 #include "UnrealNetwork.h"
 #include "NZDamageType.h"
 #include "NZPlayerCameraManager.h"
-#include "NZWeaponViewKickComponent.h"
 
 
 ANZWeapon::ANZWeapon()
@@ -538,11 +537,6 @@ bool ANZWeapon::ServerStopFire_Validate(uint8 FireModeNum)
 
 bool ANZWeapon::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
 {
-    if (ViewKickComponent != NULL)
-    {
-        ViewKickComponent->BeginFiringSequence(FireModeNum, bClientFired);
-    }
-    
     if (NZOwner)
     {
         NZOwner->SetPendingFire(FireModeNum, true);
@@ -562,11 +556,6 @@ bool ANZWeapon::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
 
 void ANZWeapon::EndFiringSequence(uint8 FireModeNum)
 {
-    if (ViewKickComponent != NULL)
-    {
-        ViewKickComponent->EndFiringSequence(FireModeNum);
-    }
-    
     if (NZOwner)
     {
         NZOwner->SetPendingFire(FireModeNum, false);
@@ -822,11 +811,6 @@ void ANZWeapon::ClientRemoved_Implementation()
 
 void ANZWeapon::FireShot()
 {
-    if (ViewKickComponent != NULL)
-    {
-        ViewKickComponent->FireShot();
-    }
-    
     NZOwner->DeactivateSpawnProtection();
     ConsumeAmmo(CurrentFireMode);
     
@@ -1199,21 +1183,15 @@ void ANZWeapon::FireInstantHit(bool bDealDamage, FHitResult* OutHit)
 
     checkSlow(InstantHitInfo.IsValidIndex(CurrentFireMode));
     
-	if (ViewKickComponent != NULL)
-	{
-		ViewKickComponent->KickBackTheView();
-	}
-
-    const FVector SpawnLocation = GetFireStartLoc();
-    const FRotator SpawnRotation = GetAdjustedAim(SpawnLocation);
-    const FVector FireDir = SpawnRotation.Vector();
-    const FVector EndTrace = SpawnLocation + FireDir * InstantHitInfo[CurrentFireMode].TraceRange;
+    const FVector StartTrace = InstantFireStartTrace();
+    const FVector EndTrace = InstantFireEndTrace(StartTrace);
+    const FVector FireDir = (EndTrace - StartTrace).GetSafeNormal();
     
     FHitResult Hit;
     ANZPlayerController* NZPC = Cast<ANZPlayerController>(NZOwner->Controller);
     ANZPlayerState* PS = NZOwner->Controller ? Cast<ANZPlayerState>(NZOwner->Controller->PlayerState) : NULL;
     float PredictionTime = NZPC ? NZPC->GetPredictionTime() : 0.f;
-    HitScanTrace(SpawnLocation, EndTrace, InstantHitInfo[CurrentFireMode].TraceHalfSize, Hit, PredictionTime);
+    HitScanTrace(StartTrace, EndTrace, InstantHitInfo[CurrentFireMode].TraceHalfSize, Hit, PredictionTime);
     if (Role == ROLE_Authority)
     {
         if (PS && (ShotsStatsName != NAME_None))
@@ -1281,6 +1259,17 @@ void ANZWeapon::FireInstantHit(bool bDealDamage, FHitResult* OutHit)
     {
         *OutHit = Hit;
     }
+}
+
+FVector ANZWeapon::InstantFireStartTrace()
+{
+    return GetFireStartLoc();
+}
+
+FVector ANZWeapon::InstantFireEndTrace(FVector StartTrace)
+{
+    const FVector FireDir = GetAdjustedAim(StartTrace).Vector();
+    return StartTrace + FireDir * InstantHitInfo[CurrentFireMode].TraceRange;
 }
 
 void ANZWeapon::K2_FireInstantHit(bool bDealDamage, FHitResult& OutHit)
@@ -2320,10 +2309,3 @@ void ANZWeapon::TickZoom(float DeltaTime)
     }
 }
 
-void ANZWeapon::WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot)
-{
-	if (ViewKickComponent != NULL)
-	{
-		ViewKickComponent->CalcCamera(DeltaTime, OutCamLoc, OutCamRot);
-	}
-}

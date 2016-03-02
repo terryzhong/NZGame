@@ -8,7 +8,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(Within = NZGun)
 class NZGAME_API UNZGunStateChangeClip : public UNZWeaponState
 {
 	GENERATED_BODY()
