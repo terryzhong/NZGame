@@ -5,6 +5,56 @@
 
 
 
+ANZPlayerCameraManager::ANZPlayerCameraManager()
+{
+    FreeCamOffset = FVector(-256.f, 0.f, 90.f);
+    EndGameFreeCamOffset = FVector(-256.f, 0.f, 45.f);
+    EndGameFreeCamDistance = 55.f;
+    
+    DeathCamDistance = 55.f;
+    DeathCamOffset = FVector(-128.f, 0.f, 30.f);
+    FlagBaseFreeCamOffset = FVector(0, 0, 90);
+    bUseClientSideCameraUpdates = false;
+    
+    PrimaryActorTick.bTickEvenWhenPaused = true;
+    ViewPitchMin = -89.f;
+    ViewPitchMax = 89.f;
+    
+    DefaultPPSettings.SetBaseValues();
+    DefaultPPSettings.bOverride_AmbientCubemapIntensity = true;
+    DefaultPPSettings.bOverride_BloomIntensity = true;
+    DefaultPPSettings.bOverride_BloomDirtMaskIntensity = true;
+    DefaultPPSettings.bOverride_AutoExposureMinBrightness = true;
+    DefaultPPSettings.bOverride_AutoExposureMaxBrightness = true;
+    DefaultPPSettings.bOverride_LensFlareIntensity = true;
+    DefaultPPSettings.bOverride_MotionBlurAmount = true;
+    DefaultPPSettings.bOverride_ScreenSpaceReflectionIntensity = true;
+    DefaultPPSettings.BloomIntensity = 0.20f;
+    DefaultPPSettings.BloomDirtMaskIntensity = 0.f;
+    DefaultPPSettings.AutoExposureMinBrightness = 1.f;
+    DefaultPPSettings.AutoExposureMaxBrightness = 1.f;
+    DefaultPPSettings.VignetteIntensity = 0.20f;
+    DefaultPPSettings.MotionBlurAmount = 0.f;
+    DefaultPPSettings.ScreenSpaceReflectionIntensity = 0.f;
+    
+    StylizedPPSettings.AddZeroed();
+    StylizedPPSettings[0].bOverride_BloomIntensity = true;
+    StylizedPPSettings[0].bOverride_MotionBlurAmount = true;
+    StylizedPPSettings[0].BloomIntensity = 0.20f;
+    StylizedPPSettings[0].MotionBlurAmount = 0.f;
+    StylizedPPSettings[0].bOverride_MotionBlurAmount = true;
+    StylizedPPSettings[0].bOverride_MotionBlurMax = true;
+    StylizedPPSettings[0].bOverride_DepthOfFieldDepthBlurAmount = true;
+    StylizedPPSettings[0].bOverride_DepthOfFieldFocalDistance = true;
+    StylizedPPSettings[0].bOverride_DepthOfFieldScale = true;
+    StylizedPPSettings[0].bOverride_DepthOfFieldNearBlurSize = true;
+    StylizedPPSettings[0].bOverride_DepthOfFieldFarBlurSize = true;
+    
+    LastThirdPersonCameraLoc = FVector::ZeroVector;
+    ThirdPersonCameraSmoothingSpeed = 6.f;
+    CurrentCameraRoll = 0.f;
+    WallSlideCameraRoll = 12.5f;
+}
 
 void ANZPlayerCameraManager::CheckCameraSweep(FHitResult& OutHit, AActor* TargetActor, const FVector& Start, const FVector& End)
 {
@@ -134,7 +184,8 @@ void ANZPlayerCameraManager::UpdateViewTarget(FTViewTarget& OutVT, float DeltaTi
         LastThirdPersonTarget = TargetActor;
         
         ANZPlayerController* NZPC = Cast<ANZPlayerController>(PCOwner);
-        bool bGameOver = (NZPC != NULL && NZPC->GetStateName() == NAME_GameOver);
+        bool bGameOver = (NZPC !=
+                          NULL && NZPC->GetStateName() == NAME_GameOver);
         bool bUseDeathCam = !bGameOver && NZCharacter && (NZCharacter->IsDead() || NZCharacter->IsRagdoll());
         
         float CameraDistance = bUseDeathCam ? DeathCamDistance : FreeCamDistance;

@@ -14,6 +14,8 @@ class NZGAME_API ANZPlayerCameraManager : public APlayerCameraManager
 	GENERATED_BODY()
 	
 public:
+    ANZPlayerCameraManager();
+    
     /** Post process settings used when there are no post process volumes */
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = PostProcess)
     FPostProcessSettings DefaultPPSettings;

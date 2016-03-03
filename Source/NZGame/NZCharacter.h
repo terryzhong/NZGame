@@ -359,6 +359,15 @@ public:
     UPROPERTY(BlueprintReadOnly)
     TSubclassOf<class ANZCharacterContent> CharacterData;
     
+    /** Temp replacement for CharacterData->GetDefaultObject() until 4.9 enables that in blueprints */
+    UFUNCTION(BlueprintCallable, Category = Character)
+    ANZCharacterContent* GetCharacterData() const;
+    
+    virtual void ApplyCharacterData(TSubclassOf<class ANZCharacterContent> Data);
+    
+    /** Called when a PC viewing this character switches from behindview to first person or vice versa */
+    virtual void BehindViewChange(APlayerController* PC, bool bNowBehindView);
+    
     UPROPERTY()
     float DefaultBaseEyeHeight;
     

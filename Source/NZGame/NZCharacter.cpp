@@ -20,6 +20,7 @@
 #include "NZProjectile.h"
 #include "Unrealnetwork.h"
 #include "NZGun.h"
+#include "ComponentReregisterContext.h"
 
 
 // Sets default values
@@ -1187,6 +1188,92 @@ void ANZCharacter::PlayerSuicide()
     }
 }
 
+ANZCharacterContent* ANZCharacter::GetCharacterData() const
+{
+    return CharacterData.GetDefaultObject();
+}
+
+void ANZCharacter::ApplyCharacterData(TSubclassOf<class ANZCharacterContent> CharType)
+{
+    ANZPlayerState* PS = Cast<ANZPlayerState>(PlayerState);
+    if (CharType != NULL)
+    {
+        CharacterData = CharType;
+    }
+    const ANZCharacterContent* Data = CharacterData.GetDefaultObject();
+    if (Data->Mesh != NULL)
+    {
+        FComponentReregisterContext ReregisterContext(GetMesh());
+        GetMesh()->OverrideMaterials = Data->Mesh->OverrideMaterials;
+        if (PS != NULL && PS->Team != NULL)
+        {
+            GetMesh()->OverrideMaterials.SetNumZeroed(FMath::Min<int32>(Data->Mesh->GetNumMaterials(), Data->TeamMaterials.Num()));
+            for (int32 i = GetMesh()->OverrideMaterials.Num() - 1; i >= 0; i--)
+            {
+                if (Data->TeamMaterials[i] != NULL)
+                {
+                    GetMesh()->OverrideMaterials[i] = Data->TeamMaterials[i];
+                }
+            }
+        }
+        GetMesh()->SkeletalMesh = Data->Mesh->SkeletalMesh;
+        BodyMIs.Empty();
+        for (int32 i = 0; i < GetMesh()->GetNumMaterials(); i++)
+        {
+            if (GetMesh()->GetMaterial(i) != NULL)
+            {
+                BodyMIs.Add(GetMesh()->CreateAndSetMaterialInstanceDynamic(i));
+            }
+        }
+        GetMesh()->PhysicsAssetOverride = Data->Mesh->PhysicsAssetOverride;
+        GetMesh()->RelativeScale3D = GetClass()->GetDefaultObject<ANZCharacter>()->GetMesh()->RelativeScale3D * Data->Mesh->RelativeScale3D;
+        if (GetMesh() != GetRootComponent())
+        {
+            GetMesh()->RelativeLocation = Data->Mesh->RelativeLocation;
+            GetMesh()->RelativeRotation = Data->Mesh->RelativeRotation;
+        }
+        if (OverlayMesh != NULL)
+        {
+            OverlayMesh->DetachFromParent();
+            OverlayMesh->UnregisterComponent();
+            OverlayMesh = NULL;
+            UpdateCharOverlays();
+        }
+        UpdateSkin();
+    }
+}
+
+void ANZCharacter::BehindViewChange(APlayerController* PC, bool bNowBehindView)
+{
+    if (PC->GetPawn() != this)
+    {
+        if (!bNowBehindView)
+        {
+            if (Weapon != NULL && PC->IsLocalPlayerController() && !Weapon->Mesh->IsAttachedTo(CharacterCameraComponent))
+            {
+                Weapon->AttachToOwner();
+            }
+        }
+        else
+        {
+            if (Weapon != NULL && (Controller == NULL || !Controller->IsLocalPlayerController()) && Weapon->Mesh->IsAttachedTo(CharacterCameraComponent))
+            {
+                Weapon->StopFiringEffects();
+                Weapon->DetachFromOwner();
+            }
+        }
+    }
+    if (bNowBehindView)
+    {
+        FirstPersonMesh->MeshComponentUpdateFlag = GetClass()->GetDefaultObject<ANZCharacter>()->FirstPersonMesh->MeshComponentUpdateFlag;
+    }
+    else
+    {
+        FirstPersonMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPose;
+        FirstPersonMesh->LastRenderTime = GetWorld()->TimeSeconds;
+        FirstPersonMesh->bRecentlyRendered = true;
+    }
+}
 
 bool ANZCharacter::IsSpawnProtected()
 {

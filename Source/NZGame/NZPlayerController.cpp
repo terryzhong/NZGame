@@ -528,6 +528,30 @@ bool ANZPlayerController::ServerSwitchTeam_Validate()
 
 void ANZPlayerController::BehindView(bool bWantBehindView)
 {
+    if (GetPawn() != NULL && !GetPawn()->bTearOff && !bAllowPlayingBehindView && GetNetMode() != NM_Standalone && (GetWorld()->WorldType != EWorldType::PIE))
+    {
+        bWantBehindView = false;
+    }
+    if (IsInState(NAME_Spectating))
+    {
+        bSpectateBehindView = bWantBehindView;
+    }
+    else
+    {
+        bPlayBehindView = bWantBehindView;
+    }
+    SetCameraMode(bWantBehindView ? FName(TEXT("FreeCam")) : FName(TEXT("Default")));
+    if (Cast<ANZCharacter>(GetViewTarget()) != NULL)
+    {
+        ((ANZCharacter*)GetViewTarget())->BehindViewChange(this, bWantBehindView);
+    }
+    
+    // Make sure we don't have leftover zoom
+    if (bWantBehindView && PlayerCameraManager != NULL)
+    {
+        PlayerCameraManager->UnlockFOV();
+        PlayerCameraManager->DefaultFOV = ConfigDefaultFOV;
+    }
 }
 
 bool ANZPlayerController::IsBehindView()
@@ -717,9 +741,129 @@ void ANZPlayerController::ViewSelf(FViewTargetTransitionParams TransitionParams)
     ServerViewSelf(TransitionParams);
 }
 
-void ANZPlayerController::FindGoodView(const FVector& Targetloc, bool bIsUpdate)
+void ANZPlayerController::FindGoodView(const FVector& TargetLoc, bool bIsUpdate)
 {
+    AActor* TestViewTarget = GetViewTarget();
+    if (!TestViewTarget || !PlayerCameraManager || (TestViewTarget == this) || (TestViewTarget == GetSpectatorPawn()) || Cast<ANZProjectile>(TestViewTarget)/* || Cast<ANZViewPlaceholder>(TestViewTarget)*/)
+    {
+        // No rotation change
+        return;
+    }
+    
+    FRotator BestRot = GetControlRotation();
+    // Always start looking down slightly
+    BestRot.Pitch = -10.f;
+    BestRot.Roll = 0.f;
+    BestRot.Yaw = FMath::UnwindDegrees(BestRot.Yaw);
+    float CurrentYaw = BestRot.Yaw;
+    
+    BestRot.Yaw = FMath::UnwindDegrees(TestViewTarget->GetActorRotation().Yaw) + 15.f;
+    if (bIsUpdate)
+    {
+        float DesiredYaw = BestRot.Yaw;
+        
+        // Check if too far to change directly
+        if (DesiredYaw - CurrentYaw > 180.f)
+        {
+            DesiredYaw -= 360.f;
+        }
+        else if (CurrentYaw - DesiredYaw > 180.f)
+        {
+            CurrentYaw -= 360.f;
+        }
+    }
+    
+    ANZPlayerCameraManager* CamMgr = Cast<ANZPlayerCameraManager>(PlayerCameraManager);
+    static const FName NAME_GameOver = FName(TEXT("GameOver"));
+    bool bGameOver = (GetStateName() == NAME_GameOver);
+    float CameraDistance = bGameOver ? CamMgr->EndGameFreeCamDistance : CamMgr->FreeCamDistance;
+    FVector CameraOffset = bGameOver ? CamMgr->EndGameFreeCamOffset : CamMgr->FreeCamOffset;
+    float UnBlockedPct = (Cast<APawn>(TestViewTarget) && (CameraDistance > 0.f)) ? 96.f / CameraDistance : 1.f;
+    
     // todo:
+    
+    if ((TestViewTarget == FinalViewTarget) && Cast<ANZCharacter>(TestViewTarget))
+    {
+        UnBlockedPct = 1.f;
+        BestRot.Yaw += 180.f;
+    }
+    
+    // Look for acceptable view
+    float YawIncrement = 30.f;
+    BestRot.Yaw = int32(BestRot.Yaw / 5.f) * 5.f;
+    BestRot.Yaw = FMath::UnwindDegrees(BestRot.Yaw);
+    if ((FMath::Abs(LastGoalYaw - BestRot.Yaw) < 6.f) || (FMath::Abs(LastGoalYaw - BestRot.Yaw) > 354.f))
+    {
+        // Prevent jitter when can't settle on good view
+        BestRot.Yaw = LastGoalYaw;
+    }
+    float OffsetMag = -60.f;
+    float YawOffset = 0.f;
+    bool bFoundGoodView = false;
+    float BestView = BestRot.Yaw;
+    float BestDist = 0.f;
+    float StartYaw = BestRot.Yaw;
+    int32 IncrementCount = 1;
+    while (!bFoundGoodView && (IncrementCount < 12) && CamMgr)
+    {
+        BestRot.Yaw = StartYaw + YawOffset;
+        FVector Pos = TargetLoc + FRotationMatrix(BestRot).TransformVector(CameraOffset) - BestRot.Vector() * CameraDistance;
+        FHitResult Result(1.f);
+        CamMgr->CheckCameraSweep(Result, TestViewTarget, TargetLoc, Pos);
+        float NewDist = (Result.Location - TargetLoc).SizeSquared();
+        bFoundGoodView = Result.Time > UnBlockedPct;
+        if (NewDist > BestDist)
+        {
+            BestDist = NewDist;
+            BestView = BestRot.Yaw;
+        }
+        float NewOffset = (YawIncrement * IncrementCount);
+        if ((IncrementCount % 2) == 0)
+        {
+            NewOffset *= -1.f;
+        }
+        IncrementCount++;
+        YawOffset += NewOffset;
+    }
+    if (!bFoundGoodView)
+    {
+        BestRot.Yaw = CurrentYaw;
+    }
+    LastGoalYaw = BestRot.Yaw;
+    if ((FMath::Abs(CurrentYaw - BestRot.Yaw) > 60.f) && (FMath::Abs(CurrentYaw - BestRot.Yaw) < 300.f))
+    {
+        if (BestRot.Yaw < 0.f)
+        {
+            BestRot.Yaw += 360.f;
+        }
+        if (CurrentYaw < 0.f)
+        {
+            CurrentYaw += 360.f;
+        }
+        if (CurrentYaw > BestRot.Yaw)
+        {
+            if (360.f - CurrentYaw + BestRot.Yaw < CurrentYaw - BestRot.Yaw)
+            {
+                BestRot.Yaw = CurrentYaw + 30.f;
+            }
+            else
+            {
+                BestRot.Yaw = CurrentYaw - 30.f;
+            }
+        }
+        else
+        {
+            if (360.f - BestRot.Yaw + CurrentYaw < BestRot.Yaw - CurrentYaw)
+            {
+                BestRot.Yaw = CurrentYaw - 30.f;
+            }
+            else
+            {
+                BestRot.Yaw = CurrentYaw + 30.f;
+            }
+        }
+    }
+    SetControlRotation(BestRot);
 }
 
 void ANZPlayerController::ClientViewSpectatorPawn_Implementation(FViewTargetTransitionParams TransitionParams)
@@ -799,7 +943,24 @@ void ANZPlayerController::ViewCamera(int32 Index)
 
 FRotator ANZPlayerController::GetSpectatingRotation(const FVector& ViewLoc, float DeltaTime)
 {
-    return FRotator();
+    if (IsInState(NAME_Spectating))
+    {
+        ANZGameState* GS = GetWorld()->GetGameState<ANZGameState>();
+        if (GS && (!GS->IsMatchInProgress() || GS->IsMatchIntermission()))
+        {
+            return GetControlRotation();
+        }
+        float OldYaw = FMath::UnwindDegrees(GetControlRotation().Yaw);
+        FindGoodView(ViewLoc, true);
+        FRotator NewRotation = GetControlRotation();
+        float NewYaw = FMath::UnwindDegrees(NewRotation.Yaw);
+        if (FMath::Abs(NewYaw - OldYaw) < 60.f)
+        {
+            NewRotation.Yaw = (1.f - 7.f * DeltaTime) * OldYaw + 7.f * DeltaTime * NewYaw;
+            SetControlRotation(NewRotation);
+        }
+    }
+    return GetControlRotation();
 }
 
 

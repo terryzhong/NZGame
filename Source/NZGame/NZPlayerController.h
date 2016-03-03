@@ -126,7 +126,10 @@ public:
      * UnBlockedPct is how much of the camera offset trace needs to be unlocked.
      */
     UFUNCTION()
-    virtual void FindGoodView(const FVector& Targetloc, bool bIsUpdate);
+    virtual void FindGoodView(const FVector& TargetLoc, bool bIsUpdate);
+    
+    UPROPERTY()
+    float LastGoalYaw;
     
     UFUNCTION(Client, Reliable)
     void ClientViewSpectatorPawn(FViewTargetTransitionParams TransitionParams);
