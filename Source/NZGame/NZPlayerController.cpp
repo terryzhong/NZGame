@@ -873,12 +873,58 @@ void ANZPlayerController::ClientViewSpectatorPawn_Implementation(FViewTargetTran
 
 void ANZPlayerController::ViewPlayerNum(int32 Index, uint8 TeamNum)
 {
-    
+    ANZGameState* GS = GetWorld()->GetGameState<ANZGameState>();
+    if (GS != NULL)
+    {
+        APlayerState** PlayerToView = NULL;
+        if ((TeamNum == 255) || !GS->Teams.IsValidIndex(TeamNum))
+        {
+            if (TeamNum == 0)
+            {
+                Index += 1;
+            }
+            else if (TeamNum == 1)
+            {
+                Index += 6;
+            }
+            int32 MaxSpectatingId = GS->GetMaxSpectatingId();
+            while ((Index <= MaxSpectatingId) && (PlayerToView == NULL))
+            {
+                PlayerToView = GS->PlayerArray.FindByPredicate([=](const APlayerState* TestItem) -> bool
+                {
+                    const ANZPlayerState* PS = Cast<ANZPlayerState>(TestItem);
+                    return (PS != NULL && PS->SpectatingID == Index);
+                });
+                Index += 5;
+            }
+        }
+        else
+        {
+            int32 MaxSpectatingId = GS->GetMaxTeamSpectatingId(TeamNum);
+            while ((Index <= MaxSpectatingId) && (PlayerToView == NULL))
+            {
+                PlayerToView = GS->PlayerArray.FindByPredicate([=](const APlayerState* TestItem)->bool
+                {
+                    const ANZPlayerState* PS = Cast<ANZPlayerState>(TestItem);
+                    return (PS != NULL && PS->SpectatingIDTeam == Index && PS->GetTeamNum() == TeamNum);
+                });
+                Index += 5;
+            }
+        }
+        if (PlayerToView != NULL)
+        {
+            bAutoCam = false;
+            BehindView(bSpectateBehindView);
+            ViewPlayerState(*PlayerToView);
+        }
+    }
 }
 
 void ANZPlayerController::ViewNextPlayer()
 {
-    
+    bAutoCam = false;
+    BehindView(bSpectateBehindView);
+    ServerViewNextPlayer();
 }
 
 void ANZPlayerController::ServerViewFlagHolder_Implementation(uint8 TeamIndex)
@@ -1089,6 +1135,7 @@ void ANZPlayerController::ClientNotifyTakeHit_Implementation(bool bFriendlyFire,
 
 void ANZPlayerController::ClientNotifyCausedHit_Implementation(APawn* HitPawn, uint8 Damage)
 {
+    // By default we only show HUD hitconfirms for hits that the player could conceivably see (i.e. target is in LOS)
     if (HitPawn != NULL && HitPawn->GetRootComponent() != NULL && GetPawn() != NULL && MyNZHUD != NULL)
     {
         float VictimLastRenderTime = -1.0f;
@@ -1104,8 +1151,7 @@ void ANZPlayerController::ClientNotifyCausedHit_Implementation(APawn* HitPawn, u
         }
         if (GetWorld()->TimeSeconds - VictimLastRenderTime < 0.15f)
         {
-            // todo:
-            //MyNZHUD->CausedDamage(HitPawn, Damage);
+            MyNZHUD->CausedDamage(HitPawn, Damage);
         }
     }
 }

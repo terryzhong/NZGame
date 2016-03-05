@@ -44,15 +44,19 @@ public:
     UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
     uint8 SpectatingID;
     
+    /** Version of SpectatingID that is unique only amongst this player's team instead of all players in the game */
 	UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
 	uint8 SpectatingIDTeam;
     
+    /** Player's team if we're playing a team game */
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = NotifyTeamChanged, Category = PlayerState)
     class ANZTeamInfo* Team;
     
+    /** Whether this player is waiting to enter match */
     UPROPERTY(BlueprintReadOnly, Replicated, Category = PlayerState)
     uint32 bWaitingPlayer : 1;
 
+    /** Whether this player has confirmed ready to play */
 	UPROPERTY(BlueprintReadWrite, Replicated, Category = PlayerState)
 	uint32 bReadyToPlay : 1;
 

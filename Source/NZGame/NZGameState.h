@@ -55,6 +55,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = GameState)
 	virtual bool IsMatchIntermission() const;
     
+    /** Return largest SpectatingId value in current PlayerArray */
+    virtual int32 GetMaxSpectatingId();
+    
+    /** Return largest SpectatingIdTeam value in current PlayerArray */
+    virtual int32 GetMaxTeamSpectatingId(int32 TeamNum);
+    
     /** 246
      Returns first active overlay material given the passed in flags */
     FOverlayEffect GetFirstOverlay(uint16 Flags, bool bFirstPerson);
