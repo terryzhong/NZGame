@@ -18,19 +18,19 @@ UNZCharacterMovementComponent::UNZCharacterMovementComponent()
 {
     MinTimeBetweenTimeStampResets = 10000.f;
     
-    MaxWalkSpeed = 940.f;
+    MaxWalkSpeed = 300.f;
     
-    SprintSpeed = 1230;
-    SprintAccel = 300;
+    SprintSpeed = 400;
+    SprintAccel = 100;
     SprintMaxWallNormal = -0.7f;
     AutoSprintDelayInterval = 2.f;
-    MaxWalkSpeedCrouched = 315.f;
+    MaxWalkSpeedCrouched = 150.f;
     SetWalkableFloorZ(0.695f);
-    MaxAcceleration = 5500.f;
+    MaxAcceleration = 1500.f;
     MaxFallingAcceleration = 4200.f;
-    MaxSwimmingAcceleration = 5500.f;
+    MaxSwimmingAcceleration = 1500.f;
     MaxRelativeSwimmingAccelNumerator = 0.f;
-    MaxRelativeSwimmingAccelDenominator = 1000.f;
+    MaxRelativeSwimmingAccelDenominator = 300.f;
     BrakingDecelerationFalling = 0.f;
     GroundFriction = 11.5f;
     BrakingFriction = 5.f;
@@ -38,7 +38,7 @@ UNZCharacterMovementComponent::UNZCharacterMovementComponent()
     MaxStepHeight = 40.f;
     CrouchedHalfHeight = 50.f;
     
-    MaxSwimSpeed = 1000.f;
+    MaxSwimSpeed = 300.f;
     //MaxWaterSpeed = 450.f;
     
     bIsSprinting = false;

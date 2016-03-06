@@ -13,7 +13,7 @@
 
 ANZGameMode::ANZGameMode()
 {
-	PlayerPawnObject = FStringAssetReference(TEXT("/Game/Characters/Nicholas/Nicholas.Nicholas_C"));
+	PlayerPawnObject = FStringAssetReference(TEXT("/Game/Characters/Default/NZCharacter_Default.NZCharacter_Default_C"));
 
     HUDClass = ANZHUD::StaticClass();
     

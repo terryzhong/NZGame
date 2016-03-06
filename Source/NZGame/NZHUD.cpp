@@ -582,12 +582,78 @@ FCrosshairInfo* ANZHUD::GetCrosshairInfo(ANZWeapon* Weapon)
 
 void ANZHUD::UpdateMinimapTexture(UCanvas* C, int32 Width, int32 Height)
 {
-
+/*    FBox LevelBox(0);
+    ANZRecastNavMesh* NavMesh = GetNZNavData(GetWorld());
+    if (NavMesh != NULL)
+    {
+        TMap<const UNZPathNode*, FNavMeshTriangleList> TriangleMap;
+        NavMesh->GetNodeTriangleMap(TriangleMap);
+        // Calculate a bounding box for the level
+        for (TMap<const UNZPathNode*, FNavMeshTriangleList>::TConstIterator It(TriangleMap); It; ++It)
+        {
+            const FNavMeshTriangleList& TriList = It.Value();
+            for (const FVector& Vert : TriList.Verts)
+            {
+                LevelBox += Vert;
+            }
+        }
+        if (LevelBox.IsValid)
+        {
+            LevelBox = LevelBox.ExpandBy(LevelBox.GetSize() * 0.01f);
+            CalcMinimapTransform(LevelBox, Width, Height);
+            for (TMap<const UNZPathNode*, FNavMeshTriangleList>::TConstIterator It(TriangleMap); It; ++It)
+            {
+                const FNavMeshTriangleList& TriList = It.Value();
+                
+                for (const FNavMeshTriangleList::FTriangle& Tri : TriList.Triangles)
+                {
+                    bool bInWater = false;
+                    FVector Verts[3] = { TriList.Verts[Tri.Indices[0]], TriList.Verts[Tri.Indices[1]], TriList.Verts[Tri.Indices[2]] };
+                    for (int32 i = 0; i < ARRAY_COUNT(Verts); i++)
+                    {
+                        UNZPathNode* Node = NavMesh->FindNearestNode(Verts[i], NavMesh->GetHumanPathSize().GetExtent());
+                        if (Node != NULL && Node->PhysicsVolume != NULL && Node->PhysicsVolume->bWaterVolume)
+                        {
+                            bInWater = true;
+                            break;
+                        }
+                        Verts[i] = MinimapTransform.TransformPosition(Verts[i]);
+                    }
+                    if (!bInWater)
+                    {
+                        FCanvasTriangleItem Item(FVector2D(Verts[0]), FVector2D(Verts[1]), FVector2D(Verts[2]), C->DefaultTexture->Resource);
+                        C->DrawItem(Item);
+                    }
+                }
+            }
+        }
+    }
+    if (!LevelBox.IsValid)
+    {
+        for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+        {
+            TArray<UPrimitiveComponent*> Components;
+            It->GetComponents(Components);
+            for (UPrimitiveComponent* Prim : Components)
+            {
+                if (Prim->IsCollisionEnabled())
+                {
+                    LevelBox += Prim->Bounds.GetBox();
+                }
+            }
+        }
+        LevelBox = LevelBox.ExpandBy(LevelBox.GetSize() * 0.01f);
+        CalcMinimapTransform(LevelBox, Width, Height);
+    }*/
 }
 
 void ANZHUD::CreateMinimapTexture()
 {
-
+    MinimapTexture = UCanvasRenderTarget2D::CreateCanvasRenderTarget2D(GetWorld(), UCanvasRenderTarget2D::StaticClass(), 1024, 1024);
+    MinimapTexture->ClearColor = FLinearColor::Black;
+    MinimapTexture->ClearColor.A = 0.f;
+    MinimapTexture->OnCanvasRenderTargetUpdate.AddDynamic(this, &ANZHUD::UpdateMinimapTexture);
+    MinimapTexture->UpdateResource();
 }
 
 void ANZHUD::DrawMinimap(const FColor& DrawColor, float MapSize, FVector2D DrawPos)
