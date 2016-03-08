@@ -55,7 +55,7 @@ struct FNZRadialDamageEvent : public FRadialDamageEvent
 /**
  * 
  */
-UCLASS()
+UCLASS(Blueprintable, NotPlaceable, Abstract)
 class NZGAME_API UNZDamageType : public UDamageType
 {
 	GENERATED_BODY()
