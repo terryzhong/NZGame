@@ -8,7 +8,7 @@
 /**
  * 
  */
-UCLASS(Blueprintable, NotPlaceable, Abstract)
+UCLASS()
 class NZGAME_API ANZAICharacter : public ANZCharacter
 {
 	GENERATED_BODY()
