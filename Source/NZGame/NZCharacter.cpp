@@ -21,6 +21,9 @@
 #include "Unrealnetwork.h"
 #include "NZGun.h"
 #include "ComponentReregisterContext.h"
+#include "AudioDevice.h"
+#include "NZWeaponStateFiring.h"
+#include "NZDamageType_Fell.h"
 
 
 // Sets default values
@@ -1159,6 +1162,170 @@ bool ANZCharacter::Died(AController* EventInstigator, const FDamageEvent& Damage
     }
 }
 
+void ANZCharacter::StartRagdoll()
+{
+    NZCharacterMovement->UnCrouch(true);
+    if (RootComponent == GetMesh() && GetMesh()->IsSimulatingPhysics())
+    {
+        // UnCrouch() caused death
+        return;
+    }
+
+    // todo: TacCom
+    
+    SetActorEnableCollision(true);
+    StopFiring();
+    DisallowWeaponFiring(true);
+    bInRagdollRecovery = false;
+    
+    if (!GetMesh()->ShouldTickPose())
+    {
+        GetMesh()->TickAnimation(0.f, false);
+        GetMesh()->RefreshBoneTransforms();
+        GetMesh()->UpdateComponentToWorld();
+    }
+    GetCharacterMovement()->ApplyAccumulatedForces(0.f);
+    GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    GetMesh()->SetAllBodiesNotifyRigidBodyCollision(true);
+    GetMesh()->UpdateKinematicBonesToAnim(GetMesh()->GetSpaceBases(), ETeleportType::TeleportPhysics, true);
+    GetMesh()->SetSimulatePhysics(true);
+    GetMesh()->RefreshBoneTransforms();
+    GetMesh()->SetAllBodiesPhysicsBlendWeight(1.f);
+    GetMesh()->DetachFromParent(true);
+    RootComponent = GetMesh();
+    GetMesh()->bGenerateOverlapEvents = true;
+    GetMesh()->bShouldUpdatePhysicsVolume = true;
+    GetMesh()->RegisterClothTick(true);
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    GetCapsuleComponent()->DetachFromParent(false);
+    GetCapsuleComponent()->AttachTo(GetMesh(), NAME_None, EAttachLocation::KeepWorldPosition);
+
+    if (bDeferredReplicatedMovement)
+    {
+        OnRep_ReplicatedMovement();
+        // OnRep_ReplicatedMovement() will only apply to the root body but in this case we want to apply to all bodies
+        if (GetMesh()->GetBodyInstance())
+        {
+            GetMesh()->SetAllPhysicsLinearVelocity(GetMesh()->GetBodyInstance()->GetUnrealWorldVelocity());
+        }
+        else
+        {
+            //UE_LOG(LogNZCharacter, Warning, TEXT("NZCharacter does not have a body instance!"));
+        }
+        bDeferredReplicatedMovement = false;
+    }
+    else
+    {
+        GetMesh()->SetAllPhysicsLinearVelocity(GetMovementComponent()->Velocity, false);
+    }
+    
+    GetCharacterMovement()->StopActiveMovement();
+    GetCharacterMovement()->Velocity = FVector::ZeroVector;
+    //bApplyWallSide = false;
+    
+    // Set up the custom physics override, if necessary
+    SetRagdollGravityScale(RagdollGravityScale);
+}
+
+void ANZCharacter::StopRagdoll()
+{
+    // Check for falling damage
+    if (!IsDead())
+    {
+        CheckRagdollFallingDamage(FHitResult(NULL, NULL, GetActorLocation(), FVector(0.f, 0.f, 1.f)));
+    }
+    
+    NZCharacterMovement->Velocity = GetMesh()->GetComponentVelocity();
+    
+    GetCapsuleComponent()->DetachFromParent(true);
+    FRotator FixedRotation = GetCapsuleComponent()->RelativeRotation;
+    FixedRotation.Pitch = FixedRotation.Roll = 0.f;
+    if (Controller != NULL)
+    {
+        // Always recover in the direction the controller is facing since turning is instant
+        FixedRotation.Yaw = Controller->GetControlRotation().Yaw;
+    }
+    GetCapsuleComponent()->SetRelativeRotation(FixedRotation);
+    GetCapsuleComponent()->SetRelativeScale3D(GetClass()->GetDefaultObject<ANZCharacter>()->GetCapsuleComponent()->RelativeScale3D);
+    if ((Role == ROLE_Authority) || IsLocallyControlled())
+    {
+        GetCapsuleComponent()->SetCapsuleSize(GetCapsuleComponent()->GetUnscaledCapsuleRadius(), GetCharacterMovement()->CrouchedHalfHeight);
+        bIsCrouched = true;
+    }
+    RootComponent = GetCapsuleComponent();
+    
+    GetMesh()->MeshComponentUpdateFlag = GetClass()->GetDefaultObject<ANZCharacter>()->GetMesh()->MeshComponentUpdateFlag;
+    GetMesh()->bBlendPhysics = false;   // For some reason bBlendPhysics == false is the value that actually blends instead of using only physics
+    GetMesh()->bGenerateOverlapEvents = false;
+    GetMesh()->bShouldUpdatePhysicsVolume = false;
+    GetMesh()->RegisterClothTick(false);
+    
+    // TODO: make sure cylinder is in valid position (navmesh?)
+    FVector AdjustedLoc = GetActorLocation() + FVector(0.f, 0.f, GetCharacterMovement()->CrouchedHalfHeight);
+    GetWorld()->FindTeleportSpot(this, AdjustedLoc, GetActorRotation());
+    GetCapsuleComponent()->SetWorldLocation(AdjustedLoc);
+    if (NZCharacterMovement)
+    {
+        NZCharacterMovement->NeedsClientAdjustment();
+    }
+    
+    // Terminate constraints on the root bone so we can move it without interference
+    for (int32 i = 0; i < GetMesh()->Constraints.Num(); i++)
+    {
+        if (GetMesh()->Constraints[i] != NULL && (GetMesh()->GetBoneIndex(GetMesh()->Constraints[i]->ConstraintBone1) == 0 || GetMesh()->GetBoneIndex(GetMesh()->Constraints[i]->ConstraintBone2) == 0))
+        {
+            GetMesh()->Constraints[i]->TermConstraint();
+        }
+    }
+    
+    // Move the root bone to where we put the capsule, then disable further physics
+    if (GetMesh()->Bodies.Num() > 0)
+    {
+        FBodyInstance* RootBody = GetMesh()->GetBodyInstance();
+        if (RootBody != NULL)
+        {
+            TArray<FTransform> BodyTransforms;
+            for (int32 i = 0; i < GetMesh()->Bodies.Num(); i++)
+            {
+                BodyTransforms.Add((GetMesh()->Bodies[i] != NULL) ? GetMesh()->Bodies[i]->GetUnrealWorldTransform() : FTransform::Identity);
+            }
+            
+            const USkeletalMeshComponent* DefaultMesh = GetClass()->GetDefaultObject<ANZCharacter>()->GetMesh();
+            FTransform RelativeTransform(DefaultMesh->RelativeRotation, DefaultMesh->RelativeLocation, DefaultMesh->RelativeScale3D);
+            GetMesh()->SetWorldTransform(RelativeTransform * GetCapsuleComponent()->GetComponentTransform());
+            
+            RootBody->SetBodyTransform(GetMesh()->GetComponentTransform(), ETeleportType::TeleportPhysics);
+            RootBody->PutInstanceToSleep();
+            RootBody->SetInstanceSimulatePhysics(false, true);
+            RootBody->PhysicsBlendWeight = 1.f; // Second parameter of SetInstanceSimulatePhysics() doesn't actually work at the moment...
+            for (int32 i = 0; i < GetMesh()->Bodies.Num(); i++)
+            {
+                if (GetMesh()->Bodies[i] != NULL && GetMesh()->Bodies[i] != RootBody)
+                {
+                    GetMesh()->Bodies[i]->SetBodyTransform(BodyTransforms[i], ETeleportType::TeleportPhysics);
+                    GetMesh()->Bodies[i]->PutInstanceToSleep();
+                }
+            }
+        }
+    }
+    
+    bInRagdollRecovery = true;
+    GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+}
+
+void ANZCharacter::SetRagdollGravityScale(float NewScale)
+{
+    for (FBodyInstance* Body : GetMesh()->Bodies)
+    {
+        if (Body != NULL)
+        {
+            Body->SetEnableGravity(NewScale != 0.f);
+        }
+    }
+    RagdollGravityScale = NewScale;
+}
+
 
 
 uint8 ANZCharacter::GetTeamNum() const
@@ -1285,6 +1452,34 @@ bool ANZCharacter::IsSpawnProtected()
     {
         ANZGameState* GameState = GetWorld()->GetGameState<ANZGameState>();
         return (GameState != NULL && GameState->SpawnProtectionTime > 0.0f && GetWorld()->TimeSeconds - CreationTime < GameState->SpawnProtectionTime);
+    }
+}
+
+void ANZCharacter::DisallowWeaponFiring(bool bDisallowed)
+{
+    if (bDisallowed != bDisallowWeaponFiring)
+    {
+        bDisallowWeaponFiring = bDisallowed;
+        if (bDisallowed && Weapon != NULL)
+        {
+            for (int32 i = 0; i < PendingFire.Num(); i++)
+            {
+                if (PendingFire[i])
+                {
+                    StopFire(i);
+                }
+            }
+            if (Weapon != NULL) // StopFire() could have killed us
+            {
+                for (UNZWeaponStateFiring* FiringState : Weapon->FiringState)
+                {
+                    if (FiringState != NULL)
+                    {
+                        FiringState->WeaponBecameInactive();
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1987,11 +2182,6 @@ void ANZCharacter::SetWalkMovementReduction(float InPct, float InDuration)
 }
 
 
-bool ANZCharacter::IsDead()
-{
-	return bTearOff || IsPendingKillPending();
-}
-
 void ANZCharacter::StartFire(uint8 FireModeNum)
 {
     //UE_LOG(LogNZCharacter, Verbose, TEXT("StartFire %d"), FireModeNum);
@@ -2069,7 +2259,98 @@ void ANZCharacter::SetAmbientSound(USoundBase* NewAmbientSound, bool bClear)
 
 void ANZCharacter::AmbientSoundUpdated()
 {
-    
+    if (AmbientSound == NULL)
+    {
+        if (AmbientSoundComp != NULL)
+        {
+            AmbientSoundComp->Stop();
+        }
+    }
+    else
+    {
+        if (AmbientSoundComp == NULL)
+        {
+            AmbientSoundComp = NewObject<UAudioComponent>(this);
+            AmbientSoundComp->bAutoDestroy = false;
+            AmbientSoundComp->bAutoActivate = false;
+            AmbientSoundComp->AttachTo(RootComponent);
+            AmbientSoundComp->RegisterComponent();
+        }
+        if (AmbientSoundComp->Sound != AmbientSound)
+        {
+            // Don't attenuate/spatialize sounds made by a local viewtarget
+            AmbientSoundComp->bAllowSpatialization = true;
+            
+            if (GEngine->GetMainAudioDevice() && !GEngine->GetMainAudioDevice()->IsHRTFEnabledForAll())
+            {
+                for (FLocalPlayerIterator It(GEngine, GetWorld()); It; ++It)
+                {
+                    if (It->PlayerController != NULL && It->PlayerController->GetViewTarget() == this)
+                    {
+                        AmbientSoundComp->bAllowSpatialization = false;
+                        break;
+                    }
+                }
+            }
+            
+            AmbientSoundComp->SetSound(AmbientSound);
+        }
+        if (!AmbientSoundComp->IsPlaying())
+        {
+            AmbientSoundComp->Play();
+        }
+    }
+}
+
+void ANZCharacter::SetLocalAmbientSound(USoundBase* NewAmbientSound, float SoundVolume, bool bClear)
+{
+    if (bClear)
+    {
+        if ((NewAmbientSound != NULL) && (NewAmbientSound == LocalAmbientSound))
+        {
+            LocalAmbientSound = NULL;
+            LocalAmbientSoundUpdated();
+        }
+    }
+    else
+    {
+        LocalAmbientSound = NewAmbientSound;
+        LocalAmbientSoundUpdated();
+        if (LocalAmbientSoundComp && LocalAmbientSound)
+        {
+            LocalAmbientSoundComp->SetVolumeMultiplier(SoundVolume);
+        }
+    }
+}
+
+void ANZCharacter::LocalAmbientSoundUpdated()
+{
+    if (LocalAmbientSound == NULL)
+    {
+        if (LocalAmbientSoundComp != NULL)
+        {
+            LocalAmbientSoundComp->Stop();
+        }
+    }
+    else
+    {
+        if (LocalAmbientSoundComp == NULL)
+        {
+            LocalAmbientSoundComp = NewObject<UAudioComponent>(this);
+            LocalAmbientSoundComp->bAutoDestroy = false;
+            LocalAmbientSoundComp->bAutoActivate = false;
+            LocalAmbientSoundComp->AttachTo(RootComponent);
+            LocalAmbientSoundComp->RegisterComponent();
+        }
+        if (LocalAmbientSoundComp->Sound != LocalAmbientSound)
+        {
+            LocalAmbientSoundComp->SetSound(LocalAmbientSound);
+        }
+        if (!LocalAmbientSoundComp->IsPlaying())
+        {
+            LocalAmbientSoundComp->Play();
+        }
+    }
 }
 
 void ANZCharacter::PlayLandedEffect_Implementation()
@@ -2192,6 +2473,36 @@ void ANZCharacter::PlayJump_Implementation(const FVector& JumpLocation, const FV
     
 }
 
+void ANZCharacter::TakeFallingDamage(const FHitResult& Hit, float FallingSpeed)
+{
+    if (Role == ROLE_Authority && NZCharacterMovement)
+    {
+        if (FallingSpeed < -1.f * MaxSafeFallSpeed && !HandleFallingDamage(FallingSpeed, Hit))
+        {
+            if (FeetAreInWater())
+            {
+                FallingSpeed += 100.f;
+            }
+            if (FallingSpeed < -1.f * MaxSafeFallSpeed)
+            {
+                float FallingDamage = -100.f * (FallingSpeed + MaxSafeFallSpeed) / MaxSafeFallSpeed;
+                FallingDamage -= NZCharacterMovement->FallingDamageReduction(FallingDamage, Hit);
+                if (FallingDamage >= 1.0f)
+                {
+                    FNZPointDamageEvent DamageEvent(FallingDamage, Hit, GetCharacterMovement()->Velocity.GetSafeNormal(), UNZDamageType_Fell::StaticClass());
+                    TakeDamage(DamageEvent.Damage, DamageEvent, Controller, this);
+                }
+            }
+        }
+    }
+}
+
+void ANZCharacter::Landed(const FHitResult& Hit)
+{
+    
+}
+
+
 
 bool ANZCharacter::FeetAreInWater() const
 {
@@ -2257,7 +2568,40 @@ void ANZCharacter::StopDriving(APawn* Vehicle)
 
 void ANZCharacter::PlayDying()
 {
+    TimeOfDeath = GetWorld()->TimeSeconds;
     
+    SetAmbientSound(NULL);
+    SetLocalAmbientSound(NULL);
+    
+    SpawnBloodDecal(GetActorLocation() - FVector(0.f, 0.f, GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()), FVector(0.f, 0.f, -1.f));
+    LastDeathDecalTime = GetWorld()->TimeSeconds;
+    
+    if (GetNetMode() != NM_DedicatedServer && (GetWorld()->TimeSeconds - GetLastRenderTime() < 3.f || IsLocallyViewed()))
+    {
+        TSubclassOf<UNZDamageType> NZDmg(*LastTakeHitInfo.DamageType);
+        
+        {
+            StartRagdoll();
+            
+            if (NZDmg != NULL)
+            {
+                NZDmg.GetDefaultObject()->PlayDeathEffects(this);
+            }
+            
+            // StartRagdoll() changes collision properties, which can potentially result in a new overlay -> more damage -> gib explosion -> Destroy()
+            // SetTimer() has a dumb assert if the target of the function is already destroyed, so we need to check it ourselves
+            if (!IsPendingKillPending())
+            {
+                FTimerHandle TempHandle;
+                GetWorldTimerManager().SetTimer(TempHandle, this, &ANZCharacter::DeathCleanupTimer, 15.f, false);
+            }
+        }
+    }
+    else
+    {
+        GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        SetLifeSpan(0.25f);
+    }
 }
 
 bool ANZCharacter::IsRecentlyDead()
@@ -2271,6 +2615,23 @@ void ANZCharacter::DeactivateSpawnProtection()
     // TODO: visual effect
 }
 
+bool ANZCharacter::IsDead()
+{
+    return bTearOff || IsPendingKillPending();
+}
+
+void ANZCharacter::DeathCleanupTimer()
+{
+    if (!IsLocallyViewed() && (bHidden || GetWorld()->TimeSeconds - GetLastRenderTime() > 0.5f || GetWorld()->TimeSeconds - TimeOfDeath > MaxDeathLifeSpan))
+    {
+        Destroy();
+    }
+    else
+    {
+        FTimerHandle TempHandle;
+        GetWorldTimerManager().SetTimer(TempHandle, this, &ANZCharacter::DeathCleanupTimer, 0.5f, false);
+    }
+}
 
 
 
@@ -2442,6 +2803,33 @@ void ANZCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
 	{
 		Weapon->WeaponCalcCamera(DeltaTime, OutResult.Location, OutResult.Rotation);
 	}
+}
+
+bool ANZCharacter::TeleportTo(const FVector& DestLocation, const FRotator& DestRotation, bool bIsATest, bool bNoCheck)
+{
+    return Super::TeleportTo(DestLocation, DestRotation, bIsATest, bNoCheck);
+}
+
+void ANZCharacter::CheckRagdollFallingDamage(const FHitResult& Hit)
+{
+    FVector MeshVelocity = GetMesh()->GetComponentVelocity();
+    // Physics numbers don't seem to match up... biasing towards more falling damage over less to minimize exploits
+    // Besides, faceplanting ought to hurt more than landing on your feet, right? :)
+    MeshVelocity.Z *= 2.0f;
+    if (MeshVelocity.Z < -1.f * MaxSafeFallSpeed)
+    {
+        FVector SavedVelocity = GetCharacterMovement()->Velocity;
+        GetCharacterMovement()->Velocity = MeshVelocity;
+        TakeFallingDamage(Hit, GetCharacterMovement()->Velocity.Z);
+        GetCharacterMovement()->Velocity = SavedVelocity;
+        // Clear Z velocity on the mesh so that this collision won't happen again unless there's a new fall
+        for (int32 i = 0; i < GetMesh()->Bodies.Num(); i++)
+        {
+            FVector Vel = GetMesh()->Bodies[i]->GetUnrealWorldVelocity();
+            Vel.Z = 0.f;
+            GetMesh()->Bodies[i]->SetLinearVelocity(Vel, false);
+        }
+    }
 }
 
 

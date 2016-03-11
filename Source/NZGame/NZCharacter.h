@@ -358,7 +358,22 @@ public:
     UPROPERTY(BlueprintAssignable)
     FCharacterDiedSignature OnDied;
     
+    virtual void StartRagdoll();
+    virtual void StopRagdoll();
+    
+protected:
+    UPROPERTY(BlueprintReadOnly, Category = Ragdoll)
+    float RagdollGravityScale;
+public:
+    inline float GetRagdollGravityScale() const
+    {
+        return RagdollGravityScale;
+    }
+    /** Sets gravity for the ragdoll (used by some death effects) */
+    UFUNCTION(BlueprintCallable, Category = Ragdoll)
+    virtual void SetRagdollGravityScale(float NewScale);
 
+    
     /** First person arm mesh */
     UPROPERTY(VisibleDefaultsOnly, Category = Mesh)
     class USkeletalMeshComponent* FirstPersonMesh;
@@ -396,6 +411,10 @@ public:
     UPROPERTY()
     float DefaultBaseEyeHeight;
     
+    /** Maximum amount of time Pawn stays around when dead even if visible (may be cleaned up earlier if not visible) */
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Death)
+    float MaxDeathLifeSpan;
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
     float DefaultCrouchedEyeHeight;
     
@@ -410,8 +429,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = Damage)
     bool IsSpawnProtected();
     
-    /** 712 */
+    /** 
+     * Set temporarily during client reception of replicated properties because replicated position and switches to ragdoll may be processed out of the desired order
+     * When set, OnRep_ReplicatedMovement() will be called after switching to ragdoll
+     */
     bool bDeferredReplicatedMovement;
+    
+
     
     
     UPROPERTY()
@@ -558,15 +582,22 @@ public:
             PendingFire[i] = 0;
         }
     }
-
+    
 protected:
-	UPROPERTY(BlueprintReadOnly, Category = Pawn)
-	bool bDisallowWeaponFiring;
+    UPROPERTY(BlueprintReadOnly, Category = Pawn)
+    bool bDisallowWeaponFiring;
 public:
-	inline bool IsFiringDisabled() const
-	{
-		return bDisallowWeaponFiring;
-	}
+    /**
+     * Allows disabling all weapon firing from this Pawn
+     * NOT replicated, must be called on both sides to work properly
+     */
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual void DisallowWeaponFiring(bool bDisallowed);
+    
+    inline bool IsFiringDisabled() const
+    {
+        return bDisallowWeaponFiring;
+    }
     
     inline ANZWeapon* GetWeapon() const
     {
@@ -654,7 +685,18 @@ public:
     virtual void FiringInfoReplicated();
     
     
-    
+    /** Returns true if any local PlayerController is viewing this Pawn */
+    bool IsLocallyViewed()
+    {
+        for (FLocalPlayerIterator It(GEngine, GetWorld()); It; ++It)
+        {
+            if (It->PlayerController != NULL && It->PlayerController->GetViewTarget() == this)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 
 
 
@@ -734,14 +776,49 @@ protected:
     UPROPERTY(BlueprintReadOnly, ReplicatedUsing = AmbientSoundUpdated, Category = Audio)
     USoundBase* AmbientSound;
     
+    UPROPERTY(BlueprintReadOnly, Category = Audio)
+    UAudioComponent* AmbientSoundComp;
+    
+    /** Ambient sound played only on owning client */
+    UPROPERTY(BlueprintReadOnly, Category = Audio)
+    USoundBase* LocalAmbientSound;
+    
+    /** Volume of Ambient sound played only on owning client */
+    UPROPERTY(BlueprintReadOnly, Category = Audio)
+    float LocalAmbientVolume;
+    
+    UPROPERTY(BlueprintReadOnly, Category = Audio)
+    UAudioComponent* LocalAmbientSoundComp;
+    
+    /** Status ambient sound played only on owning client */
+    UPROPERTY(BlueprintReadOnly, Category = Audio)
+    USoundBase* StatusAmbientSound;
+    
+    UPROPERTY(BlueprintReadOnly, Category = Audio)
+    UAudioComponent* StatusAmbientSoundComp;
+    
 public:
+    /** 
+     * Sets replicated ambient (looping) sound on this Pawn
+     * Only one ambient sound can be set at a time
+     * Pass bClear with a valid NewAmbientSound to remove only if NewAmbientSound == CurrentAmbientSound
+     */
     UFUNCTION(BlueprintCallable, Category = Audio)
     virtual void SetAmbientSound(USoundBase* NewAmbientSound, bool bClear = false);
     
     UFUNCTION()
     void AmbientSoundUpdated();
     
+    /**
+     * Sets local (not replicated) ambient (looping) sound on this Pawn
+     * Only one ambient sound can be set at a time
+     * Pass bClear with a valid NewAmbientSound to remove only if NewAmbientSound == CurrentAmbientSound
+     */
+    UFUNCTION(BlueprintCallable, Category = Audio)
+    virtual void SetLocalAmbientSound(USoundBase* NewAmbientSound, float SoundVolume = 0.f, bool bClear = false);
     
+    UFUNCTION()
+    void LocalAmbientSoundUpdated();
     
     
     UPROPERTY()
@@ -813,6 +890,31 @@ public:
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Sounds)
     USoundBase* WaterFootstepSound;
+    
+    // Falling
+    /** Landing at faster than this velocity results in damage (note: use positive number) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Falling Damage")
+    float MaxSafeFallSpeed;
+    
+    /** Amount of falling damage dealt if the player's fall speed is double MaxSafeFallSpeed (scaled linearly from there) */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Falling Damage")
+    float FallingDamageFactor;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    float CrushingDamageFactor;
+    
+    /** 
+     * Blueprint override for take falling damage.
+     * Return true to keep TakeFallingDamage() from causing damage.
+     * FallingSpeed is the Z velocity at landing, and Hit describes the impacted surface.
+     */
+    UFUNCTION(BlueprintImplementableEvent)
+    bool HandleFallingDamage(float FallingSpeed, const FHitResult& Hit);
+    
+    UFUNCTION(BlueprintCallable, Category = Pawn)
+    virtual void TakeFallingDamage(const FHitResult& Hit, float FallingSpeed);
+    
+    virtual void Landed(const FHitResult& Hit) override;
 
     // Swimming
     
@@ -902,6 +1004,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = Pawn)
     bool IsDead();
     
+protected:
+    /** Destroys dead character if no longer onscreen */
+    UFUNCTION()
+    void DeathCleanupTimer();
     
 protected:
     /** Set during ragdoll recovery (still blending out physics, playing recover anim, etc) */
@@ -1077,6 +1183,11 @@ public:
 	virtual FRotator GetPunchAngle();
 
 	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
+    
+    
+    virtual bool TeleportTo(const FVector& DestLocation, const FRotator& DestRotation, bool bIsATest = false, bool bNoCheck = false) override;
+    
+    virtual void CheckRagdollFallingDamage(const FHitResult& Hit);
 
 
     

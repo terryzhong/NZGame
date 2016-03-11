@@ -208,6 +208,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Wall Slide")
 	FVector WallSlideNormal;
 	
+    
+    UFUNCTION(BlueprintCallable, Category = "Damage")
+    virtual float FallingDamageReduction(float FallingDamage, const FHitResult& Hit);
+    
 
 	// Networking
 	virtual void SendClientAdjustment() override;

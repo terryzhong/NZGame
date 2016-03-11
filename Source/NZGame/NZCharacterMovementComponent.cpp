@@ -502,6 +502,15 @@ float UNZCharacterMovementComponent::GetMaxSpeed() const
 	}
 }
 
+float UNZCharacterMovementComponent::FallingDamageReduction(float FallingDamage, const FHitResult& Hit)
+{
+    if (Hit.ImpactNormal.Z < GetWalkableFloorZ())
+    {
+        return FallingDamage * Hit.ImpactNormal.Z;
+    }
+    return 0.f;
+}
+
 void UNZCharacterMovementComponent::SendClientAdjustment()
 {
 	if (!HasValidData())
