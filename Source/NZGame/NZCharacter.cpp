@@ -34,6 +34,7 @@ ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bStartWithTickEnabled = true;
 
     static ConstructorHelpers::FObjectFinder<UClass> DefaultCharacterContentRef(TEXT("Blueprint'/Game/Characters/Default/BP_NZCharacterContent_Default.BP_NZCharacterContent_Default_C'"));
     CharacterData = DefaultCharacterContentRef.Object;
@@ -76,9 +77,9 @@ ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
     //bDamageHurtsHealth = true;
     FireRateMultiplier = 1.0f;
     bSpawnProtectionEligible = true;
-    //MaxSafeFallSpeed = 2400.0f;
-    //FallingDamageFactor = 100.0f;
-    //CrushingDamageFactor = 2.0f;
+    MaxSafeFallSpeed = 2400.0f;
+    FallingDamageFactor = 100.0f;
+    CrushingDamageFactor = 2.0f;
     
     BobTime = 0.f;
     WeaponBobMagnitude = FVector(0.f, 0.8f, 0.4f);
@@ -92,6 +93,49 @@ ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
     EyeOffset = FVector(0.f, 0.f, 0.f);
     CrouchEyeOffset = EyeOffset;
     TargetEyeOffset = EyeOffset;
+    EyeOffsetInterpRate = FVector(18.f, 9.f, 9.f);
+    CrouchEyeOffsetInterpRate = 12.f;
+    EyeOffsetJumpBob = 20.f;
+    EyeOffsetLandBob = -110.f;
+    EyeOffsetLandBobThreshold = 300.f;
+    WeaponLandBobThreshold = 100.f;
+    FullWeaponLandBobVelZ = 900.f;
+    FullEyeOffsetLandBobVelZ = 750.f;
+    WeaponDirChangeDeflection = 4.f;
+    //RagdollBlendOutTime = 0.75f;
+    //bApplyWallSlide = false;
+    //RagdollCollisionBleedThreshold = 2000.f;
+    
+    MinPainSoundInterval = 0.35f;
+    LastPainSoundTime = -100.f;
+    
+    //SprintAmbientStartSpeed = 1000.f;
+    //FallingAmbientStartSpeed = -1300.f;
+    LandEffectSpeed = 500.f;
+    
+    NetCullDistanceSquared = 500000000.f;
+    
+    //OnActorBeginOverlap.AddDynamic(this, &ANZCharacter::OnOverlapBegin);
+    //GetMesh()->OnComponentHit.AddDynamic(this, &ANZCharacter::OnRagdollCollision);
+    GetMesh()->SetNotifyRigidBodyCollision(true);
+    
+    MaxSavedPositionAge = 0.3f;
+    MaxShotSynchDelay = 0.1f;
+    
+    MaxStackedArmor = 150;
+    MaxDeathLifeSpan = 30.f;
+    //MinWaterSoundInterval = 0.8f;
+    //LastWaterSoundTime = 0.f;
+    //DrowningDamagePerSecond = 2.f;
+    //bHeadIsUnderwater = false;
+    //LastBreathTime = 0.f;
+    //LastDrownTime = 0.f;
+    
+    //LowHealthAmbientThreshold = 40;
+    //MinOverlapToTelefrag = 25.f;
+    //bIsTranslocating = false;
+    LastTakeHitTime = -10000.f;
+    LastTakeHitReplicatedTime = -10000.f;
     
 }
 

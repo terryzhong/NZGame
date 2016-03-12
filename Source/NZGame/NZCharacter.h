@@ -408,15 +408,6 @@ public:
     /** Called when a PC viewing this character switches from behindview to first person or vice versa */
     virtual void BehindViewChange(APlayerController* PC, bool bNowBehindView);
     
-    UPROPERTY()
-    float DefaultBaseEyeHeight;
-    
-    /** Maximum amount of time Pawn stays around when dead even if visible (may be cleaned up earlier if not visible) */
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Death)
-    float MaxDeathLifeSpan;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
-    float DefaultCrouchedEyeHeight;
     
     /**
      * Whether spawn protection may potentially be applied (still must meet time since spawn check in NZGameMode)
@@ -475,6 +466,10 @@ public:
     /** Return true if there's a recent delayed shot */
     virtual bool DelayedShotFound();
     
+    
+    /** Limit to armor stacking */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn)
+    int32 MaxStackedArmor;
     
 	/** Returns current total armor amount */
 	UFUNCTION(BlueprintCallable, Category = Pawn)
@@ -1156,6 +1151,57 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
 	FVector CrouchEyeOffset;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera)
+    float DefaultCrouchedEyeHeight;
+    
+    
+    /** Target eye position offset from base view position */
+    UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
+    FVector TargetEyeOffset;
+    
+    /** How fast EyeOffset interpolates to TargetEyeOffset */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    FVector EyeOffsetInterpRate;
+    
+    /** How fast CrouchEyeOffset interpolates to 0 */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float CrouchEyeOffsetInterpRate;
+    
+    /** How fast TargetEyeOffset decays */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    FVector EyeOffsetDecayRate;
+    
+    /** Jump target view bob magnitude */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float EyeOffsetJumpBob;
+    
+    /** Jump Landing target view bob magnitude */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float EyeOffsetLandBob;
+    
+    /** Jump Landing target view bob velocity threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float EyeOffsetLandBobThreshold;
+    
+    /** Jump Landing target weapon bob velocity threshold */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float WeaponLandBobThreshold;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float FullWeaponLandBobVelZ;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = WeaponBob)
+    float FullEyeOffsetLandBobVelZ;
+    
+    /** Get max weapon land bob deflection at landing velocity Z of FullWeaponLandBobVelZ + WeaponLandBobThreshold */
+    UPROPERTY()
+    float DefaultBaseEyeHeight;
+    
+    /** Maximum amount of time Pawn stays around when dead even if visible (may be cleaned up earlier if not visible) */
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Death)
+    float MaxDeathLifeSpan;
+    
 
 	UFUNCTION(BlueprintCallable, Category = Weapon)
 	virtual float GetWeaponBobScaling();
@@ -1191,8 +1237,7 @@ public:
 
 
     
-    UPROPERTY(BlueprintReadWrite, Category = WeaponBob)
-    FVector TargetEyeOffset;
+    
     
     /** 1512
      Whether this pawn can obtain pickup items (NZPickup, NZDroppedPickup) */
