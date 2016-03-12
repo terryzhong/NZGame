@@ -20,6 +20,12 @@ public:
     UPROPERTY(BlueprintReadOnly, Category = GameState)
     TArray<ANZTeamInfo*> Teams;
     
+    /** If true, then we weapon pick ups to stay on their base */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = GameState)
+    uint32 bWeaponStay : 1;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = GameState)
+    uint32 bTeamGame : 1;
 	
 	
     /** 77

@@ -379,6 +379,24 @@ void ANZHUD::OpenMatchSummary()
     
 }
 
+FLinearColor ANZHUD::GetWidgetTeamColor()
+{
+    // Add code to cache and return the team color if it's a team game
+    ANZGameState* GS = GetWorld()->GetGameState<ANZGameState>();
+    if (GS == NULL || (GS->bTeamGame && NZPlayerOwner && NZPlayerOwner->GetViewTarget()))
+    {
+        APawn* HUDPawn = Cast<APawn>(NZPlayerOwner->GetViewTarget());
+        ANZPlayerState* PS = HUDPawn ? Cast<ANZPlayerState>(HUDPawn->PlayerState) : NULL;
+        if (PS != NULL)
+        {
+            return (PS->GetTeamNum() == 0) ? FLinearColor(0.15, 0.0, 0.0, 1.0) : FLinearColor(0.025, 0.025, 0.1, 1.0);
+        }
+    }
+    
+    return FLinearColor::Black;
+}
+
+
 void ANZHUD::BuildHudWidget(FString NewWidgetString)
 {
     if (NewWidgetString.Trim().Left(1) == TEXT("{"))
@@ -426,7 +444,7 @@ void ANZHUD::BuildHudWidget(FString NewWidgetString)
         }
         else
         {
-            //UE_LOG(NZ, Log, TEXT("Failed to parse JSON HudWidget entry: %s"), *NewWidgetString);
+            UE_LOG(NZ, Log, TEXT("Failed to parse JSON HudWidget entry: %s"), *NewWidgetString);
         }
     }
     else

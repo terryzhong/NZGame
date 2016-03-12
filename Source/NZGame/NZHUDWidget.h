@@ -54,6 +54,8 @@ class NZGAME_API UNZHUDWidget : public UObject
 	GENERATED_BODY()
 	
 public:
+    UNZHUDWidget();
+    
     virtual UWorld* GetWorld() const;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Widgets)

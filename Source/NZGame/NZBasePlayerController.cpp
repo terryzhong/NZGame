@@ -6,6 +6,7 @@
 #include "NZLocalPlayer.h"
 #include "NZHUD.h"
 #include "Engine/Console.h"
+#include "NZTeamInfo.h"
 
 
 
@@ -77,6 +78,12 @@ void ANZBasePlayerController::UpdateInputMode()
             }
         }
     }
+}
+
+uint8 ANZBasePlayerController::GetTeamNum() const
+{
+    ANZPlayerState* PS = Cast<ANZPlayerState>(PlayerState);
+    return (PS != NULL && PS->Team != NULL) ? PS->Team->TeamIndex : 255;
 }
 
 void ANZBasePlayerController::ClientRequireContentItemListBegin_Implementation(const FString& CloudId)

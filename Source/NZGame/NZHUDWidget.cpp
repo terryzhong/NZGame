@@ -175,6 +175,16 @@ void FNZCanvasTextItem::NZDrawStringInternal(class FCanvas* InCanvas, const FVec
 }
 
 
+UNZHUDWidget::UNZHUDWidget()
+{
+    bIgnoreHUDBaseColor = false;
+    Opacity = 1.f;
+    Origin = FVector2D(0.f, 0.f);
+    ScreenPosition = FVector2D(0.f, 0.f);
+    bScaleByDesignedResolution = true;
+    bMaintainAspectRatio = true;
+    DesignedResolution = 720;
+}
 
 UWorld* UNZHUDWidget::GetWorld() const
 {
@@ -485,27 +495,97 @@ void UNZHUDWidget::DrawMaterial(UMaterialInterface* Material, float X, float Y, 
 
 void UNZHUDWidget::DrawAllRenderObjects(float DeltaTime, FVector2D DrawOffset)
 {
-    
+    for (int32 i = 0; i < RenderObjectList.Num(); i++)
+    {
+        UStructProperty* Prop = RenderObjectList[i];
+        const FName CPPName = Prop->Struct->GetFName();
+        if (CPPName == ERenderObjectType::TextureObject)
+        {
+            // Get the object
+            FHUDRenderObject_Texture* PtrToTexture = RenderObjectList[i]->ContainerPtrToValuePtr<FHUDRenderObject_Texture>(this, 0);
+            if (PtrToTexture)
+            {
+                RenderObj_Texture(*PtrToTexture, DrawOffset);
+            }
+        }
+        else if (CPPName == ERenderObjectType::TextObject)
+        {
+            // Get the object
+            FHUDRenderObject_Text* PtrToText = RenderObjectList[i]->ContainerPtrToValuePtr<FHUDRenderObject_Text>(this, 0);
+            if (PtrToText)
+            {
+                RenderObj_Text(*PtrToText, DrawOffset);
+            }
+        }
+    }
 }
 
 void UNZHUDWidget::RenderObj_Texture(FHUDRenderObject_Texture& TextureObject, FVector2D DrawOffset)
 {
-    
+    FVector2D NewRenderSize = FVector2D(TextureObject.GetWidth(), TextureObject.GetHeight());
+    RenderObj_TextureAt(TextureObject, (TextureObject.Position.X + DrawOffset.X), (TextureObject.Position.Y + DrawOffset.Y), NewRenderSize.X, NewRenderSize.Y);
 }
 
 void UNZHUDWidget::RenderObj_TextureAt(FHUDRenderObject_Texture& TextureObject, float X, float Y, float Width, float Height)
 {
+    if (TextureObject.bHidden || TextureObject.Atlas == NULL || Width <= 0.f || Height <= 0.f)
+    {
+        return;
+    }
     
+    FLinearColor RenderColor = TextureObject.RenderColor;
+    if (TextureObject.bUseTeamColors && NZHUDOwner && NZHUDOwner->NZPlayerOwner)
+    {
+        if (NZGameState && NZGameState->bTeamGame)
+        {
+            uint8 TeamIndex = NZHUDOwner->NZPlayerOwner->GetTeamNum();
+            
+            // If spectating, get team of the viewed player
+            if (TeamIndex == 255)
+            {
+                ANZCharacter* ViewedNZC = Cast<ANZCharacter>(NZHUDOwner->NZPlayerOwner->GetViewTarget());
+                if (ViewedNZC != NULL)
+                {
+                    TeamIndex = ViewedNZC->GetTeamNum();
+                }
+            }
+            
+            if (TeamIndex < TextureObject.TeamColorOverrides.Num())
+            {
+                RenderColor = TextureObject.TeamColorOverrides[TeamIndex];
+            }
+            else
+            {
+                RenderColor = NZHUDOwner->GetWidgetTeamColor();
+            }
+        }
+    }
+    
+    float NewOpacity = NZHUDOwner->HUDWidgetOpacity * (TextureObject.bIsBorderElement ? NZHUDOwner->HUDWidgetBorderOpacity : 1.f) * (TextureObject.bIsSlateElement ? NZHUDOwner->HUDWidgetSlateOpacity : 1.f);
+    
+    DrawTexture(TextureObject.Atlas, X, Y, Width, Height, TextureObject.UVs.U, TextureObject.UVs.V, TextureObject.UVs.UL, TextureObject.UVs.VL,
+                TextureObject.RenderOpacity * NewOpacity, RenderColor, TextureObject.RenderOffset, TextureObject.Rotation, TextureObject.RotPivot);
 }
 
 FVector2D UNZHUDWidget::RenderObj_Text(FHUDRenderObject_Text& TextObject, FVector2D DrawOffset)
 {
-    return FVector2D(0, 0);
+    return RenderObj_TextAt(TextObject, TextObject.Position.X + DrawOffset.X, TextObject.Position.Y + DrawOffset.Y);
 }
 
 FVector2D UNZHUDWidget::RenderObj_TextAt(FHUDRenderObject_Text& TextObject, float X, float Y)
 {
-    return FVector2D(0, 0);
+    FText TextToRender = TextObject.Text;
+    if (TextObject.GetTextDelegate.IsBound())
+    {
+        TextToRender = TextObject.GetTextDelegate.Execute();
+    }
+    
+    if (TextObject.bHidden || TextToRender.IsEmpty() || TextObject.Font == NULL)
+    {
+        return FVector2D(0, 0);
+    }
+    
+    return DrawText(TextToRender, X, Y, TextObject.Font, TextObject.bDrawShadow, TextObject.ShadowDirection, TextObject.ShadowColor, TextObject.bDrawOutline, TextObject.OutlineColor, TextObject.TextScale, TextObject.RenderOpacity * NZHUDOwner->HUDWidgetOpacity, TextObject.RenderColor, TextObject.HorzPosition, TextObject.VertPosition);
 }
 
 float UNZHUDWidget::GetDrawScaleOverride()

@@ -43,6 +43,9 @@ public:
     TEnumAsByte<EInputMode::Type> InputMode;
 #endif
     
+    virtual uint8 GetTeamNum() const;
+    
+    
 
 	UFUNCTION(Client, Reliable)
 	virtual void ClientRequireContentItemListBegin(const FString& CloudId);

@@ -305,6 +305,10 @@ public:
 
 	UPROPERTY(globalconfig)
 	bool bUseWeaponColors;
+    
+    
+    /** Accessor for CachedTeamColor */
+    FLinearColor GetWidgetTeamColor();
 
 
 	int32 NumActualPlayers;
