@@ -497,12 +497,38 @@ FText ANZHUD::GetPlaceSuffix(int32 Value)
 
 void ANZHUD::DrawString(FText Text, float X, float Y, ETextHorzPos::Type HorzAlignment, ETextVertPos::Type VertAlignment, UFont* Font, FLinearColor Color, float Scale, bool bOutline)
 {
-
+    FVector2D RenderPos = FVector2D(X, Y);
+    
+    float XL, YL;
+    Canvas->TextSize(Font, Text.ToString(), XL, YL, Scale, Scale);
+    
+    if (HorzAlignment != ETextHorzPos::Left)
+    {
+        RenderPos.X -= (HorzAlignment == ETextHorzPos::Right ? XL : XL * 0.5f);
+    }
+    
+    if (VertAlignment != ETextVertPos::Top)
+    {
+        RenderPos.Y -= (VertAlignment == ETextVertPos::Bottom ? YL : YL * 0.5f);
+    }
+    
+    FCanvasTextItem TextItem(RenderPos, Text, Font, Color);
+    
+    if (bOutline)
+    {
+        TextItem.bOutlined = true;
+        TextItem.OutlineColor = FLinearColor::Black;
+    }
+    
+    TextItem.Scale = FVector2D(Scale, Scale);
+    Canvas->DrawItem(TextItem);
 }
 
 void ANZHUD::DrawNumber(int32 Number, float X, float Y, FLinearColor Color, float GlowOpacity, float Scale, int32 MinDigits, bool bRightAlign)
 {
-
+    FNumberFormattingOptions Opts;
+    Opts.MinimumIntegralDigits = MinDigits;
+    DrawString(FText::AsNumber(Number, &Opts), X, Y, bRightAlign ? ETextHorzPos::Right : ETextHorzPos::Left, ETextVertPos::Top, NumberFont, Color, Scale, true);
 }
 
 EInputMode::Type ANZHUD::GetInputMode_Implementation() const
@@ -676,7 +702,23 @@ void ANZHUD::CreateMinimapTexture()
 
 void ANZHUD::DrawMinimap(const FColor& DrawColor, float MapSize, FVector2D DrawPos)
 {
+    if (MinimapTexture == NULL)
+    {
+        CreateMinimapTexture();
+    }
 
+    FVector ScaleFactor(MapSize / MinimapTexture->GetSurfaceWidth(), MapSize / MinimapTexture->GetSurfaceHeight(), 1.f);
+    MapToScreen = FTranslationMatrix(FVector(DrawPos, 0.f) / ScaleFactor) * FScaleMatrix(ScaleFactor);
+    if (MinimapTexture != NULL)
+    {
+        Canvas->DrawColor = DrawColor;
+        Canvas->DrawTile(MinimapTexture, MapToScreen.GetOrigin().X, MapToScreen.GetOrigin().Y, MapSize, MapSize, 0.f, 0.f, MinimapTexture->GetSurfaceWidth(), MinimapTexture->GetSurfaceHeight());
+    }
+    
+    if (PlayerOwner && PlayerOwner->PlayerState && PlayerOwner->PlayerState->bOnlySpectator)
+    {
+        DrawMinimapSpectatorIcons();
+    }
 }
 
 void ANZHUD::DrawMinimapIcon(UTexture2D* Texture, FVector2D Pos, FVector2D DrawSize, FVector2D UV, FVector2D UVL, FLinearColor DrawColor, bool bDropShadow)
