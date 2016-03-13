@@ -132,12 +132,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_AttachmentType, Category = "Weapon")
     TSubclassOf<class ANZWeaponAttachment> AttachmentType;
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_Ammo, Category = "Weapon")
-    int32 Ammo;
-    
     UFUNCTION()
     virtual void OnRep_AttachmentType();
     
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_Ammo, Category = "Weapon")
+    int32 Ammo;
+
     /**
      * Handles weapon switch when out of ammo, etc
      * NOTE: called on server if owner is locally controlled, on client only when owner is remote
@@ -147,7 +147,19 @@ public:
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Weapon")
     int32 MaxAmmo;
-    
+
+	/**
+	 * Carried ammo
+	 */
+ 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_CarriedAmmo, Category = "Weapon")
+	int32 CarriedAmmo;
+
+	UFUNCTION()
+	virtual void OnRep_CarriedAmmo();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, Category = "Weapon")
+	int32 MaxCarriedAmmo;
+   
     /** Ammo cost for one shot of each fire mode */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<int32> AmmoCost;

@@ -148,6 +148,11 @@ void ANZWeapon::OnRep_Ammo()
     }
 }
 
+void ANZWeapon::OnRep_CarriedAmmo()
+{
+
+}
+
 float ANZWeapon::GetImpartedMomentumMag(AActor* HitActor)
 {
     ANZGameState* GameState = GetWorld()->GetGameState<ANZGameState>();
