@@ -102,9 +102,11 @@ ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
     FullWeaponLandBobVelZ = 900.f;
     FullEyeOffsetLandBobVelZ = 750.f;
     WeaponDirChangeDeflection = 4.f;
-    //RagdollBlendOutTime = 0.75f;
+    RagdollBlendOutTime = 0.75f;
     //bApplyWallSlide = false;
-    //RagdollCollisionBleedThreshold = 2000.f;
+    bCanPickupItems = true;
+    RagdollGravityScale = 1.f;
+    RagdollCollisionBleedThreshold = 2000.f;
     
     MinPainSoundInterval = 0.35f;
     LastPainSoundTime = -100.f;
@@ -116,7 +118,7 @@ ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
     NetCullDistanceSquared = 500000000.f;
     
     //OnActorBeginOverlap.AddDynamic(this, &ANZCharacter::OnOverlapBegin);
-    //GetMesh()->OnComponentHit.AddDynamic(this, &ANZCharacter::OnRagdollCollision);
+    GetMesh()->OnComponentHit.AddDynamic(this, &ANZCharacter::OnRagdollCollision);
     GetMesh()->SetNotifyRigidBodyCollision(true);
     
     MaxSavedPositionAge = 0.3f;
@@ -195,17 +197,90 @@ void ANZCharacter::Tick( float DeltaTime )
     }
 
 	// todo:
-
-	if (GetWeapon())
-	{
-		GetWeapon()->UpdateViewBob(DeltaTime);
-	}
-	else
-	{
-		GetWeaponBobOffset(DeltaTime, NULL);
-	}
-
-
+    
+    // todo: tick ragdoll recovery
+    
+    // Update eyeoffset
+    if (GetCharacterMovement()->MovementMode == MOVE_Walking && !MovementBaseUtility::UseRelativeLocation(BasedMovement.MovementBase))
+    {
+        // Smooth up/down stairs
+        if (GetCharacterMovement()->bJustTeleported && (FMath::Abs(OldZ - GetActorLocation().Z) > GetCharacterMovement()->MaxStepHeight))
+        {
+            EyeOffset.Z = 0.f;
+        }
+        else
+        {
+            EyeOffset.Z += (OldZ - GetActorLocation().Z);
+        }
+        
+        // Avoid clipping
+        if (CrouchEyeOffset.Z + EyeOffset.Z > GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - BaseEyeHeight - 12.f)
+        {
+            if (!GetLocalViewer())
+            {
+                CrouchEyeOffset.Z = 0.f;
+                EyeOffset.Z = FMath::Min(EyeOffset.Z, GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - BaseEyeHeight);
+            }
+            else
+            {
+                // Trace and see if camera will clip
+                static FName CameraClipTrace = FName(TEXT("CameraClipTrace"));
+                FCollisionQueryParams Params(CameraClipTrace, false, this);
+                FHitResult Hit;
+                if (GetWorld()->SweepSingleByChannel(Hit, GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight), GetActorLocation() + FVector(0.f, 0.f, BaseEyeHeight) + CrouchEyeOffset + GetTransformedEyeOffset(), FQuat::Identity, ECC_Visibility, FCollisionShape::MakeSphere(12.f), Params))
+                {
+                    EyeOffset.Z = Hit.Location.Z - BaseEyeHeight - GetActorLocation().Z - CrouchEyeOffset.Z;
+                }
+            }
+        }
+        else
+        {
+            EyeOffset.Z = FMath::Max(EyeOffset.Z, 12.f - BaseEyeHeight - GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - CrouchEyeOffset.Z);
+        }
+    }
+    OldZ = GetActorLocation().Z;
+    
+    // Clamp transformed offset z contribution
+    FRotationMatrix ViewRotMatrix = FRotationMatrix(GetViewRotation());
+    FVector XTransform = ViewRotMatrix.GetScaledAxis(EAxis::X) * EyeOffset.X;
+    if ((XTransform.Z > 0.f) && (XTransform.Z + EyeOffset.Z + BaseEyeHeight + CrouchEyeOffset.Z > GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - 12.f))
+    {
+        float MaxZ = FMath::Max(0.f, GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - 12.f - EyeOffset.Z - BaseEyeHeight - CrouchEyeOffset.Z);
+        EyeOffset.X *= MaxZ / XTransform.Z;
+    }
+    
+    // Decay offset
+    float InterpTimeX = FMath::Min(1.f, EyeOffsetInterpRate.X * DeltaTime);
+    float InterpTimeY = FMath::Min(1.f, EyeOffsetInterpRate.Y * DeltaTime);
+    float InterpTimeZ = FMath::Min(1.f, EyeOffsetInterpRate.Z * DeltaTime);
+    EyeOffset.X = (1.f - InterpTimeX) * EyeOffset.X + InterpTimeX * TargetEyeOffset.X;
+    EyeOffset.Y = (1.f - InterpTimeY) * EyeOffset.Y + InterpTimeY * TargetEyeOffset.Y;
+    EyeOffset.Z = (1.f - InterpTimeZ) * EyeOffset.Z + InterpTimeZ * TargetEyeOffset.Z;
+    float CrouchInterpTime = FMath::Min(1.f, CrouchEyeOffsetInterpRate * DeltaTime);
+    CrouchEyeOffset = (1.f - CrouchInterpTime) * CrouchEyeOffset;
+    if (EyeOffset.Z > 0.f)
+    {
+        // Faster decay if positive
+        EyeOffset.Z = (1.f - InterpTimeZ) * EyeOffset.Z + InterpTimeZ * TargetEyeOffset.Z;
+    }
+    EyeOffset.DiagnosticCheckNaN();
+    TargetEyeOffset.X *= FMath::Max(0.f, 1.f - FMath::Min(1.f, EyeOffsetDecayRate.X * DeltaTime));
+    TargetEyeOffset.Y *= FMath::Max(0.f, 1.f - FMath::Min(1.f, EyeOffsetDecayRate.Y * DeltaTime));
+    TargetEyeOffset.Z *= FMath::Max(0.f, 1.f - FMath::Min(1.f, EyeOffsetDecayRate.Z * DeltaTime));
+    TargetEyeOffset.DiagnosticCheckNaN();
+    
+    if (GetWeapon())
+    {
+        GetWeapon()->UpdateViewBob(DeltaTime);
+    }
+    else
+    {
+        GetWeaponBobOffset(DeltaTime, NULL);
+    }
+    
+    // todo: ambient sound
+    
+    // todo: water
 }
 
 // Called to bind functionality to input
@@ -2854,6 +2929,11 @@ bool ANZCharacter::TeleportTo(const FVector& DestLocation, const FRotator& DestR
     return Super::TeleportTo(DestLocation, DestRotation, bIsATest, bNoCheck);
 }
 
+void ANZCharacter::OnOverlapBegin(AActor* OtherActor)
+{
+
+}
+
 void ANZCharacter::CheckRagdollFallingDamage(const FHitResult& Hit)
 {
     FVector MeshVelocity = GetMesh()->GetComponentVelocity();
@@ -2876,6 +2956,26 @@ void ANZCharacter::CheckRagdollFallingDamage(const FHitResult& Hit)
     }
 }
 
+void ANZCharacter::OnRagdollCollision(AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+    if (IsDead())
+    {
+        if (NormalImpulse.SizeSquared() > RagdollCollisionBleedThreshold * RagdollCollisionBleedThreshold)
+        {
+            // Maybe spawn blood as the ragdoll smacks into things
+            if (OtherComp != NULL && OtherActor != this && GetWorld()->TimeSeconds - LastDeathDecalTime > 0.25f && GetWorld()->TimeSeconds - GetLastRenderTime() < 1.f)
+            {
+                SpawnBloodDecal(GetActorLocation(), -Hit.Normal);
+                LastDeathDecalTime = GetWorld()->TimeSeconds;
+            }
+        }
+    }
+    // Cause falling damage on Z axis collisions
+    else if (!bInRagdollRecovery)
+    {
+        CheckRagdollFallingDamage(Hit);
+    }
+}
 
 
 ANZPlayerController* ANZCharacter::GetLocalViewer()

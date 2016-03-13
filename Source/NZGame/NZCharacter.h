@@ -337,6 +337,9 @@ public:
     /** Last time ragdolling corpse spawned a blood decal */
     UPROPERTY(BlueprintReadWrite, Category = Effects)
     float LastDeathDecalTime;
+    
+    UPROPERTY(BlueprintReadWrite, Category = Effects)
+    float RagdollCollisionBleedThreshold;
 
     UFUNCTION(BlueprintNativeEvent, BlueprintCosmetic)
     void PlayTakeHitEffects();
@@ -357,6 +360,10 @@ public:
     
     UPROPERTY(BlueprintAssignable)
     FCharacterDiedSignature OnDied;
+    
+    /** Time between StopRagdoll() call and when physics has been fully blended out of our mesh */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
+    float RagdollBlendOutTime;
     
     virtual void StartRagdoll();
     virtual void StopRagdoll();
@@ -1233,8 +1240,13 @@ public:
     
     virtual bool TeleportTo(const FVector& DestLocation, const FRotator& DestRotation, bool bIsATest = false, bool bNoCheck = false) override;
     
+    UFUNCTION()
+    virtual void OnOverlapBegin(AActor* OtherActor);
+    
     virtual void CheckRagdollFallingDamage(const FHitResult& Hit);
 
+    UFUNCTION()
+    virtual void OnRagdollCollision(AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 
     
     
