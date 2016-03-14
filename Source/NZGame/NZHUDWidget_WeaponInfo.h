@@ -22,30 +22,18 @@ public:
     
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RenderObject)
-    FHUDRenderObject_Texture BackgroundSlate;
+    FHUDRenderObject_Texture BackgroundTexture;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RenderObject)
-    FHUDRenderObject_Texture BackgroundBorder;
+    FHUDRenderObject_Texture WeaponTexture;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RenderObject)
     FHUDRenderObject_Text AmmoText;
     
     UFUNCTION(BlueprintNativeEvent, Category = RenderObject)
-    FText GetAmmoAmount();
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RenderObject)
-    float AmmoFlashTime;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RenderObject)
-    FLinearColor AmmoFlashColor;
-    
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = RenderObject)
-    FLinearColor WeaponChangeFlashColor;
-    
+    FText GetAmmoText();
+        
 private:
-    float FlashTimer;
-    int32 LastAmmoAmount;
-    
-    UPROPERTY()
-    ANZWeapon* LastWeapon;
+    int32 Ammo;
+    int32 CarriedAmmo;
 };
