@@ -17,7 +17,7 @@ public:
     ANZBaseGameMode();
     
 protected:
-    UPROPERTY()
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Classes)
     TAssetSubclassOf<APawn> PlayerPawnObject;
     
     /** Handle for efficient management of DefaultTimer timer */
