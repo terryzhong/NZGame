@@ -373,7 +373,6 @@ void ANZPlayerController::UpdateHiddenComponents(const FVector& ViewLocation, TS
     
     // todo:
     
-    
     // Hide all components that shouldn't be shown in the current 1P/3P state
     // with bOwnerNoSee/bOnlyOwnerSee not being propagated to children this method is much easier to maintain
     // although slightly less efficient
@@ -415,11 +414,12 @@ void ANZPlayerController::UpdateHiddenComponents(const FVector& ViewLocation, TS
                 }
             }
         }
-        else if (P->GetWeapon() == NULL || P->GetWeapon()->HandsAttachSocket == NAME_None)
-        {
-            // Weapon doesn't use hands
-            HiddenComponents.Add(P->FirstPersonMesh->ComponentId);
-        }
+        // terryzhong@2016.3.18: Always show hands
+        //else if (P->GetWeapon() == NULL || P->GetWeapon()->HandsAttachSocket == NAME_None)
+        //{
+        //    // Weapon doesn't use hands
+        //    HiddenComponents.Add(P->FirstPersonMesh->ComponentId);
+        //}
         
         // Hide third person character model
         HideComponentTree(P->GetMesh(), HiddenComponents);

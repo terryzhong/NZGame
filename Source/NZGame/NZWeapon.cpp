@@ -335,6 +335,7 @@ void ANZWeapon::DeactivateSpawnProtection()
 
 void ANZWeapon::UpdateViewBob(float DeltaTime)
 {
+    return;
     ANZPlayerController* MyPC = NZOwner ? NZOwner->GetLocalViewer() : NULL;
     if (MyPC != NULL && Mesh != NULL && NZOwner->GetWeapon() == this && ShouldPlay1PVisuals())
     {
@@ -1861,7 +1862,7 @@ void ANZWeapon::UpdateWeaponHand()
         Mesh->AttachSocketName = HandsAttachSocket;
         if (HandsAttachSocket == NAME_None)
         {
-            NZOwner->FirstPersonMesh->SetRelativeTransform(FTransform::Identity);
+            //NZOwner->FirstPersonMesh->SetRelativeTransform(FTransform::Identity);
         }
         else
         {
