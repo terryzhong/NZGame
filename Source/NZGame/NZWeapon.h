@@ -720,6 +720,13 @@ public:
         return CurrentFireMode;
     }
     
+    /** Idle anims */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+    UAnimMontage* IdleAnim;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+    UAnimMontage* IdleAnimHands;
+
     inline void GotoActiveState()
     {
         GotoState(ActiveState);

@@ -20,6 +20,8 @@ void UNZWeaponStateActive::BeginState(const UNZWeaponState* PrevState)
 			}
 		}
 	}
+    
+    GetOuterANZWeapon()->PlayWeaponAnim(GetOuterANZWeapon()->IdleAnim, GetOuterANZWeapon()->IdleAnimHands, 1.0);
 }
 
 bool UNZWeaponStateActive::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)

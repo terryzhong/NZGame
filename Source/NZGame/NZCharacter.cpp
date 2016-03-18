@@ -200,7 +200,7 @@ void ANZCharacter::Tick( float DeltaTime )
     
     // todo: tick ragdoll recovery
     
-    // Update eyeoffset
+/*    // Update eyeoffset
     if (GetCharacterMovement()->MovementMode == MOVE_Walking && !MovementBaseUtility::UseRelativeLocation(BasedMovement.MovementBase))
     {
         // Smooth up/down stairs
@@ -268,6 +268,7 @@ void ANZCharacter::Tick( float DeltaTime )
     TargetEyeOffset.Y *= FMath::Max(0.f, 1.f - FMath::Min(1.f, EyeOffsetDecayRate.Y * DeltaTime));
     TargetEyeOffset.Z *= FMath::Max(0.f, 1.f - FMath::Min(1.f, EyeOffsetDecayRate.Z * DeltaTime));
     TargetEyeOffset.DiagnosticCheckNaN();
+*/
     
     if (GetWeapon())
     {
