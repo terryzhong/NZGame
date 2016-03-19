@@ -69,7 +69,8 @@ ANZWeapon::ANZWeapon()
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
 	Mesh->SetOnlyOwnerSee(true);
 	Mesh->AttachParent = RootComponent;
-	Mesh->bSelfShadowOnly = true;
+    Mesh->bCastInsetShadow = true;
+	//Mesh->bSelfShadowOnly = true;
 	Mesh->bReceivesDecals = false;
 	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
 	FirstPMeshOffset = FVector(0.f);

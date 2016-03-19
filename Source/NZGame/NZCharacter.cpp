@@ -56,10 +56,11 @@ ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
     FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
     FirstPersonMesh->SetOnlyOwnerSee(true);
     FirstPersonMesh->AttachParent = CharacterCameraComponent;
-    FirstPersonMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
-    FirstPersonMesh->bCastDynamicShadow = false;
-    FirstPersonMesh->CastShadow = false;
+    FirstPersonMesh->bCastInsetShadow = true;
+    //FirstPersonMesh->bCastDynamicShadow = false;
+    //FirstPersonMesh->CastShadow = false;
     FirstPersonMesh->bReceivesDecals = false;
+    FirstPersonMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
     FirstPersonMesh->PrimaryComponentTick.AddPrerequisite(this, PrimaryActorTick);
 
     GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
