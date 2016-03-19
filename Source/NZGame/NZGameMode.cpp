@@ -23,6 +23,7 @@ ANZGameMode::ANZGameMode()
     PlayerControllerClass = ANZPlayerController::StaticClass();
     
     bDelayedStart = true;
+    bAmmoIsLimited = true;
 }
 
 void ANZGameMode::InitGameState()

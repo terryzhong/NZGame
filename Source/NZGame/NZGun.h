@@ -21,9 +21,6 @@ public:
     /** Change clip */
     UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
     UNZWeaponState* ChangeClipState;
-
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun")
-    int32 ClipAmmoCount;
 	
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gun")
     float ChangeClipTime;

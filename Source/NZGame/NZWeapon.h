@@ -135,7 +135,7 @@ public:
     UFUNCTION()
     virtual void OnRep_AttachmentType();
     
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_Ammo, Category = "Weapon")
+    UPROPERTY(EditAnywhere, Replicated, ReplicatedUsing = OnRep_Ammo)
     int32 Ammo;
 
     /**
@@ -151,7 +151,7 @@ public:
 	/**
 	 * Carried ammo
 	 */
- 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_CarriedAmmo, Category = "Weapon")
+ 	UPROPERTY(EditAnywhere, Replicated, ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo;
 
 	UFUNCTION()

@@ -217,9 +217,9 @@ void UNZGunViewKickComponent::FireShot()
     if (Gun != NULL)
     {
         FireCount++;
-        if (FireCount >= Gun->GetClass()->GetDefaultObject<ANZGun>()->Ammo)
+        if (FireCount >= Gun->GetClass()->GetDefaultObject<ANZGun>()->MaxAmmo)
         {
-            FireCount = Gun->GetClass()->GetDefaultObject<ANZGun>()->Ammo;
+            FireCount = Gun->GetClass()->GetDefaultObject<ANZGun>()->MaxAmmo;
         }
         
         if (FireCount <= FireCounterInterval[2])
@@ -298,18 +298,28 @@ void UNZGunViewKickComponent::KickBackTheView()
     DeltaPitchParam = CurrentDetailReactPitchShot * (RecordReactParam + 0.1500000059604645) * -1.0f;
     DeltaYawParam = CurrentDetailReactYawShot * (RecordReactParam + 0.1500000059604645) * -1.0f * AdjustDeltaYawDirection;
     
-    for (int i = 1; i < SideReactDirectSectionNum; i++)
+    if (FireCount - 1 > SideReactDirectSection[SideReactDirectSectionNum - 1])
     {
-        if (FireCount - 1 <= SideReactDirectSection[i])
+        for (int j = 0; j < SideReactDirectOneSectionNum; j++)
         {
-            for (int j = 0; j < SideReactDirectOneSectionNum; j++)
-            {
-                CurrentSideReactDirect.Add(SideReactDirect[i * SideReactDirectOneSectionNum + j]);
-            }
-            break;
+            CurrentSideReactDirect.Add(SideReactDirect[(SideReactDirectSectionNum - 1) * SideReactDirectOneSectionNum + j]);
         }
     }
-    
+    else
+    {
+        for (int i = 1; i < SideReactDirectSectionNum; i++)
+        {
+            if (FireCount - 1 <= SideReactDirectSection[i])
+            {
+                for (int j = 0; j < SideReactDirectOneSectionNum; j++)
+                {
+                    CurrentSideReactDirect.Add(SideReactDirect[i * SideReactDirectOneSectionNum + j]);
+                }
+                break;
+            }
+        }
+    }
+
     if (SideReactDirect[SideReactDirectOneSectionNum + 1] == 0)
     {
         DeltaYawParam = DeltaYawParam * (2 * int32(FMath::FRand() * 2.f) - 1);
@@ -559,27 +569,47 @@ void UNZGunViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc, FR
             }
         }
         
-        for (int i = 0; i < ShotReactYawSectionNum; i++)
+        if (FireCount > ShotReactYawSection[ShotReactYawSectionNum - 1])
         {
-            if (FireCount <= ShotReactYawSection[i])
+            for (int j = 0; j < ShotReactYawOneSectionNum; j++)
             {
-                for (int j = 0; j < ShotReactYawOneSectionNum; j++)
+                CurrentShotReactYaw.Add(ShotReactYaw[(ShotReactYawSectionNum - 1) * ShotReactYawOneSectionNum + j]);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < ShotReactYawSectionNum; i++)
+            {
+                if (FireCount <= ShotReactYawSection[i])
                 {
-                    CurrentShotReactYaw.Add(ShotReactYaw[i * ShotReactYawOneSectionNum + j]);
+                    for (int j = 0; j < ShotReactYawOneSectionNum; j++)
+                    {
+                        CurrentShotReactYaw.Add(ShotReactYaw[i * ShotReactYawOneSectionNum + j]);
+                    }
+                    break;
                 }
-                break;
             }
         }
         
-        for (int i = 0; i < ShotReactPitchSectionNum; i++)
+        if (FireCount > ShotReactPitchSection[ShotReactPitchSectionNum - 1])
         {
-            if (FireCount <= ShotReactPitchSection[i])
+            for (int j = 0; j < ShotReactPitchOneSectionNum; j++)
             {
-                for (int j = 0; j < ShotReactPitchOneSectionNum; j++)
+                CurrentShotReactPitch.Add(ShotReactPitch[(ShotReactPitchSectionNum - 1) * ShotReactPitchOneSectionNum + j]);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < ShotReactPitchSectionNum; i++)
+            {
+                if (FireCount <= ShotReactPitchSection[i])
                 {
-                    CurrentShotReactPitch.Add(ShotReactPitch[i * ShotReactPitchOneSectionNum + j]);
+                    for (int j = 0; j < ShotReactPitchOneSectionNum; j++)
+                    {
+                        CurrentShotReactPitch.Add(ShotReactPitch[i * ShotReactPitchOneSectionNum + j]);
+                    }
+                    break;
                 }
-                break;
             }
         }
         
@@ -758,16 +788,24 @@ void UNZGunViewKickComponent::CalcCamera(float DeltaTime, FVector& OutCamLoc, FR
         }
     }
     
-    for (int i = 0; i < CameraYawAndPitchSectionNum; i++)
+    if (FireCount > CameraYawAndPitchSection[CameraYawAndPitchSectionNum - 1])
     {
-        if (FireCount <= CameraYawAndPitchSection[i])
+        CurrentYawAndPitchPitchFactor = CameraYawAndPitch[(CameraYawAndPitchSectionNum - 1) * CameraYawAndPitchOneSectionNum + 1];
+        CurrentYawAndPitchYawFactor = CameraYawAndPitch[(CameraYawAndPitchSectionNum - 1) * CameraYawAndPitchOneSectionNum];
+    }
+    else
+    {
+        for (int i = 0; i < CameraYawAndPitchSectionNum; i++)
         {
-            for (int j = 0; j < CameraYawAndPitchOneSectionNum; j++)
+            if (FireCount <= CameraYawAndPitchSection[i])
             {
-                CurrentYawAndPitchPitchFactor = CameraYawAndPitch[i * CameraYawAndPitchOneSectionNum + 1];
-                CurrentYawAndPitchYawFactor = CameraYawAndPitch[i * CameraYawAndPitchOneSectionNum];
+                //for (int j = 0; j < CameraYawAndPitchOneSectionNum; j++)
+                //{
+                    CurrentYawAndPitchPitchFactor = CameraYawAndPitch[i * CameraYawAndPitchOneSectionNum + 1];
+                    CurrentYawAndPitchYawFactor = CameraYawAndPitch[i * CameraYawAndPitchOneSectionNum];
+                //}
+                break;
             }
-            break;
         }
     }
     

@@ -39,8 +39,8 @@ ANZWeapon::ANZWeapon()
     bWeaponStay = true;
     bCanThrowWeapon = true;
     
-    Ammo = 20;
-    MaxAmmo = 50;
+    MaxAmmo = 30;
+    MaxCarriedAmmo = 60;
     
     Group = -1;
     BringUpTime = 0.37f;
@@ -433,6 +433,9 @@ void ANZWeapon::BeginPlay()
     }
     
     checkSlow(CurrentState != NULL);
+    
+    Ammo = MaxAmmo;
+    CarriedAmmo = MaxCarriedAmmo;
 }
 
 UMeshComponent* ANZWeapon::GetPickupMeshTemplate_Implementation(FVector& OverrideScale) const

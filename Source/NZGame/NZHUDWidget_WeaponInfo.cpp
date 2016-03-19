@@ -45,6 +45,6 @@ void UNZHUDWidget_WeaponInfo::InitializeWidget(ANZHUD* Hud)
 
 FText UNZHUDWidget_WeaponInfo::GetAmmoText_Implementation()
 {
-    FString AmmoString = FString::Printf(TEXT("%d/%d"), Ammo, Ammo);
+    FString AmmoString = FString::Printf(TEXT("%d/%d"), Ammo, CarriedAmmo);
     return FText::FromString(AmmoString);
 }
