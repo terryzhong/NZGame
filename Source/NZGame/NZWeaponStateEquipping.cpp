@@ -63,6 +63,11 @@ void UNZWeaponStateEquipping::StartEquip(float OverflowTime)
 			FComponentRecreateRenderStateContext ReregisterContext(GetOuterANZWeapon()->GetNZOwner()->FirstPersonMesh);
 			FComponentRecreateRenderStateContext ReregisterContext2(GetOuterANZWeapon()->Mesh);
 		}
+        // Try and play equip sound if specified
+        if (GetOuterANZWeapon()->EquipSound != NULL)
+        {
+            UNZGameplayStatics::NZPlaySound(GetWorld(), GetOuterANZWeapon()->EquipSound, GetNZOwner(), SRT_None);
+        }
 	}
 }
 

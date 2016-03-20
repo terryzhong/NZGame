@@ -26,11 +26,22 @@ void UNZWeaponStateActive::BeginState(const UNZWeaponState* PrevState)
 
 bool UNZWeaponStateActive::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
 {
-	if (GetOuterANZWeapon()->FiringState.IsValidIndex(FireModeNum) && GetOuterANZWeapon()->HasAmmo(FireModeNum))
+	if (GetOuterANZWeapon()->FiringState.IsValidIndex(FireModeNum))
 	{
-		GetOuterANZWeapon()->CurrentFireMode = FireModeNum;
-		GetOuterANZWeapon()->GotoState(GetOuterANZWeapon()->FiringState[FireModeNum]);
-		return true;
+        if (GetOuterANZWeapon()->HasAmmo(FireModeNum))
+        {
+            GetOuterANZWeapon()->CurrentFireMode = FireModeNum;
+            GetOuterANZWeapon()->GotoState(GetOuterANZWeapon()->FiringState[FireModeNum]);
+            return true;
+        }
+        else
+        {
+            // Try and play equip sound if out of ammo when firing
+            if (GetOuterANZWeapon()->FireEmptySound != NULL)
+            {
+                UNZGameplayStatics::NZPlaySound(GetWorld(), GetOuterANZWeapon()->FireEmptySound, GetNZOwner(), SRT_None);
+            }
+        }
 	}
 	return false;
 }

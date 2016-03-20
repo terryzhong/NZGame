@@ -210,6 +210,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<float> Spread;
     
+    /** Sound to play when equiping weapon */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+    USoundBase* EquipSound;
+    
     /** Sound to play each time we fire */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<USoundBase*> FireSound;
@@ -221,6 +225,10 @@ public:
     /** Looping (ambient) sound to set on owner while firing */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     TArray<USoundBase*> FireLoopingSound;
+    
+    /** Sound to play if out of ammo when firing */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+    USoundBase* FireEmptySound;
     
     /** AnimMontage to play each time we fire */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
