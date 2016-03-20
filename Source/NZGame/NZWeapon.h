@@ -727,10 +727,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
     UAnimMontage* IdleAnimHands;
 
-    inline void GotoActiveState()
-    {
-        GotoState(ActiveState);
-    }
+    virtual void GotoActiveState();
     
     virtual void GotoFireMode(uint8 NewFireMode);
     

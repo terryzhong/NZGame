@@ -40,7 +40,9 @@ public:
         return ChangeClipTime;
     }
     
+    virtual void GotoActiveState();
     virtual void GotoChangeClipState();
+    
     virtual void ChangeClip();
     virtual void ChangeClipFinished();
     

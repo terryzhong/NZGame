@@ -187,6 +187,12 @@ FRotator UNZGunViewKickComponent::GetPunchAngle()
     }
 }
 
+void UNZGunViewKickComponent::Reset()
+{
+    FireCount = 0;
+    FireCountDelayFrameCount = 0;
+}
+
 void UNZGunViewKickComponent::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)
 {
     

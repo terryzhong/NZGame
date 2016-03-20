@@ -178,6 +178,8 @@ public:
     virtual void SetPunchAngle(FRotator Angle);
     virtual FRotator GetPunchAngle();
     
+    virtual void Reset();
+    
     virtual void BeginFiringSequence(uint8 FireModeNum, bool bClientFired);
     
     virtual void EndFiringSequence(uint8 FireModeNum);

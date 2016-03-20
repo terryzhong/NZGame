@@ -15,6 +15,16 @@ ANZGun::ANZGun(const FObjectInitializer& ObjectInitializer)
     ViewKickComponent = ObjectInitializer.CreateDefaultSubobject<UNZGunViewKickComponent>(this, TEXT("ViewKickComponent"));
 }
 
+void ANZGun::GotoActiveState()
+{
+    if (ViewKickComponent != NULL)
+    {
+        ViewKickComponent->Reset();
+    }
+    
+    Super::GotoActiveState();
+}
+
 void ANZGun::GotoChangeClipState()
 {
     GotoState(ChangeClipState);

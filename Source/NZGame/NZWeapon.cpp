@@ -1528,6 +1528,11 @@ float ANZWeapon::GetRefireTime(uint8 FireModeNum)
     }
 }
 
+void ANZWeapon::GotoActiveState()
+{
+    GotoState(ActiveState);
+}
+
 void ANZWeapon::GotoFireMode(uint8 NewFireMode)
 {
     if (FiringState.IsValidIndex(NewFireMode))
