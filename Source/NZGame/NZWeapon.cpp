@@ -27,7 +27,8 @@
 #include "NZPlayerCameraManager.h"
 
 
-ANZWeapon::ANZWeapon()
+ANZWeapon::ANZWeapon(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
     AmmoCost.Add(1);
     AmmoCost.Add(1);
@@ -60,10 +61,10 @@ ANZWeapon::ANZWeapon()
     FireZOffsetTime = 0.f;
     MaxTracerDist = 5000.f;
     
-    InactiveState = CreateDefaultSubobject<UNZWeaponStateInactive>(TEXT("StateInactive"));
-	ActiveState = CreateDefaultSubobject<UNZWeaponStateActive>(TEXT("StateActive"));
-	EquippingState = CreateDefaultSubobject<UNZWeaponStateEquipping>(TEXT("StateEquipping"));
-	UnequippingStateDefault = CreateDefaultSubobject<UNZWeaponStateUnequipping>(TEXT("StateUnequipping"));
+    InactiveState = ObjectInitializer.CreateDefaultSubobject<UNZWeaponStateInactive>(this, TEXT("StateInactive"));
+	ActiveState = ObjectInitializer.CreateDefaultSubobject<UNZWeaponStateActive>(this, TEXT("StateActive"));
+	EquippingState = ObjectInitializer.CreateDefaultSubobject<UNZWeaponStateEquipping>(this, TEXT("StateEquipping"));
+	UnequippingStateDefault = ObjectInitializer.CreateDefaultSubobject<UNZWeaponStateUnequipping>(this, TEXT("StateUnequipping"));
 	UnequippingState = UnequippingStateDefault;
 
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
@@ -78,7 +79,7 @@ ANZWeapon::ANZWeapon()
 
 	for (int32 i = 0; i < 2; i++)
 	{
-		UNZWeaponStateFiring* NewState = CreateDefaultSubobject<UNZWeaponStateFiring, UNZWeaponStateFiring>(FName(*FString::Printf(TEXT("FiringState%i"), i)), false);
+		UNZWeaponStateFiring* NewState = ObjectInitializer.CreateDefaultSubobject<UNZWeaponStateFiring, UNZWeaponStateFiring>(this, FName(*FString::Printf(TEXT("FiringState%i"), i)), false);
 		if (NewState != NULL)
 		{
 			FiringState.Add(NewState);

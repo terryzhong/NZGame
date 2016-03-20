@@ -16,7 +16,7 @@ class NZGAME_API ANZGun : public ANZWeapon
     friend class UNZGunStateChangeClip;
 	
 public:
-    ANZGun();
+    ANZGun(const FObjectInitializer& ObjectInitializer);
 
     /** Change clip */
     UPROPERTY(Instanced, BlueprintReadOnly, Category = States)
@@ -40,7 +40,12 @@ public:
         return ChangeClipTime;
     }
     
+    virtual void GotoChangeClipState();
     virtual void ChangeClip();
+    virtual void ChangeClipFinished();
+    
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Gun")
+    virtual bool IsChangingClip() { return GetCurrentState() == ChangeClipState; }
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Fire)
     bool bIsContinousFire;

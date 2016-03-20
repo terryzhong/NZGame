@@ -14,7 +14,7 @@ class NZGAME_API ANZWeapon_Sniper : public ANZWeapon
 	GENERATED_BODY()
 	
 public:
-	ANZWeapon_Sniper();
+	ANZWeapon_Sniper(const FObjectInitializer& ObjectInitializer);
 	
 	
 };

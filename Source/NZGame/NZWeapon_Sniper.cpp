@@ -11,7 +11,8 @@ const FName NAME_SniperHeadshotDeaths(TEXT("SniperHeadshotDeaths"));
 const FName NAME_SniperHits(TEXT("SniperHits"));
 const FName NAME_SniperShots(TEXT("SniperShots"));
 
-ANZWeapon_Sniper::ANZWeapon_Sniper()
+ANZWeapon_Sniper::ANZWeapon_Sniper(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
 	BringUpTime = 0.45f;
 	PutDownTime = 0.4;

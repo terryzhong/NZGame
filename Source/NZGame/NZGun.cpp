@@ -2,20 +2,41 @@
 
 #include "NZGame.h"
 #include "NZGun.h"
+#include "NZGunStateActive.h"
 #include "NZGunStateChangeClip.h"
 #include "NZGunViewKickComponent.h"
 
 
-ANZGun::ANZGun()
+ANZGun::ANZGun(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer.SetDefaultSubobjectClass<UNZGunStateActive>(TEXT("StateActive")))
 {
-    ChangeClipState = CreateDefaultSubobject<UNZGunStateChangeClip>(TEXT("StateChangeClip"));
+    ChangeClipState = ObjectInitializer.CreateDefaultSubobject<UNZGunStateChangeClip>(this, TEXT("StateChangeClip"));
     
-    ViewKickComponent = CreateDefaultSubobject<UNZGunViewKickComponent>(TEXT("ViewKickComponent"));
+    ViewKickComponent = ObjectInitializer.CreateDefaultSubobject<UNZGunViewKickComponent>(this, TEXT("ViewKickComponent"));
+}
+
+void ANZGun::GotoChangeClipState()
+{
+    GotoState(ChangeClipState);
 }
 
 void ANZGun::ChangeClip()
 {
-    GotoState(ChangeClipState);
+    GotoChangeClipState();
+}
+
+void ANZGun::ChangeClipFinished()
+{
+    if (Ammo + CarriedAmmo > MaxAmmo)
+    {
+        CarriedAmmo -= MaxAmmo - Ammo;
+        Ammo = MaxAmmo;
+    }
+    else
+    {
+        Ammo = Ammo + CarriedAmmo;
+        CarriedAmmo = 0;
+    }
 }
 
 bool ANZGun::BeginFiringSequence(uint8 FireModeNum, bool bClientFired)

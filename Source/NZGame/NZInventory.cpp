@@ -9,7 +9,8 @@
 
 
 // Sets default values
-ANZInventory::ANZInventory()
+ANZInventory::ANZInventory(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -19,8 +20,8 @@ ANZInventory::ANZInventory()
     
     RespawnTime = 30.0f;
     
-    RootComponent = CreateDefaultSubobject<USceneComponent, USceneComponent>(TEXT("DummyRoot"), false);
-    PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PickupMesh0"), false);
+    RootComponent = ObjectInitializer.CreateDefaultSubobject<USceneComponent, USceneComponent>(this, TEXT("DummyRoot"), false);
+    PickupMesh = ObjectInitializer.CreateDefaultSubobject<UStaticMeshComponent>(this, TEXT("PickupMesh0"), false);
     if (PickupMesh != NULL)
     {
         PickupMesh->AttachParent = RootComponent;

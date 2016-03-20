@@ -17,7 +17,7 @@ class NZGAME_API ANZInventory : public AActor
 	
 public:	
 	// Sets default values for this actor's properties
-	ANZInventory();
+	ANZInventory(const FObjectInitializer& ObjectInitializer);
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

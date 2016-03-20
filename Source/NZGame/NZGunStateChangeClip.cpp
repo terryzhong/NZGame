@@ -27,6 +27,7 @@ void UNZGunStateChangeClip::EndState()
 
 void UNZGunStateChangeClip::ChangeClipFinished()
 {
+    GetOuterANZGun()->ChangeClipFinished();
     GetOuterANZGun()->GotoActiveState();
 }
 

@@ -127,7 +127,7 @@ class NZGAME_API ANZWeapon : public ANZInventory
     friend class UNZWeaponStateUnequipping;
     
 public:
-    ANZWeapon();
+    ANZWeapon(const FObjectInitializer& ObjectInitializer);
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated, ReplicatedUsing = OnRep_AttachmentType, Category = "Weapon")
     TSubclassOf<class ANZWeaponAttachment> AttachmentType;
