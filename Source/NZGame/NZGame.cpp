@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NZGame.h"
-
+#include "UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY(NZ);
 
@@ -12,14 +12,14 @@ class FNZModule : public FDefaultGameModuleImpl
 
 IMPLEMENT_PRIMARY_GAME_MODULE( FNZModule, NZGame, "NZGame" );
 
-#if WITH_EDITOR
-
-#include "NZDetailsCustomization.h"
-
 static uint32 NZGetNetworkVersion()
 {
     return 3008042;
 }
+
+#if WITH_EDITOR
+
+#include "NZDetailsCustomization.h"
 
 /*
 static void AddLevelSummaryAssetTags(const UWorld* InWorld, TArray<UObject::FAssetRegistryTag>& OutTags)
