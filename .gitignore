@@ -1,4 +1,8 @@
+.svn/
+.vs/
 Binaries/
+Build/
+Content/
 Intermediate/
 Saved/
 DerivedDataCache/
