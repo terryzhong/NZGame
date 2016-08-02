@@ -8,7 +8,7 @@ public class NZGameTarget : TargetRules
 	public NZGameTarget(TargetInfo Target)
 	{
 		Type = TargetType.Game;
-	}
+    }
 
 	//
 	// TargetRules interface.
