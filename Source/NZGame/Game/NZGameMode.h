@@ -20,7 +20,7 @@ namespace MatchState
 /**
  * 
  */
-UCLASS()
+UCLASS(Config = Game, Abstract)
 class NZGAME_API ANZGameMode : public ANZBaseGameMode
 {
 	GENERATED_BODY()
@@ -119,7 +119,7 @@ public:
     float MaxTimeMargin;
     
     /** Maximum time client can be behind. */
-    UPROPERTY(GlobalCOnfig)
+    UPROPERTY(GlobalConfig)
     float MinTimeMargin;
     
     /** Accepted drift in clocks. */

@@ -24,6 +24,11 @@ ANZGameMode::ANZGameMode()
     
     bDelayedStart = true;
     bAmmoIsLimited = true;
+
+	bSpeedhackDetection = false;
+	MaxTimeMargin = 0.25f;
+	MinTimeMargin = -0.25f;
+	TimeMarginSlack = 0.1f;
 }
 
 void ANZGameMode::InitGameState()
