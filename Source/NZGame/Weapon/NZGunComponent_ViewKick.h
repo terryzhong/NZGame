@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "NZCrosshair.h"
 #include "NZGunComponent_ViewKick.generated.h"
 
 /**

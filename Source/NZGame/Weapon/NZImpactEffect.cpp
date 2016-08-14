@@ -3,7 +3,7 @@
 #include "NZGame.h"
 #include "NZImpactEffect.h"
 #include "NZGameUserSettings.h"
-
+#include "NZWorldSettings.h"
 
 
 FImpactEffectNamedParameters::FImpactEffectNamedParameters(float DamageRadius)
