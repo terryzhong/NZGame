@@ -247,6 +247,10 @@ public:
     
     virtual void Destroyed() override;
 
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void UnPossessed() override;
+	virtual void Restart() override;
+
 	// Networking
 	virtual void PawnClientRestart() override;
 

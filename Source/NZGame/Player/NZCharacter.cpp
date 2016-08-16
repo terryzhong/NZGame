@@ -289,6 +289,42 @@ void ANZCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME_CONDITION(ANZCharacter, NZReplicatedMovement, COND_SimulatedOrPhysics);
+	DOREPLIFETIME_CONDITION(ANZCharacter, Health, COND_None);
+
+	//DOREPLIFETIME_CONDITION(ANZCharacter, InventoryList, COND_OwnerOnly);
+	// replicate for cases where non-owned inventory is replicated (e.g. spectators)
+	// UE4 networking doesn't cause endless replication sending unserializable values like UE3 did so this shouldn't be a big deal
+	DOREPLIFETIME_CONDITION(ANZCharacter, InventoryList, COND_None);
+	DOREPLIFETIME_CONDITION(ANZCharacter, Weapon, COND_SkipOwner);
+
+	DOREPLIFETIME_CONDITION(ANZCharacter, FlashCount, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ANZCharacter, FlashLocation, COND_None);
+	DOREPLIFETIME_CONDITION(ANZCharacter, FireMode, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ANZCharacter, FlashExtra, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ANZCharacter, LastTakeHitInfo, COND_Custom);
+	// todo
+	DOREPLIFETIME_CONDITION(ANZCharacter, WeaponClass, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ANZCharacter, WeaponAttachmentClass, COND_SkipOwner);
+	// todo
+	DOREPLIFETIME_CONDITION(ANZCharacter, HolsteredWeaponAttachmentClass, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(ANZCharacter, DamageScaling, COND_None);
+	DOREPLIFETIME_CONDITION(ANZCharacter, FireRateMultiplier, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ANZCharacter, AmbientSound, COND_None);
+	DOREPLIFETIME_CONDITION(ANZCharacter, CharOverlayFlags, COND_None);
+	DOREPLIFETIME_CONDITION(ANZCharacter, WeaponOverlayFlags, COND_None);
+	DOREPLIFETIME_CONDITION(ANZCharacter, ReplicatedBodyMaterial, COND_None);
+	// todo
+	DOREPLIFETIME_CONDITION(ANZCharacter, bSpawnProtectionEligible, COND_None);
+	DOREPLIFETIME_CONDITION(ANZCharacter, DrivenVehicle, COND_OwnerOnly);
+	// todo
+	DOREPLIFETIME_CONDITION(ANZCharacter, WalkMovementReductionPct, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ANZCharacter, WalkMovementReductionTime, COND_OwnerOnly);
+	// todo
+	DOREPLIFETIME_CONDITION(ANZCharacter, ArmorAmount, COND_None);
+	// todo
+
+
 }
 
 void ANZCharacter::PostInitializeComponents()
@@ -348,6 +384,63 @@ void ANZCharacter::Destroyed()
         GetWorldTimerManager().ClearAllTimersForObject(GetCharacterMovement());
     }
     GetWorldTimerManager().ClearAllTimersForObject(this);
+}
+
+void ANZCharacter::PossessedBy(AController* NewController)
+{
+	// TODO: shouldn't base class do this? APawn::Unpossessed() still does SetOwner(NULL)...
+	SetOwner(NewController);
+
+	Super::PossessedBy(NewController);
+	NotifyTeamChanged();
+	NewController->ClientSetRotation(GetActorRotation());
+	if (NZCharacterMovement)
+	{
+		NZCharacterMovement->ResetTimers();
+	}
+
+	if (Role == ROLE_Authority)
+	{
+		//SetCosmeticsFromPlayerState();
+	}
+}
+
+void ANZCharacter::UnPossessed()
+{
+	StopFiring();
+	SetAmbientSound(NULL);
+	//SetStatusAmbientSound(NULL);
+	SetLocalAmbientSound(NULL);
+	Super::UnPossessed();
+}
+
+void ANZCharacter::Restart()
+{
+	Super::Restart();
+	ClearJumpInput();
+
+	// make sure equipped weapon state is synchronized
+	if (IsLocallyControlled())
+	{
+		ANZPlayerController* PC = Cast<ANZPlayerController>(Controller);
+		if (PC != NULL && PC->IsInState(NAME_Inactive))
+		{
+			// respawning from dead, switch to best
+			PC->SwitchToBestWeapon();
+		}
+		else if (PendingWeapon != NULL)
+		{
+			SwitchWeapon(PendingWeapon);
+		}
+		else if (Weapon != NULL && Weapon->HasAnyAmmo())
+		{
+			SwitchWeapon(Weapon);
+		}
+		else
+		{
+			SwitchToBestWeapon();
+		}
+	}
 }
 
 void ANZCharacter::PawnClientRestart()
