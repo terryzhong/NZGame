@@ -21,6 +21,9 @@ ANZPlayerController::ANZPlayerController()
 {
     // Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
+    
+    BaseTurnRate = 45.f;
+    BaseLookUpRate = 45.f;
 
 	PlayerCameraManagerClass = ANZPlayerCameraManager::StaticClass();
     
@@ -169,9 +172,9 @@ void ANZPlayerController::SetupInputComponent()
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
 	InputComponent->BindAxis("Turn", this, &ANZPlayerController::AddYawInput);
-	//InputComponent->BindAxis("TurnRate", this, &ANZPlayerController::TurnAtRate);
+	InputComponent->BindAxis("TurnAtRate", this, &ANZPlayerController::TurnAtRate);
 	InputComponent->BindAxis("LookUp", this, &ANZPlayerController::AddPitchInput);
-	//InputComponent->BindAxis("LookUpRate", this, &ANZPlayerController::LookUpAtRate);
+	InputComponent->BindAxis("LookUpAtRate", this, &ANZPlayerController::LookUpAtRate);
 
 	InputComponent->BindAction("Jump", IE_Pressed, this, &ANZPlayerController::Jump);
 	InputComponent->BindAction("Jump", IE_Released, this, &ANZPlayerController::JumpRelease);
@@ -1614,6 +1617,18 @@ void ANZPlayerController::AddPitchInput(float Value)
     {
         Super::AddPitchInput(Value);
     }
+}
+
+void ANZPlayerController::TurnAtRate(float Rate)
+{
+    // Calculate delta for this frame from the rate information
+    AddYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+}
+
+void ANZPlayerController::LookUpAtRate(float Rate)
+{
+    //
+    AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
 void ANZPlayerController::ApplyDeferredFireInputs()

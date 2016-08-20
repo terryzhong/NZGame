@@ -304,6 +304,10 @@ public:
 	/** Up and down when flying or swimming */
 	virtual void MoveUp(float Value);
 
+    virtual void TurnAtRate(float Rate);
+    
+    virtual void LookUpAtRate(float Rate);
+    
 	/** Called to set the jump flag from input */
 	virtual void Jump();
 
