@@ -21,7 +21,8 @@ ANZGameMode::ANZGameMode()
     PlayerStateClass = ANZPlayerState::StaticClass();
     
     PlayerControllerClass = ANZPlayerController::StaticClass();
-    
+	SpectatorClass = NULL;
+
     bDelayedStart = true;
     bAmmoIsLimited = true;
 
