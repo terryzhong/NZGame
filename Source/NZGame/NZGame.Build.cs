@@ -6,12 +6,30 @@ public class NZGame : ModuleRules
 {
 	public NZGame(TargetInfo Target)
 	{
-        PublicIncludePaths.AddRange(new string[] { "NZGame/AI", "NZGame/Base", "NZGame/Game", "NZGame/HUD", "NZGame/Item", "NZGame/Player", "NZGame/Weapon" });
+        PublicIncludePaths.AddRange(new string[] {
+            "NZGame/AI",
+            "NZGame/Base",
+            "NZGame/Game",
+            "NZGame/HUD",
+            "NZGame/Item",
+            "NZGame/Player",
+            "NZGame/Weapon"
+        });
 
-        //PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "NetworkReplayStreaming", "Json", "HeadMountedDisplay"});
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "NetworkReplayStreaming", "Json", "HeadMountedDisplay", "PortControl" });
+        PublicDependencyModuleNames.AddRange(new string[] {
+            "Core",
+            "CoreUObject",
+            "Engine",
+            "InputCore",
+            "NetworkReplayStreaming",
+            "Json",
+            "NZBase"
+        });
 
-        PrivateDependencyModuleNames.AddRange(new string[] { "SlateCore", "Slate" });
+        PrivateDependencyModuleNames.AddRange(new string[] {
+            "SlateCore",
+            "Slate"
+        });
         
         if (Target.Type == TargetRules.TargetType.Editor)
         {

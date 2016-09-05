@@ -27,7 +27,6 @@
 #include "NZPlayerCameraManager.h"
 #include "NZImpactEffectManager.h"
 
-
 ANZWeapon::ANZWeapon(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
 {

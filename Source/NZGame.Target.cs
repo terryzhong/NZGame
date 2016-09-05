@@ -20,6 +20,15 @@ public class NZGameTarget : TargetRules
 		ref List<string> OutExtraModuleNames
 		)
 	{
-		OutExtraModuleNames.AddRange( new string[] { "NZGame" } );
+		OutExtraModuleNames.AddRange( new string[] {
+            "NZBase",
+            "NZGame",
+            "NZLobby",
+            "NZWeapon",
+            "NZPVPGame",
+            "NZPVEGame",
+            "NZPEPGame",
+            "NZVR"
+        } );
 	}
 }

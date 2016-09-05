@@ -1,9 +1,17 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{4A08E629-4640-CE81-7CCD-458B2CF0B018}",
+	"EngineAssociation": "{644A2E41-4B12-CF21-48A0-0EA98D6D93B3}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
+		{
+			"Name": "NZBase",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		},
 		{
 			"Name": "NZGame",
 			"Type": "Runtime",
@@ -11,6 +19,58 @@
 			"AdditionalDependencies": [
 				"Engine",
 				"AIModule"
+			]
+		},
+		{
+			"Name": "NZLobby",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		},
+		{
+			"Name": "NZWeapon",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"NZGame"
+			]
+		},
+		{
+			"Name": "NZPVPGame",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		},
+		{
+			"Name": "NZPVEGame",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"NZGame"
+			]
+		},
+		{
+			"Name": "NZPEPGame",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"NZGame"
+			]
+		},
+		{
+			"Name": "NZVR",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"NZGame"
 			]
 		}
 	]

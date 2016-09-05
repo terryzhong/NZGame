@@ -6,7 +6,8 @@
 #include "NZDualGunStateChangeClip.h"
 #include "NZDualGunStateLeftHandChangeClip.h"
 #include "NZDualGunStateActive.h"
-
+#include "IHeadMountedDisplay.h"
+#include "NZGameplayStatics.h"
 
 ANZDualGun::ANZDualGun(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer

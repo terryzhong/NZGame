@@ -71,7 +71,7 @@ FCollisionResponseParams WorldResponseParams = []()
 
 #include "Particles/ParticleSystemComponent.h"
 #include "Particles/ParticleModuleRequired.h"
-#include "particles/ParticleLODLevel.h"
+#include "Particles/ParticleLODLevel.h"
 bool IsLoopingParticleSystem(const UParticleSystem* PSys)
 {
     for (int32 i = 0; i < PSys->Emitters.Num(); i++)

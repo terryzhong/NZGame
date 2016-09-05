@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Weapon/NZGunStateActive.h"
+#include "NZGunStateActive.h"
 #include "NZDualGunStateActive.generated.h"
 
 /**

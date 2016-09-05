@@ -74,10 +74,11 @@ public:
     virtual void InitPlayerState();
     virtual void OnRep_PlayerState();
     virtual void SetPawn(APawn* InPawn);
-    virtual void SetupInputComponent() override;
+	virtual void SetupInputComponent() override;
     virtual void ProcessPlayerInput(const float DeltaTime, const bool bGamePaused) override;
+	
     virtual void PawnPendingDestroy(APawn* InPawn) override;
-    
+	    
     virtual void HearSound(USoundBase* InSoundCue, AActor* SoundPlayer, const FVector& SoundLocation, bool bStopWhenOwnerDestroyed, bool bAmplifyVolume);
     
     UFUNCTION(Client, Unreliable)
@@ -307,6 +308,19 @@ public:
     virtual void TurnAtRate(float Rate);
     
     virtual void LookUpAtRate(float Rate);
+
+	struct TouchData
+	{
+		TouchData() { bIsPressed = false; Location = FVector::ZeroVector; }
+		bool bIsPressed;
+		ETouchIndex::Type FingerIndex;
+		FVector Location;
+		bool bMoved;
+	};
+	void BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
+	void EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
+	void TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location);
+	TouchData TouchItem;
     
 	/** Called to set the jump flag from input */
 	virtual void Jump();

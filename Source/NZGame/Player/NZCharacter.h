@@ -350,7 +350,7 @@ public:
     
     UFUNCTION(BlueprintNativeEvent, BlueprintCosmetic)
     void PlayDamageEffects();
-    
+	    
     
     
     /**
@@ -1280,11 +1280,5 @@ public:
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bAiming;
-
-
-public:
-	UFUNCTION(BlueprintCallable, Category = "HMD")
-	virtual void ProcessHeadMountedDisplay(FVector HeadPosition, FRotator HeadRotation, FVector RightHandPosition, FRotator RightHandRotation, FVector LeftHandPosition, FRotator LeftHandRotation);
-
 };
 

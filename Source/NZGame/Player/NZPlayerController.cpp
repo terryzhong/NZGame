@@ -196,6 +196,14 @@ void ANZPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &ANZPlayerController::Sprint);
 	InputComponent->BindAction("UnSprint", IE_Released, this, &ANZPlayerController::UnSprint);
 
+	if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
+	{
+		InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZPlayerController::BeginTouch);
+		InputComponent->BindTouch(EInputEvent::IE_Released, this, &ANZPlayerController::EndTouch);
+		InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZPlayerController::TouchUpdate);
+	}
+
+
  /*   InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
     InputComponent->BindAction("TapRight", IE_Pressed, this, &ANZPlayerController::OnTapRight);
     InputComponent->BindAction("TapForward", IE_Pressed, this, &ANZPlayerController::OnTapForward);
@@ -1629,6 +1637,66 @@ void ANZPlayerController::LookUpAtRate(float Rate)
 {
     //
     AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
+void ANZPlayerController::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
+{
+	if (TouchItem.bIsPressed == true)
+	{
+		return;
+	}
+	TouchItem.bIsPressed = true;
+	TouchItem.FingerIndex = FingerIndex;
+	TouchItem.Location = Location;
+	TouchItem.bMoved = false;
+}
+
+void ANZPlayerController::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
+{
+	if (TouchItem.bIsPressed == false)
+	{
+		return;
+	}
+	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
+	{
+		OnFire();
+	}
+	TouchItem.bIsPressed = false;
+}
+
+void ANZPlayerController::TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location)
+{
+	if ((TouchItem.bIsPressed == true) && (TouchItem.FingerIndex == FingerIndex))
+	{
+		if (TouchItem.bIsPressed)
+		{
+			if (GetWorld() != NULL)
+			{
+				UGameViewportClient* ViewportClient = GetWorld()->GetGameViewport();
+				if (ViewportClient != NULL)
+				{
+					FVector MoveDelta = Location - TouchItem.Location;
+					FVector2D ScreenSize;
+					ViewportClient->GetViewportSize(ScreenSize);
+					FVector2D ScaledDelta = FVector2D(MoveDelta.X, MoveDelta.Y) / ScreenSize;
+					if (FMath::Abs(ScaledDelta.X) >= 4.0 / ScreenSize.X)
+					{
+						TouchItem.bMoved = true;
+						float Value = ScaledDelta.X * BaseTurnRate;
+						AddYawInput(Value);
+					}
+					if (FMath::Abs(ScaledDelta.Y) >= 4.0 / ScreenSize.Y)
+					{
+						TouchItem.bMoved = true;
+						float Value = ScaledDelta.Y * BaseTurnRate;
+						AddPitchInput(Value);
+					}
+					TouchItem.Location = Location;
+				}
+				TouchItem.Location = Location;
+			}
+		}
+	}
 }
 
 void ANZPlayerController::ApplyDeferredFireInputs()

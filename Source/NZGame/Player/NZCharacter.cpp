@@ -18,14 +18,13 @@
 #include "NZCharacterContent.h"
 #include "NZWorldSettings.h"
 #include "NZProjectile.h"
-#include "Unrealnetwork.h"
+#include "UnrealNetwork.h"
 #include "NZGun.h"
 #include "NZDualGun.h"
 #include "ComponentReregisterContext.h"
 #include "AudioDevice.h"
 #include "NZWeaponStateFiring.h"
 #include "NZDamageType_Fell.h"
-
 
 // Sets default values
 //ANZCharacter::ANZCharacter()
@@ -3098,7 +3097,6 @@ void ANZCharacter::OnRagdollCollision(UPrimitiveComponent* ThisComp, AActor* Oth
     }
 }
 
-
 ANZPlayerController* ANZCharacter::GetLocalViewer()
 {
     if (CurrentViewerPC && ((Controller == CurrentViewerPC) || (CurrentViewerPC->GetViewTarget() == this)))
@@ -3115,31 +3113,4 @@ ANZPlayerController* ANZCharacter::GetLocalViewer()
         }
     }
     return CurrentViewerPC;
-}
-
-void ANZCharacter::ProcessHeadMountedDisplay(FVector HeadPosition, FRotator HeadRotation, FVector RightHandPosition, FRotator RightHandRotation, FVector LeftHandPosition, FRotator LeftHandRotation)
-{
-	if (GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		// ×ÔÓÉÒÆ¶¯
-		if (Controller && Controller->StartSpot.IsValid())
-		{
-			APlayerStart* PS = Cast<APlayerStart>(Controller->StartSpot.Get());
-			if (PS != NULL)
-			{
-				FVector NewLocation = PS->GetActorLocation() + (FRotator(0, 1, 0) * (GetActorRotation().Yaw - HeadRotation.Yaw)).RotateVector(HeadPosition) + PS->GetCapsuleComponent()->GetScaledCapsuleHalfHeight() * FVector(0.f, 0.f, -1.75f);
-				SetActorLocation(NewLocation);
-			}
-			else
-			{
-				FVector NewLocation = PS->GetActorLocation() + (FRotator(0, 1, 0) * (GetActorRotation().Yaw - HeadRotation.Yaw)).RotateVector(HeadPosition);
-				SetActorLocation(NewLocation);
-			}
-		}
-
-		if (Weapon != NULL)
-		{
-			Weapon->ProcessHeadMountedDisplay(HeadPosition, HeadRotation, RightHandPosition, RightHandRotation, LeftHandPosition, LeftHandRotation);
-		}
-	}
 }

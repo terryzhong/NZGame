@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "NZATypes.h"
 #include "NZInventory.h"
 #include "NZPlayerController.h"
 #include "NZWeapon.generated.h"
