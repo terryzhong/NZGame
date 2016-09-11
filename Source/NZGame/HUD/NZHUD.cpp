@@ -6,7 +6,7 @@
 #include "NZHUDWidgetMessage.h"
 #include "NZBasePlayerController.h"
 #include "Json.h"
-#include "IHeadMountedDisplay.h"
+//#include "IHeadMountedDisplay.h"
 
 ANZHUD::ANZHUD()
 {
@@ -130,6 +130,17 @@ void ANZHUD::BeginPlay()
         DamageIndicators[i].DamageAmount = 0.0f;
         DamageIndicators[i].FadeTime = 0.0f;
     }
+
+	// 自定义的UMG控件
+	for (int32 WidgetIndex = 0; WidgetIndex < HubUserWidgetClasses.Num(); WidgetIndex++)
+	{
+		if (HubUserWidgetClasses[WidgetIndex] != NULL)
+		{
+			UUserWidget* UserWidget = CreateWidget<UUserWidget>(GetGameInstance(), HubUserWidgetClasses[WidgetIndex]);
+			HubUserWidgets.Add(UserWidget);
+			UserWidget->AddToViewport();
+		}
+	}
 }
 
 void ANZHUD::PostInitializeComponents()
@@ -223,11 +234,11 @@ void ANZHUD::PostRender()
 
 void ANZHUD::DrawHUD()
 {
-	// VR设备下，不绘制HUD
-	if (NZPlayerOwner && NZPlayerOwner->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		return;
-	}
+	//// VR设备下，不绘制HUD
+	//if (NZPlayerOwner && NZPlayerOwner->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+	//{
+	//	return;
+	//}
 
 	Super::DrawHUD();
 

@@ -6,7 +6,7 @@
 #include "NZDualGunStateChangeClip.h"
 #include "NZDualGunStateLeftHandChangeClip.h"
 #include "NZDualGunStateActive.h"
-#include "IHeadMountedDisplay.h"
+//#include "IHeadMountedDisplay.h"
 #include "NZGameplayStatics.h"
 
 ANZDualGun::ANZDualGun(const FObjectInitializer& ObjectInitializer)
@@ -78,17 +78,17 @@ void ANZDualGun::BeginPlay()
 
 FVector ANZDualGun::InstantFireStartTrace()
 {
-	// VR设备下，射线检测的方向以枪口朝向为准
-	if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		FVector OutLocation;
-		FRotator OutRotation;
-		// 双枪开火模式，左键用LeftHandMesh，右键用Mesh
-		USkeletalMeshComponent* FireMesh = (CurrentFireMode == 0 ? LeftHandMesh : Mesh);
-		FireMesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
-		return OutLocation;
-	}
-	else
+	//// VR设备下，射线检测的方向以枪口朝向为准
+	//if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+	//{
+	//	FVector OutLocation;
+	//	FRotator OutRotation;
+	//	// 双枪开火模式，左键用LeftHandMesh，右键用Mesh
+	//	USkeletalMeshComponent* FireMesh = (CurrentFireMode == 0 ? LeftHandMesh : Mesh);
+	//	FireMesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
+	//	return OutLocation;
+	//}
+	//else
 	{
 		return Super::InstantFireStartTrace();
 	}
@@ -96,17 +96,17 @@ FVector ANZDualGun::InstantFireStartTrace()
 
 FVector ANZDualGun::InstantFireEndTrace(FVector StartTrace)
 {
-	// VR设备下，射线检测的方向以枪口朝向为准
-	if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		FVector OutLocation;
-		FRotator OutRotation;
-		// 双枪开火模式，左键用LeftHandMesh，右键用Mesh
-		USkeletalMeshComponent* FireMesh = (CurrentFireMode == 0 ? LeftHandMesh : Mesh);
-		FireMesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
-		return StartTrace + OutRotation.Vector() * InstantHitInfo[CurrentFireMode].TraceRange;
-	}
-	else
+	//// VR设备下，射线检测的方向以枪口朝向为准
+	//if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+	//{
+	//	FVector OutLocation;
+	//	FRotator OutRotation;
+	//	// 双枪开火模式，左键用LeftHandMesh，右键用Mesh
+	//	USkeletalMeshComponent* FireMesh = (CurrentFireMode == 0 ? LeftHandMesh : Mesh);
+	//	FireMesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
+	//	return StartTrace + OutRotation.Vector() * InstantHitInfo[CurrentFireMode].TraceRange;
+	//}
+	//else
 	{
 		const FVector FireDir = ModifyForwardDirection(GetAdjustedAim(StartTrace));
 		return StartTrace + FireDir * InstantHitInfo[CurrentFireMode].TraceRange;
@@ -158,7 +158,7 @@ bool ANZDualGun::HasAmmo(uint8 FireModeNum)
 
 	if (AmmoCost.IsValidIndex(FireModeNum))
 	{
-		int RealAmmoCost = AmmoCost[FireModeNum];
+		int32 RealAmmoCost = AmmoCost[FireModeNum];
 
 		bAmmoLeft = FireModeNum == 0 ? (LeftHandAmmo >= RealAmmoCost) : (Ammo >= RealAmmoCost);
 	}

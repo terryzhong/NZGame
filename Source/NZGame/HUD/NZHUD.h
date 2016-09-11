@@ -5,6 +5,7 @@
 #include "GameFramework/HUD.h"
 #include "NZBasePlayerController.h"
 #include "NZCrosshair.h"
+#include "UserWidget.h"
 #include "NZHUD.generated.h"
 
 const uint32 MAX_DAMAGE_INDICATORS = 3;     // Max number of damage indicators on the screen at any one time
@@ -91,6 +92,16 @@ public:
     
     /** Holds the NZPlayerController that owns this hud. NOTE: This is only valid during the render phase */
     class ANZPlayerController* NZPlayerOwner;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "User Widgets")
+	TArray<TSubclassOf<class UUserWidget> > HubUserWidgetClasses;
+
+	TArray<class UUserWidget*> HubUserWidgets;
+
+
+
+
+
     
     /** Holds the list of all hud widgets that are currently active */
     UPROPERTY(Transient)

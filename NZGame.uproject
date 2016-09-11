@@ -72,6 +72,16 @@
 				"Engine",
 				"NZGame"
 			]
+		},
+		{
+			"Name": "NZMobile",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"NZGame",
+				"CoreUObject"
+			]
 		}
 	]
 }

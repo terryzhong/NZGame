@@ -2,8 +2,7 @@
 
 #include "NZGame.h"
 #include "NZPlayerCameraManager.h"
-#include "IHeadMountedDisplay.h"
-
+//#include "IHeadMountedDisplay.h"
 
 
 ANZPlayerCameraManager::ANZPlayerCameraManager()
@@ -230,22 +229,22 @@ void ANZPlayerCameraManager::UpdateViewTarget(FTViewTarget& OutVT, float DeltaTi
         ANZCharacter* NZCharacter = Cast<ANZCharacter>(OutVT.Target);
         if (NZCharacter)
         {
-			// VR设备需要旋转Roll
-			if (!(NZCharacter && NZCharacter->Controller && NZCharacter->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed()))
-			{
-				float DesiredRoll = 0.f;
-            
-				// todo:
-				//if (NZCharacter->bApplyWallSlide)
-				//{
-				//    FVector Cross = NZCharacter->GetActorRotation().Vector() ^ FVector(0.f, 0.f, 1.f);
-				//    DesiredRoll = -1.f * (Cross.GetSafeNormal() | NZCharacter->NZCharacterMovement->WallSlideNormal) * WallSlideCameraRoll;
-				//}
-            
-				float AdjustRate = FMath::Min(1.f, 10.f * DeltaTime);
-				CurrentCameraRoll = (1.f - AdjustRate) * CurrentCameraRoll + AdjustRate * DesiredRoll;
-				OutVT.POV.Rotation.Roll = CurrentCameraRoll;
-			}
+			//// VR设备需要旋转Roll
+			//if (!(NZCharacter && NZCharacter->Controller && NZCharacter->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed()))
+			//{
+			//	float DesiredRoll = 0.f;
+   //         
+			//	// todo:
+			//	//if (NZCharacter->bApplyWallSlide)
+			//	//{
+			//	//    FVector Cross = NZCharacter->GetActorRotation().Vector() ^ FVector(0.f, 0.f, 1.f);
+			//	//    DesiredRoll = -1.f * (Cross.GetSafeNormal() | NZCharacter->NZCharacterMovement->WallSlideNormal) * WallSlideCameraRoll;
+			//	//}
+   //         
+			//	float AdjustRate = FMath::Min(1.f, 10.f * DeltaTime);
+			//	CurrentCameraRoll = (1.f - AdjustRate) * CurrentCameraRoll + AdjustRate * DesiredRoll;
+			//	OutVT.POV.Rotation.Roll = CurrentCameraRoll;
+			//}
 		}
     }
     

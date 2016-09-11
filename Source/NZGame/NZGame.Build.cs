@@ -13,7 +13,10 @@ public class NZGame : ModuleRules
             "NZGame/HUD",
             "NZGame/Item",
             "NZGame/Player",
-            "NZGame/Weapon"
+            "NZGame/Weapon",
+            "NZGame/Weapon/DualGunState",
+            "NZGame/Weapon/GunState",
+            "NZGame/Weapon/WeaponState"
         });
 
         PublicDependencyModuleNames.AddRange(new string[] {
@@ -23,6 +26,7 @@ public class NZGame : ModuleRules
             "InputCore",
             "NetworkReplayStreaming",
             "Json",
+            "UMG",
             "NZBase"
         });
 

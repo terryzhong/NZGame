@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NZGame.h"
-#include "IHeadMountedDisplay.h"
+//#include "IHeadMountedDisplay.h"
 #include "NZHUDWidget_WeaponCrosshair.h"
 
 
@@ -13,11 +13,11 @@ UNZHUDWidget_WeaponCrosshair::UNZHUDWidget_WeaponCrosshair()
 
 bool UNZHUDWidget_WeaponCrosshair::ShouldDraw_Implementation(bool bShowScores)
 {
-	// VR设备不需要绘制准星
-	if (NZPlayerOwner && NZPlayerOwner->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		return false;
-	}
+	//// VR设备不需要绘制准星
+	//if (NZPlayerOwner && NZPlayerOwner->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+	//{
+	//	return false;
+	//}
 	return Super::ShouldDraw_Implementation(bShowScores);
 }
 

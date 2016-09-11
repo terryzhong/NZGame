@@ -196,12 +196,12 @@ void ANZPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &ANZPlayerController::Sprint);
 	InputComponent->BindAction("UnSprint", IE_Released, this, &ANZPlayerController::UnSprint);
 
-	if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
-	{
-		InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZPlayerController::BeginTouch);
-		InputComponent->BindTouch(EInputEvent::IE_Released, this, &ANZPlayerController::EndTouch);
-		InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZPlayerController::TouchUpdate);
-	}
+	//if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
+	//{
+	//	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZPlayerController::BeginTouch);
+	//	InputComponent->BindTouch(EInputEvent::IE_Released, this, &ANZPlayerController::EndTouch);
+	//	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZPlayerController::TouchUpdate);
+	//}
 
 
  /*   InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
@@ -1639,6 +1639,7 @@ void ANZPlayerController::LookUpAtRate(float Rate)
     AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
+/*
 void ANZPlayerController::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
 	if (TouchItem.bIsPressed == true)
@@ -1698,6 +1699,7 @@ void ANZPlayerController::TouchUpdate(const ETouchIndex::Type FingerIndex, const
 		}
 	}
 }
+*/
 
 void ANZPlayerController::ApplyDeferredFireInputs()
 {

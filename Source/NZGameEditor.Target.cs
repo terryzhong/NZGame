@@ -28,7 +28,8 @@ public class NZGameEditorTarget : TargetRules
             "NZPVPGame",
             "NZPVEGame",
             "NZPEPGame",
-            "NZVR"
+            "NZVR",
+            "NZMobile"
         } );
     }
 }

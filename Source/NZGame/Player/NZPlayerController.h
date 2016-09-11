@@ -309,7 +309,7 @@ public:
     
     virtual void LookUpAtRate(float Rate);
 
-	struct TouchData
+/*	struct TouchData
 	{
 		TouchData() { bIsPressed = false; Location = FVector::ZeroVector; }
 		bool bIsPressed;
@@ -320,7 +320,7 @@ public:
 	void BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
 	void EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
 	void TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location);
-	TouchData TouchItem;
+	TouchData TouchItem;*/
     
 	/** Called to set the jump flag from input */
 	virtual void Jump();

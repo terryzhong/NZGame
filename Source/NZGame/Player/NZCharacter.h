@@ -613,7 +613,7 @@ public:
     inline TSubclassOf<ANZWeapon> GetWeaponClass() const
     {
         // Debug check to make sure this matches as expected
-        checkSlow(GetNetMode() == NM_Client || (Weapon == NULL ? WeaponClass == NULL : ((UObject*)Weapon)->GetClass() == WeaponClass));
+        //checkSlow(GetNetMode() == NM_Client || (Weapon == NULL ? WeaponClass == NULL : ((UObject*)Weapon)->GetClass() == WeaponClass));
         return WeaponClass;
     }
     

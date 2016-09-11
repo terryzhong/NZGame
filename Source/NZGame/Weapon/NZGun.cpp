@@ -124,15 +124,15 @@ void ANZGun::FireInstantHit(bool bDealDamage, FHitResult* OutHit)
 
 FVector ANZGun::InstantFireStartTrace()
 {
-	// VR设备下，射线检测的方向以枪口朝向为准
-	if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		FVector OutLocation;
-		FRotator OutRotation;
-		Mesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
-		return OutLocation;
-	}
-	else
+	//// VR设备下，射线检测的方向以枪口朝向为准
+	//if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+	//{
+	//	FVector OutLocation;
+	//	FRotator OutRotation;
+	//	Mesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
+	//	return OutLocation;
+	//}
+	//else
 	{
 		return Super::InstantFireStartTrace();
 	}
@@ -140,15 +140,15 @@ FVector ANZGun::InstantFireStartTrace()
 
 FVector ANZGun::InstantFireEndTrace(FVector StartTrace)
 {
-	// VR设备下，射线检测的方向以枪口朝向为准
-	if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		FVector OutLocation;
-		FRotator OutRotation;
-		Mesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
-		return StartTrace + OutRotation.Vector() * InstantHitInfo[CurrentFireMode].TraceRange;
-	}
-	else
+	//// VR设备下，射线检测的方向以枪口朝向为准
+	//if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+	//{
+	//	FVector OutLocation;
+	//	FRotator OutRotation;
+	//	Mesh->GetSocketWorldLocationAndRotation(TEXT("MuzzleFlash"), OutLocation, OutRotation);
+	//	return StartTrace + OutRotation.Vector() * InstantHitInfo[CurrentFireMode].TraceRange;
+	//}
+	//else
 	{
 		const FVector FireDir = ModifyForwardDirection(GetAdjustedAim(StartTrace));
 		return StartTrace + FireDir * InstantHitInfo[CurrentFireMode].TraceRange;
@@ -213,11 +213,11 @@ FRotator ANZGun::GetAdjustedAim_Implementation(FVector StartFireLoc)
 
 void ANZGun::WeaponCalcCamera(float DeltaTime, FVector& OutCamLoc, FRotator& OutCamRot)
 {
-	// VR设备下，射线检测的方向以枪口朝向为准
-	if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
-	{
-		return;
-	}
+	//// VR设备下，射线检测的方向以枪口朝向为准
+	//if (NZOwner && NZOwner->Controller && NZOwner->Controller->IsLocalPlayerController() && GEngine->HMDDevice.IsValid() && GEngine->HMDDevice->IsHeadTrackingAllowed())
+	//{
+	//	return;
+	//}
 		
 	if (ViewKickComponent != NULL)
     {
