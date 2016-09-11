@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "Object.h"
+#include "Input/Controller/NZMobileGameController.h"
 #include "NZMobileJoystickView.h"
 #include "NZMobileJoystickController.generated.h"
 
@@ -10,7 +10,7 @@
  * 
  */
 UCLASS()
-class NZMOBILE_API UNZMobileJoystickController : public UObject
+class NZMOBILE_API UNZMobileJoystickController : public UNZMobileGameController
 {
 	GENERATED_BODY()
 	
