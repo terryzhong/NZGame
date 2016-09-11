@@ -13,7 +13,6 @@ UPortControlBPLibrary *ThreadTest::BP = NULL;
 unsigned char incomingData[5] = {};			// don't forget to pre-allocate memory
 unsigned char outData[10] = {};
 char writeBuffer[250] = {};
-int len = 0;
 int32 thePort;
 int32 theBaud;
 
