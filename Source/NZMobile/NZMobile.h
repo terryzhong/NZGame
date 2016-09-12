@@ -89,3 +89,7 @@ struct FMobileInputData
 		return FingerIndex != ETouchIndex::Type(INDEX_NONE);
 	}
 };
+
+#include "NZMobileGameView.h"
+#include "NZMobileGameController.h"
+#include "NZMobileGameHandle.h"

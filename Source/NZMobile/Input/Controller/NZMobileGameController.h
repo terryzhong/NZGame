@@ -3,7 +3,6 @@
 #pragma once
 
 #include "Object.h"
-#include "NZMobileGameView.h"
 #include "NZMobileGameController.generated.h"
 
 /**
@@ -14,19 +13,15 @@ class NZMOBILE_API UNZMobileGameController : public UObject
 {
 	GENERATED_BODY()
 	
+	friend class UNZMobileGameView;
+
 public:
-    UNZMobileGameController()
-    {
-        if (ViewClass)
-        {
-            View = NewObject<UNZMobileGameView>(this, ViewClass);
-        }
-    }
+	UNZMobileGameController();
     
     class UNZMobileGameView* GetView() { return View; }
     
 protected:
-    TSubclassOf<class UNZMobileGameView> ViewClass;
+    TSubclassOf<UNZMobileGameView> ViewClass;
     
     UNZMobileGameView* View;
 };

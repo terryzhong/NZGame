@@ -4,7 +4,7 @@
 #include "NZMobileGameView.h"
 
 
-void UNZMobileGameView::Init()
+UNZMobileGameView::UNZMobileGameView()
 {
 	if (CacheWidgetClass != NULL && CacheWidget == NULL)
 	{

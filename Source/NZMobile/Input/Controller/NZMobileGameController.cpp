@@ -4,3 +4,14 @@
 #include "NZMobileGameController.h"
 
 
+UNZMobileGameController::UNZMobileGameController()
+{
+	if (ViewClass)
+	{
+		View = NewObject<class UNZMobileGameView>(this, ViewClass);
+		if (View)
+		{
+			View->Controller = this;
+		}
+	}
+}

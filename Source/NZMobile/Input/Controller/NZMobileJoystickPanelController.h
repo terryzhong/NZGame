@@ -2,14 +2,14 @@
 
 #pragma once
 
-#include "Object.h"
+#include "Input/Controller/NZMobileGameController.h"
 #include "NZMobileJoystickPanelController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class NZMOBILE_API UNZMobileJoystickPanelController : public UObject
+class NZMOBILE_API UNZMobileJoystickPanelController : public UNZMobileGameController
 {
 	GENERATED_BODY()
 	
