@@ -15,12 +15,9 @@ class NZMOBILE_API UNZMobileJoystickController : public UNZMobileGameController
 	GENERATED_BODY()
 
 public:
-	virtual void Init();
+    virtual void Initialize();
 
 protected:
 	virtual void InitFromConfig();
 
-	TSubclassOf<class UNZMobileJoystickView> JoystickViewClass;
-	class UNZMobileJoystickView* JoystickView;	
-	
 };

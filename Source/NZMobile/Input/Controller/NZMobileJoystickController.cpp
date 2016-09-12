@@ -4,13 +4,11 @@
 #include "NZMobileJoystickController.h"
 
 
-void UNZMobileJoystickController::Init()
+void UNZMobileJoystickController::Initialize()
 {
-	if (JoystickViewClass != NULL && JoystickView == NULL)
-	{
-		JoystickView = NewObject<UNZMobileJoystickView>(this, JoystickViewClass);
-	}
-	InitFromConfig();
+    Super::Initialize();
+    
+    InitFromConfig();
 }
 
 void UNZMobileJoystickController::InitFromConfig()

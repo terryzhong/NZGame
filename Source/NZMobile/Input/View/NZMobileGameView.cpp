@@ -4,12 +4,18 @@
 #include "NZMobileGameView.h"
 
 
-UNZMobileGameView::UNZMobileGameView()
+void UNZMobileGameView::Initialize(UNZMobileGameController* InController)
 {
+    check(InController);
+    Controller = InController;
+    
 	if (CacheWidgetClass != NULL && CacheWidget == NULL)
 	{
 		CacheWidget = CreateWidget<UUserWidget>(GWorld->GetGameInstance(), CacheWidgetClass);
-		CacheWidget->AddToViewport();
+        if (CacheWidget)
+        {
+            CacheWidget->AddToViewport();
+        }
 	}
 }
 

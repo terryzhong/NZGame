@@ -14,6 +14,7 @@ class NZMOBILE_API UNZMobileJoystickPanelController : public UNZMobileGameContro
 	GENERATED_BODY()
 	
 public:
+    virtual void Initialize();
 
 protected:
 	class UNZMobileMovementButtonController* MovementButtonController;

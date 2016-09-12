@@ -21,17 +21,17 @@ void ANZMobilePlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	//if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
-	//{
-	//	MobilePlayerInput = Cast<UNZMobilePlayerInput>(PlayerInput);
-	//	if (MobilePlayerInput)
-	//	{
-	//		MobilePlayerInput->Initialize();
-	//	}
-	//	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZMobilePlayerController::BeginTouch);
-	//	InputComponent->BindTouch(EInputEvent::IE_Released, this, &ANZMobilePlayerController::EndTouch);
-	//	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZMobilePlayerController::TouchUpdate);
-	//}
+	if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
+	{
+		MobilePlayerInput = Cast<UNZMobilePlayerInput>(PlayerInput);
+		if (MobilePlayerInput)
+		{
+			MobilePlayerInput->Initialize();
+		}
+		InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZMobilePlayerController::BeginTouch);
+		InputComponent->BindTouch(EInputEvent::IE_Released, this, &ANZMobilePlayerController::EndTouch);
+		InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZMobilePlayerController::TouchUpdate);
+	}
 }
 
 void ANZMobilePlayerController::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)

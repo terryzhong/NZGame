@@ -16,7 +16,7 @@ class NZMOBILE_API UNZMobileGameController : public UObject
 	friend class UNZMobileGameView;
 
 public:
-	UNZMobileGameController();
+    virtual void Initialize();
     
     class UNZMobileGameView* GetView() { return View; }
     

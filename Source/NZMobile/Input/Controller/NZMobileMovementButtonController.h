@@ -13,7 +13,8 @@ class NZMOBILE_API UNZMobileMovementButtonController : public UNZMobileJoystickC
 {
 	GENERATED_BODY()
 	
+public:
+    UNZMobileMovementButtonController();
 	
-	
-	
+    virtual void Initialize();
 };

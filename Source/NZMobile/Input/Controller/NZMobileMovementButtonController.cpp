@@ -2,7 +2,15 @@
 
 #include "NZMobile.h"
 #include "NZMobileMovementButtonController.h"
+#include "NZMobileMovementButtonView.h"
 
 
+UNZMobileMovementButtonController::UNZMobileMovementButtonController()
+{
+    ViewClass = UNZMobileMovementButtonView::StaticClass();
+}
 
-
+void UNZMobileMovementButtonController::Initialize()
+{
+    Super::Initialize();
+}

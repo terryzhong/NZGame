@@ -4,6 +4,7 @@
 
 #include "NZPlayerInput.h"
 #include "NZMobileGameHandle.h"
+#include "NZMobileGameController.h"
 #include "NZMobilePlayerInput.generated.h"
 
 
@@ -33,4 +34,5 @@ public:
 
 protected:
 	class UNZMobileGameHandle* GameHandle;
+    class UNZMobileGameController* GameController;
 };

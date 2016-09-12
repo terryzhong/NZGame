@@ -3,11 +3,24 @@
 #include "NZMobile.h"
 #include "NZMobilePlayerInput.h"
 #include "NZMobileFixedFireGameHandle.h"
+#include "NZMobileJoystickPanelController.h"
 
 
 void UNZMobilePlayerInput::Initialize()
 {
+    check(GameHandle == NULL);
 	GameHandle = NewObject<UNZMobileFixedFireGameHandle>(this, UNZMobileFixedFireGameHandle::StaticClass(), TEXT("FixedFireGameHandle"));
+    if (GameHandle)
+    {
+        GameHandle->Initialize();
+    }
+    
+    check(GameController == NULL);
+    GameController = NewObject<UNZMobileJoystickPanelController>(this, UNZMobileJoystickPanelController::StaticClass(), TEXT("JoystickPanelController"));
+    if (GameController)
+    {
+        GameController->Initialize();
+    }
 }
 
 void UNZMobilePlayerInput::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
