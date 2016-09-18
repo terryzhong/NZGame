@@ -5,6 +5,24 @@
 #include "NZMobilePlayerInput.h"
 
 
+ANZMobilePlayerController::ANZMobilePlayerController()
+{
+#if !PLATFORM_ANDROID && !PLATFORM_IOS
+	bShowMouseCursor = true;
+	DefaultMouseCursor = EMouseCursor::Crosshairs;
+#endif
+}
+
+void ANZMobilePlayerController::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	if (MobilePlayerInput)
+	{
+		MobilePlayerInput->UpdatePlayerInput(DeltaSeconds);
+	}
+}
+
 void ANZMobilePlayerController::InitInputSystem()
 {
 	if (PlayerInput == NULL)
@@ -19,7 +37,7 @@ void ANZMobilePlayerController::InitInputSystem()
 
 void ANZMobilePlayerController::SetupInputComponent()
 {
-	Super::SetupInputComponent();
+	APlayerController::SetupInputComponent();
 
 	if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
 	{

@@ -4,9 +4,9 @@
 #include "NZMobileJoystickController.h"
 
 
-void UNZMobileJoystickController::Initialize()
+void UNZMobileJoystickController::Initialize(UPlayerInput* InPlayerInput)
 {
-    Super::Initialize();
+    Super::Initialize(InPlayerInput);
     
     InitFromConfig();
 }

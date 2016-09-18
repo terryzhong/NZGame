@@ -16,8 +16,8 @@ class NZMOBILE_API UNZMobileMoveHandleImpl : public UObject
 	
 public:
 	virtual ENZMobileMoveHandle GetHandleImplType() { return NZMobileMoveHandle_None; }
-	virtual FVector2D CalcMovementVector(FMobileInputData& TouchData) { return FVector2D::ZeroVector; }
-	virtual bool InMovementArea(FMobileInputData& TouchData) { return false; }
+	virtual FVector2D CalcMovementVector(FMobileInputData& InputData) { return FVector2D::ZeroVector; }
+	virtual bool InMovementArea(FVector2D Pos) { return false; }
 	virtual void ProcessStaticWalking() {}
 	virtual void UpdateMovementAcceleration() {}
 

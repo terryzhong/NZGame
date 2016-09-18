@@ -4,8 +4,11 @@
 #include "NZMobileGameController.h"
 
 
-void UNZMobileGameController::Initialize()
+void UNZMobileGameController::Initialize(UPlayerInput* InPlayerInput)
 {
+	check(InPlayerInput);
+	CachedPlayerInput = InPlayerInput;
+
     if (ViewClass)
     {
         View = NewObject<class UNZMobileGameView>(this, ViewClass);
@@ -14,4 +17,12 @@ void UNZMobileGameController::Initialize()
             View->Initialize(this);
         }
     }
+}
+
+void UNZMobileGameController::Update()
+{
+	if (View)
+	{
+		View->Update();
+	}
 }

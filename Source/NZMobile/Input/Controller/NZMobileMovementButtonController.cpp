@@ -10,7 +10,7 @@ UNZMobileMovementButtonController::UNZMobileMovementButtonController()
     ViewClass = UNZMobileMovementButtonView::StaticClass();
 }
 
-void UNZMobileMovementButtonController::Initialize()
+void UNZMobileMovementButtonController::Initialize(UPlayerInput* InPlayerInput)
 {
-    Super::Initialize();
+    Super::Initialize(InPlayerInput);
 }

@@ -2,7 +2,10 @@
 
 #include "NZMobile.h"
 #include "NZMobileFireButtonController.h"
+#include "NZMobileFireButtonView.h"
 
 
-
-
+UNZMobileFireButtonController::UNZMobileFireButtonController()
+{
+	ViewClass = UNZMobileFireButtonView::StaticClass();
+}

@@ -16,5 +16,5 @@ class NZMOBILE_API UNZMobileMovementButtonController : public UNZMobileJoystickC
 public:
     UNZMobileMovementButtonController();
 	
-    virtual void Initialize();
+    virtual void Initialize(UPlayerInput* InPlayerInput);
 };

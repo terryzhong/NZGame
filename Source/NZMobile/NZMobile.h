@@ -68,13 +68,15 @@ struct FMobileInputData
 
 	FMobileInputData()
 	{
-		FingerIndex = ETouchIndex::Type(INDEX_NONE);
+		Clear();
 	}
 
-	FMobileInputData(ETouchIndex::Type InFingerIndex, FVector2D InBeginLocation, float InBeginTime)
+	FMobileInputData(ETouchIndex::Type InFingerIndex, FVector2D InBeginLocation, FVector2D InLocation, float InBeginTime)
 	{
+		Clear();
 		FingerIndex = InFingerIndex;
 		BeginLocation = InBeginLocation;
+		Location = InLocation;
 		BeginTime = InBeginTime;
 	}
 
@@ -88,7 +90,16 @@ struct FMobileInputData
 	{
 		return FingerIndex != ETouchIndex::Type(INDEX_NONE);
 	}
+
+	void Clear()
+	{
+		FMemory::Memzero(this, sizeof(FMobileInputData));
+		FingerIndex = ETouchIndex::Type(INDEX_NONE);
+	}
 };
+
+
+
 
 #include "NZMobileGameView.h"
 #include "NZMobileGameController.h"

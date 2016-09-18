@@ -9,13 +9,23 @@ void UNZMobileGameView::Initialize(UNZMobileGameController* InController)
     check(InController);
     Controller = InController;
     
-	if (CacheWidgetClass != NULL && CacheWidget == NULL)
+	if (CachedWidgetClass != NULL && CachedWidget == NULL)
 	{
-		CacheWidget = CreateWidget<UUserWidget>(GWorld->GetGameInstance(), CacheWidgetClass);
-        if (CacheWidget)
+		CachedWidget = CreateWidget<UUserWidget>(GWorld->GetGameInstance(), CachedWidgetClass);
+        if (CachedWidget)
         {
-            CacheWidget->AddToViewport();
+			CachedWidget->AddToViewport();
         }
 	}
 }
 
+void UNZMobileGameView::Update()
+{
+
+}
+
+UPlayerInput* UNZMobileGameView::GetPlayerInput()
+{
+	check(Controller);
+	return Controller->GetPlayerInput();
+}

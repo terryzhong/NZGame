@@ -13,7 +13,20 @@ class NZMOBILE_API UNZMobileFireButtonView : public UNZMobileJoystickView
 {
 	GENERATED_BODY()
 	
-	
-	
-	
+public:
+	UNZMobileFireButtonView();
+
+	virtual void Initialize(class UNZMobileGameController* InController);
+
+	virtual void Update();
+
+protected:
+	virtual void UpdateFixedFire(UNZMobilePlayerInput* PlayerInput);
+
+	virtual void UpdateFollowFire(UNZMobilePlayerInput* PlayerInput);
+
+	UWidget* CachedFireButtonBG;
+	UWidget* CachedFireButtonDirection;
+	UWidget* CachedFireButtonTopDirectionButton;
+	UWidget* CachedFireButtonBullet;
 };

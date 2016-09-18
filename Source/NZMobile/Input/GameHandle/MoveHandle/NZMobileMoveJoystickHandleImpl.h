@@ -16,8 +16,8 @@ class NZMOBILE_API UNZMobileMoveJoystickHandleImpl : public UNZMobileMoveHandleI
 public:
 	virtual ENZMobileMoveHandle GetHandleImplType() { return NZMobileMoveHandle_Joystick; }
 
-	virtual FVector2D CalcMovementVector(FMobileInputData& TouchData);
-	virtual bool InMovementArea(FMobileInputData& TouchData);
+	virtual FVector2D CalcMovementVector(FMobileInputData& InputData);
+	virtual bool InMovementArea(FVector2D Pos);
 	virtual void ProcessStaticWalking();
 	virtual void UpdateMovementAcceleration();
 

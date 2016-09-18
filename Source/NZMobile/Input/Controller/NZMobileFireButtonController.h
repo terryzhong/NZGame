@@ -13,7 +13,7 @@ class NZMOBILE_API UNZMobileFireButtonController : public UNZMobileJoystickContr
 {
 	GENERATED_BODY()
 	
-	
-	
+public:
+	UNZMobileFireButtonController();
 	
 };

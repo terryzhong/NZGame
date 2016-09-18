@@ -13,7 +13,8 @@ class NZMOBILE_API UNZMobileJumpButtonView : public UNZMobileJoystickView
 {
 	GENERATED_BODY()
 	
-	
+public:
+	UNZMobileJumpButtonView();
 	
 	
 };

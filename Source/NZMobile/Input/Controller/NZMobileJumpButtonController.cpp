@@ -2,7 +2,11 @@
 
 #include "NZMobile.h"
 #include "NZMobileJumpButtonController.h"
+#include "NZMobileJumpButtonView.h"
 
 
-
+UNZMobileJumpButtonController::UNZMobileJumpButtonController()
+{
+	ViewClass = UNZMobileJumpButtonView::StaticClass();
+}
 

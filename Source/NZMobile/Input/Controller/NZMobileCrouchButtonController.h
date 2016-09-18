@@ -13,7 +13,7 @@ class NZMOBILE_API UNZMobileCrouchButtonController : public UNZMobileJoystickCon
 {
 	GENERATED_BODY()
 	
-	
-	
+public:
+	UNZMobileCrouchButtonController();	
 	
 };

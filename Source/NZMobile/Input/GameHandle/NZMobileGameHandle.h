@@ -16,6 +16,8 @@ class NZMOBILE_API UNZMobileGameHandle : public UObject
 	GENERATED_BODY()
 	
 public:
+	UNZMobileGameHandle();
+
 	virtual void Initialize();
 
 	virtual void InitFireButton(FVector2D Pos, FVector2D Size);
@@ -26,16 +28,22 @@ public:
 	virtual void InitStaticWalkButton(FVector2D Pos, FVector2D Size);
 	virtual void InitSecondaryAttackButton(FVector2D Pos, FVector2D Size);
 
-
-
 	virtual void UpdateJoystick(TArray<FMobileInputData>& InputDataList);
+
+	UNZMobileInputButton* GetMovementButton() { return MovementButton; }
+
+	FVector2D GetMovementAccel();
+	ENZMobileMoveHandle GetMoveHandleType();
+	FMobileInputData GetMovementInputData();
+	FMobileInputData GetRotationInputData();
+	FVector2D GetMovementVector();
 
 protected:
 	bool IsJumpButtonPressed() { return IsRightJumpButtonPressed() || IsLeftJumpButtonPressed(); }
 	bool IsLeftJumpButtonPressed() { return bLeftJumpButtonState; }
 	bool IsRightJumpButtonPressed() { return bRightJumpButtonState; }
 
-	bool InMovementArea(FMobileInputData InputData);
+	bool InMovementArea(FVector2D Pos);
 	bool InRotationArea(FVector2D Pos);
 	bool InCrouchArea(FVector2D Pos);
 	bool InStaticWalkArea(FVector2D Pos);
@@ -56,15 +64,31 @@ protected:
 	void UpdateMovementAcceleration();
 
 protected:
+	UPROPERTY()
 	class UNZMobileInputButton* MovementButton;
+
+	UPROPERTY()
 	class UNZMobileInputButton* FireButton;
+
+	UPROPERTY()
 	class UNZMobileInputButton* SecondaryFireButton;
-	class UNZMobileInputButton* RotationButtion;
+
+	UPROPERTY()
+	class UNZMobileInputButton* RotationButton;
+
+	UPROPERTY()
 	class UNZMobileInputButton* JumpButton;
+
+	UPROPERTY()
 	class UNZMobileInputButton* LeftJumpButton;
+
+	UPROPERTY()
 	class UNZMobileInputButton* CrouchButton;
+
+	UPROPERTY()
 	class UNZMobileInputButton* StaticWalkButton;
 
+	UPROPERTY()
 	class UNZMobileMoveHandleImpl* MoveHandleImpl;
 	
 	bool bIsCrouchButtonDown;
@@ -112,7 +136,7 @@ protected:
 
 	float MaxAlphaForJoysitck;
 
-	FVector2D MovementAccel;
+	//FVector2D MovementAccel;
 
 	bool bHasRotationInputAfterLoadInputConfig;
 

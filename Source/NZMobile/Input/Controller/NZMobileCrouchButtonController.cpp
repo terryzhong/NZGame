@@ -2,7 +2,11 @@
 
 #include "NZMobile.h"
 #include "NZMobileCrouchButtonController.h"
+#include "NZMobileCrouchButtonView.h"
 
 
-
+UNZMobileCrouchButtonController::UNZMobileCrouchButtonController()
+{
+	ViewClass = UNZMobileCrouchButtonView::StaticClass();
+}
 

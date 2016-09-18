@@ -14,6 +14,10 @@ class NZMOBILE_API ANZMobilePlayerController : public ANZPlayerController
 	GENERATED_BODY()
 	
 public:
+	ANZMobilePlayerController();
+
+	virtual void Tick(float DeltaSeconds) override;
+
 	virtual void InitInputSystem() override;
 	virtual void SetupInputComponent() override;
 	

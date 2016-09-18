@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Object.h"
+#include "NZMobilePlayerInput.h"
 #include "NZMobileGameView.generated.h"
 
 /**
@@ -18,11 +19,17 @@ class NZMOBILE_API UNZMobileGameView : public UObject
 public:
 	virtual void Initialize(class UNZMobileGameController* InController);
 
+	virtual void Update();
+
     class UNZMobileGameController* GetController() { return Controller; }
     
 protected:
-	TSubclassOf<class UUserWidget> CacheWidgetClass;
-	class UUserWidget* CacheWidget;
+	class UPlayerInput* GetPlayerInput();
+
+	TSubclassOf<class UUserWidget> CachedWidgetClass;
+
+	UPROPERTY()
+	class UUserWidget* CachedWidget;
 
 	class UNZMobileGameController* Controller;
 };

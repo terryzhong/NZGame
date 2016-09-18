@@ -14,12 +14,24 @@ class NZMOBILE_API UNZMobileJoystickPanelController : public UNZMobileGameContro
 	GENERATED_BODY()
 	
 public:
-    virtual void Initialize();
+    virtual void Initialize(UPlayerInput* InPlayerInput);
+
+	virtual void Update();
 
 protected:
+	UPROPERTY()
 	class UNZMobileMovementButtonController* MovementButtonController;
+
+	UPROPERTY()
+	class UNZMobileRightHandController* RightHandController;
+
+	UPROPERTY()
 	class UNZMobileFireButtonController* FireButtonController;
+
+	UPROPERTY()
 	class UNZMobileJumpButtonController* JumpButtonController;
+
+	UPROPERTY()
 	class UNZMobileCrouchButtonController* CrouchButtonController;
 	
 };

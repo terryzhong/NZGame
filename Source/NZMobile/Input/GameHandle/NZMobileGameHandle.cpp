@@ -3,108 +3,91 @@
 #include "NZMobile.h"
 #include "NZMobileGameHandle.h"
 #include "NZMobilePlayerInput.h"
+#include "NZMobileMoveJoystickHandleImpl.h"
 
+
+UNZMobileGameHandle::UNZMobileGameHandle()
+{
+	MovementSensitity = 1.f;
+	RotationSensitity = 1.f;
+}
 
 void UNZMobileGameHandle::Initialize()
 {
-	if (MovementButton == NULL)
-	{
-		MovementButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("MovementButton")));
-	}
+	check(MovementButton == NULL);
+	MovementButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("MovementButton")));
 
-	if (FireButton == NULL)
-	{
-		FireButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("FireButton")));
-	}
+	check(FireButton == NULL);
+	FireButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("FireButton")));
 
-	if (SecondaryFireButton == NULL)
-	{
-		SecondaryFireButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("SecondaryFireButton")));
-	}
+	check(SecondaryFireButton == NULL);
+	SecondaryFireButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("SecondaryFireButton")));
 
-	if (RotationButtion == NULL)
-	{
-		RotationButtion = NewObject<UNZMobileInputButton>(this, FName(TEXT("RotationButtion")));
-	}
+	check(RotationButton == NULL);
+	RotationButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("RotationButton")));
 
-	if (JumpButton == NULL)
-	{
-		JumpButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("JumpButton")));
-	}
+	check(JumpButton == NULL);
+	JumpButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("JumpButton")));
 
-	if (LeftJumpButton == NULL)
-	{
-		LeftJumpButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("LeftJumpButton")));
-	}
+	check(LeftJumpButton == NULL);
+	LeftJumpButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("LeftJumpButton")));
 
-	if (CrouchButton == NULL)
-	{
-		CrouchButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("CrouchButton")));
-	}
+	check(CrouchButton == NULL);
+	CrouchButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("CrouchButton")));
 
-	if (StaticWalkButton == NULL)
-	{
-		StaticWalkButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("StaticWalkButton")));
-	}
+	check(StaticWalkButton == NULL);
+	StaticWalkButton = NewObject<UNZMobileInputButton>(this, FName(TEXT("StaticWalkButton")));
+
+	check(MoveHandleImpl == NULL);
+	MoveHandleImpl = NewObject<UNZMobileMoveJoystickHandleImpl>(this, FName(TEXT("MoveJoystickHandleImpl")));
 }
 
 void UNZMobileGameHandle::InitFireButton(FVector2D Pos, FVector2D Size)
 {
-	if (FireButton)
-	{
-		FireButton->Position = Pos;
-	}
+	check(FireButton);
+	FireButton->Position = Pos;
 }
 
 void UNZMobileGameHandle::InitMovementButton(FVector2D Pos, FVector2D Size)
 {
+	check(MoveHandleImpl);
 	MoveHandleImpl->Pos = Pos;
 	MoveHandleImpl->MovementSize = Size;
 }
 
 void UNZMobileGameHandle::InitJumpButton(FVector2D Pos, FVector2D Size)
 {
-	if (JumpButton)
-	{
-		JumpButton->Position = Pos;
-		JumpButton->Size = Size * 0.5f;
-	}
+	check(JumpButton);
+	JumpButton->Position = Pos;
+	JumpButton->Size = Size * 0.5f;
 }
 
 void UNZMobileGameHandle::InitLeftJumpButton(FVector2D Pos, FVector2D Size)
 {
-	if (LeftJumpButton)
-	{
-		LeftJumpButton->Position = Pos;
-		LeftJumpButton->Size = Size * 0.5f;
-	}
+	check(LeftJumpButton);
+	LeftJumpButton->Position = Pos;
+	LeftJumpButton->Size = Size * 0.5f;
 }
 
 void UNZMobileGameHandle::InitCrouchButton(FVector2D Pos, FVector2D Size)
 {
-	if (CrouchButton)
-	{
-		CrouchButton->Position = Pos;
-		CrouchButton->Size = Size * 0.5f;
-	}
+	check(CrouchButton);
+	CrouchButton->Position = Pos;
+	CrouchButton->Size = Size * 0.5f;
 }
 
 void UNZMobileGameHandle::InitStaticWalkButton(FVector2D Pos, FVector2D Size)
 {
-	if (StaticWalkButton)
-	{
-		StaticWalkButton->Position = Pos;
-		StaticWalkButton->Size = Size * 0.5f;
-	}
+	check(StaticWalkButton);
+	StaticWalkButton->Position = Pos;
+	StaticWalkButton->Size = Size * 0.5f;
 }
 
 void UNZMobileGameHandle::InitSecondaryAttackButton(FVector2D Pos, FVector2D Size)
 {
-	if (SecondaryFireButton)
-	{
-		SecondaryFireButton->Position = Pos;
-		SecondaryFireButton->Size = Size * 0.5f;
-	}
+	check(SecondaryFireButton);
+	SecondaryFireButton->Position = Pos;
+	SecondaryFireButton->Size = Size * 0.5f;
 }
 
 void UNZMobileGameHandle::UpdateJoystick(TArray<FMobileInputData>& InputDataList)
@@ -126,7 +109,17 @@ void UNZMobileGameHandle::UpdateJoystick(TArray<FMobileInputData>& InputDataList
 	bool bFoundDoubleClickInRotationRegion = false;
 
 	int32 LastMoveInputFingerIndex = MovementInput.FingerIndex;
-	LastRotateDelta = RotationInput.DeltaMove;
+	MovementInput.Clear();
+	if (RotationInput.IsValid())
+	{
+		LastRotateDelta = RotationInput.DeltaMove;
+	}
+	else
+	{
+		LastRotateDelta = FVector2D::ZeroVector;
+	}
+	RotationInput.Clear();
+	FireInput.Clear();
 
 	float RotationDelta = 0;
 
@@ -134,7 +127,7 @@ void UNZMobileGameHandle::UpdateJoystick(TArray<FMobileInputData>& InputDataList
 	{
 		FVector2D InitPos = InputDataList[Index].BeginLocation;
 
-		if (bIsLockCrouch && InCrouchArea(InitPos))
+		if (!bIsLockCrouch && InCrouchArea(InitPos))
 		{
 			bCrouchButtonState = true;
 		}
@@ -144,9 +137,9 @@ void UNZMobileGameHandle::UpdateJoystick(TArray<FMobileInputData>& InputDataList
 			bStaticWalkButtonState = true;
 		}
 
-		if (!bIsLockMovement && InMovementArea(InputDataList[Index]) && !InLeftJumpArea(InputDataList[Index].BeginLocation))
+		if (!bIsLockMovement && InMovementArea(InputDataList[Index].BeginLocation) && !InLeftJumpArea(InputDataList[Index].BeginLocation))
 		{
-			if (MovementInput.FingerIndex != LastMoveInputFingerIndex)
+			if (!MovementInput.IsValid() || MovementInput.FingerIndex != LastMoveInputFingerIndex)
 			{
 				MovementInput = InputDataList[Index];
 
@@ -162,7 +155,7 @@ void UNZMobileGameHandle::UpdateJoystick(TArray<FMobileInputData>& InputDataList
 			if (!bIsLockRotation && (bIsLockJump || !InJumpArea(InitPos)))
 			{
 				float TempRotDelta = InputDataList[Index].DeltaMove.Size();
-				if (TempRotDelta > RotationDelta)
+				if (!RotationInput.IsValid() || TempRotDelta > RotationDelta)
 				{
 					RotationInput = InputDataList[Index];
 					RotationDelta = TempRotDelta;
@@ -170,7 +163,8 @@ void UNZMobileGameHandle::UpdateJoystick(TArray<FMobileInputData>& InputDataList
 				bHasRotationInputAfterLoadInputConfig = true;
 			}
 
-			if (!InFireArea(InputDataList[Index].BeginLocation) &&
+			if (LastRotationInput.IsValid() &&
+				!InFireArea(InputDataList[Index].BeginLocation) &&
 				LastRotationInput.BeginTime != InputDataList[Index].BeginTime &&
 				(LastRotationInput.BeginLocation - InputDataList[Index].BeginLocation).Size() < JumpButton->Size.Y &&
 				(InputDataList[Index].BeginTime - LastRotationInput.BeginTime) < DoubleClickMaxDeltaTime)
@@ -229,27 +223,51 @@ void UNZMobileGameHandle::UpdateJoystick(TArray<FMobileInputData>& InputDataList
 	UpdateMovementAcceleration();
 }
 
-bool UNZMobileGameHandle::InMovementArea(FMobileInputData InputData)
+FVector2D UNZMobileGameHandle::GetMovementAccel()
 {
-	return MoveHandleImpl && MoveHandleImpl->InMovementArea(InputData);
+	check(MoveHandleImpl);
+	return MoveHandleImpl->MovementAccel;
+}
+
+ENZMobileMoveHandle UNZMobileGameHandle::GetMoveHandleType()
+{
+	check(MoveHandleImpl);
+	return MoveHandleImpl->GetHandleImplType();
+}
+
+FMobileInputData UNZMobileGameHandle::GetMovementInputData()
+{
+	return MovementInput;
+}
+
+FMobileInputData UNZMobileGameHandle::GetRotationInputData()
+{
+	return RotationInput;
+}
+
+FVector2D UNZMobileGameHandle::GetMovementVector()
+{
+	return MovementVector;
+}
+
+bool UNZMobileGameHandle::InMovementArea(FVector2D Pos)
+{
+	return true;
+	check(MoveHandleImpl);
+	return MoveHandleImpl->InMovementArea(Pos);
 }
 
 bool UNZMobileGameHandle::InRotationArea(FVector2D Pos)
 {
-	if (RotationButtion)
-	{
-		return RotationButtion->InButtonRange(Pos);
-	}
 	return false;
+	check(RotationButton);
+	return RotationButton->InButtonRange(Pos);
 }
 
 bool UNZMobileGameHandle::InCrouchArea(FVector2D Pos)
 {
-	if (CrouchButton)
-	{
-		return CrouchButton->InButtonRange(Pos);
-	}
-	return false;
+	check(CrouchButton);
+	return CrouchButton->InButtonRange(Pos);
 }
 
 bool UNZMobileGameHandle::InStaticWalkArea(FVector2D Pos)
@@ -287,17 +305,15 @@ bool UNZMobileGameHandle::InRightJumpArea(FVector2D Pos)
 
 bool UNZMobileGameHandle::InFireArea(FVector2D Pos)
 {
-	if (FireButton)
-	{
-		return FireButton->InButtonRange(Pos);
-	}
-	return false;
+	check(FireButton);
+	return FireButton->InButtonRange(Pos);
 }
 
 bool UNZMobileGameHandle::InSecondaryFireArea(FVector2D Pos)
 {
-	if (bEnableSecondaryFireButton && SecondaryFireButton)
+	if (bEnableSecondaryFireButton)
 	{
+		check(SecondaryFireButton);
 		return SecondaryFireButton->InButtonRange(Pos);
 	}
 	return false;
@@ -313,6 +329,7 @@ bool UNZMobileGameHandle::IsPointFire(FMobileInputData& InFireInput)
 
 void UNZMobileGameHandle::CalcMovementVector()
 {
+	check(MoveHandleImpl);
 	MovementVector = MoveHandleImpl->CalcMovementVector(MovementInput);
 	MovementVector *= MovementSensitity;
 }
@@ -338,7 +355,7 @@ void UNZMobileGameHandle::ProcessRightInput(bool IsFiring)
 
 void UNZMobileGameHandle::ProcessRightInput()
 {
-
+	// none
 }
 
 void UNZMobileGameHandle::ProcessRotation()

@@ -16,12 +16,21 @@ class NZMOBILE_API UNZMobileGameController : public UObject
 	friend class UNZMobileGameView;
 
 public:
-    virtual void Initialize();
+    virtual void Initialize(UPlayerInput* InPlayerInput);
     
-    class UNZMobileGameView* GetView() { return View; }
+	virtual void Update();
+
+	UPlayerInput* GetPlayerInput() { return CachedPlayerInput; }
+
+	class UNZMobileGameView* GetView() { return View; }
     
 protected:
+	UPROPERTY()
+	UPlayerInput* CachedPlayerInput;
+
+	UPROPERTY()
     TSubclassOf<UNZMobileGameView> ViewClass;
     
+	UPROPERTY()
     UNZMobileGameView* View;
 };

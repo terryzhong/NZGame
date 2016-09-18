@@ -16,5 +16,21 @@ class NZMOBILE_API UNZMobileMovementButtonView : public UNZMobileJoystickView
 public:
     UNZMobileMovementButtonView();
 	
-	
+	virtual void Initialize(class UNZMobileGameController* InController);
+
+	virtual void Update();
+
+protected:
+	virtual void UpdateJoystick(UNZMobilePlayerInput* PlayerInput);
+
+	virtual void UpdateClassics(UNZMobilePlayerInput* PlayerInput);
+
+	UWidget* CachedJoystickBG;
+	UWidget* CachedJoystickDirection;
+	UWidget* CachedJoystickTopDirectionButton;
+	UWidget* CachedJoystickFrontArrow;
+	UWidget* CachedJoystickBackArrow;
+	UWidget* CachedJoystickLeftArrow;
+	UWidget* CachedJoystickRightArrow;
+
 };

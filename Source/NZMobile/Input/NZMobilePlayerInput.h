@@ -3,6 +3,7 @@
 #pragma once
 
 #include "NZPlayerInput.h"
+#include "NZMobileInputConfig.h"
 #include "NZMobileGameHandle.h"
 #include "NZMobileGameController.h"
 #include "NZMobilePlayerInput.generated.h"
@@ -17,22 +18,34 @@ class NZMOBILE_API UNZMobilePlayerInput : public UNZPlayerInput
 	GENERATED_BODY()
 	
 public:
-	TArray<struct FMobileInputData> MobileInputDataList;
-	
 	void Initialize();
 
 	void BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
 	void EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
 	void TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location);
 
-	void Tick(float DeltaTime);
+	void UpdatePlayerInput(float DeltaTime);
 	void UpdatePlayerInputOnMobile();
 	void UpdatePlayerInputOnPC();
 	void UpdateJoystick();
 
+	FVector2D GetMovementAccel();
+	ENZMobileMoveHandle GetMoveHandleType();
+	FMobileInputData GetMovementInputData();
+	FMobileInputData GetRotationInputData();
+	bool IsFixed();
+
 	ENZMobileStaticWalkMode StaticWalkMode;
 
 protected:
+	UPROPERTY()
+	class UNZMobileInputConfig* InputConfig;
+
+	UPROPERTY()
 	class UNZMobileGameHandle* GameHandle;
+
+	UPROPERTY()
     class UNZMobileGameController* GameController;
+
+	TArray<struct FMobileInputData> MobileInputDataList;
 };
