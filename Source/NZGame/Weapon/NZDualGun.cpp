@@ -61,7 +61,8 @@ void ANZDualGun::DetachFromOwner_Implementation()
 {
 	if (LeftHandMesh != NULL && LeftHandMesh->SkeletalMesh != NULL)
 	{
-		LeftHandMesh->DetachFromParent();
+		//LeftHandMesh->DetachFromParent();
+		LeftHandMesh->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
 	}
 
 	Super::DetachFromOwner_Implementation();
@@ -135,14 +136,16 @@ void ANZDualGun::ProcessHeadMountedDisplay(FVector HeadPosition, FRotator HeadRo
 
 	if (Mesh->GetAttachParent() != NULL)
 	{
-		Mesh->DetachFromParent(true);
+		//Mesh->DetachFromParent(true);
+		Mesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	}
 	Mesh->SetWorldLocation(LeftHandMeshMatrix.GetOrigin());
 	Mesh->SetWorldRotation(LeftHandMeshMatrix.Rotator());
 
 	if (LeftHandMesh->GetAttachParent() != NULL)
 	{
-		LeftHandMesh->DetachFromParent(true);
+		//LeftHandMesh->DetachFromParent(true);
+		LeftHandMesh->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
 	}
 	LeftHandMesh->SetWorldLocation(RightMeshMatrix.GetOrigin());
 	LeftHandMesh->SetWorldRotation(RightMeshMatrix.Rotator());

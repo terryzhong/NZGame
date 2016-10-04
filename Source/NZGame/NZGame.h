@@ -3,7 +3,7 @@
 #pragma once
 
 #include "Engine.h"
-#include "NZATypes.h"
+#include "UMG.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(NZ, Log, All);
 
@@ -14,7 +14,6 @@ DECLARE_LOG_CATEGORY_EXTERN(NZ, Log, All);
 #define COLLISION_PAWNOVERLAP   ECC_GameTraceChannel5
 #define COLLISION_TRACE_WEAPONNOCHARACTER   ECC_GameTraceChannel6
 #define COLLISION_TRANSDISK     ECC_GameTraceChannel7
-
 
 /** Handy response params for world-only checks */
 extern FCollisionResponseParams WorldResponseParams;
@@ -27,3 +26,6 @@ extern APhysicsVolume* FindPhysicsVolume(UWorld* World, const FVector& TestLoc, 
 
 /**  */
 extern float GetAnimLengthForScaling(UAnimMontage* WeaponAnim, UAnimMontage* HandsAnim);
+
+#include "NZATypes.h"
+#include "NZMobile.h"

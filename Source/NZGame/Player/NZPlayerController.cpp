@@ -15,6 +15,8 @@
 #include "NZTeamInfo.h"
 #include "AudioDevice.h"
 #include "ActiveSound.h"
+#include "NZMobilePlayerInput.h"
+#include "NZMobileInputComponent.h"
 
 
 ANZPlayerController::ANZPlayerController()
@@ -36,7 +38,8 @@ ANZPlayerController::ANZPlayerController()
     //EmoteCooldownTime = 0.3f;
     bSpectateBehindView = true;
     StylizedPPIndex = INDEX_NONE;
-    
+
+	bPCSimulateMobile = false;
 }
 
 ANZCharacter* ANZPlayerController::GetNZCharacter()
@@ -86,18 +89,6 @@ void ANZPlayerController::Destroyed()
 {
     Super::Destroyed();
 
-    // todo:
-}
-
-void ANZPlayerController::InitInputSystem()
-{
-    if (PlayerInput == NULL)
-    {
-        PlayerInput = NewObject<UNZPlayerInput>(this, UNZPlayerInput::StaticClass());
-    }
-    
-    Super::InitInputSystem();
-    
     // todo:
 }
 
@@ -158,8 +149,75 @@ void ANZPlayerController::SetPawn(APawn* InPawn)
     }
 }
 
+UClass* ANZPlayerController::GetPlayerInputClass()
+{
+	FString PlatformName = UGameplayStatics::GetPlatformName();
+	if (PlatformName == TEXT("Windows") || PlatformName == TEXT("Mac"))
+	{
+		if (!bPCSimulateMobile)
+		{
+			return UNZPlayerInput::StaticClass();
+		}
+		else
+		{
+			return UNZMobilePlayerInput::StaticClass();
+		}
+	}
+	else if (PlatformName == TEXT("Android") || PlatformName == TEXT("IOS"))
+	{
+		return UNZMobilePlayerInput::StaticClass();
+	}
+
+	return UNZPlayerInput::StaticClass();
+}
+
+UClass* ANZPlayerController::GetInputComponentClass()
+{
+	FString PlatformName = UGameplayStatics::GetPlatformName();
+	if (PlatformName == TEXT("Windows") || PlatformName == TEXT("Mac"))
+	{
+		if (!bPCSimulateMobile)
+		{
+			return UInputComponent::StaticClass();
+		}
+		else
+		{
+			return UNZMobileInputComponent::StaticClass();
+		}
+	}
+	else if (PlatformName == TEXT("Android") || PlatformName == TEXT("IOS"))
+	{
+		return UNZMobileInputComponent::StaticClass();
+	}
+
+	return UInputComponent::StaticClass();
+}
+
+void ANZPlayerController::InitInputSystem()
+{
+	if (PlayerInput == NULL)
+	{
+		NZPlayerInput = NewObject<UNZPlayerInput>(this, GetPlayerInputClass());
+		check(NZPlayerInput);
+		NZPlayerInput->Initialize();
+		PlayerInput = NZPlayerInput;
+	}
+
+	Super::InitInputSystem();
+
+	// todo:
+}
+
 void ANZPlayerController::SetupInputComponent()
 {
+	// A subclass could create a different InputComponent class but still want the default bindings
+	if (InputComponent == NULL)
+	{
+		InputComponent = NewObject<UInputComponent>(this, GetInputComponentClass(), TEXT("PC_InputComponent0"));
+		check(InputComponent);
+		InputComponent->RegisterComponent();
+	}
+
 	Super::SetupInputComponent();
     
 	InputComponent->BindAxis("MoveForward", this, &ANZPlayerController::MoveForward);
@@ -196,12 +254,12 @@ void ANZPlayerController::SetupInputComponent()
 	InputComponent->BindAction("Sprint", IE_Pressed, this, &ANZPlayerController::Sprint);
 	InputComponent->BindAction("UnSprint", IE_Released, this, &ANZPlayerController::UnSprint);
 
-	//if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
-	//{
-	//	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZPlayerController::BeginTouch);
-	//	InputComponent->BindTouch(EInputEvent::IE_Released, this, &ANZPlayerController::EndTouch);
-	//	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZPlayerController::TouchUpdate);
-	//}
+	if (FPlatformMisc::GetUseVirtualJoysticks() || GetDefault<UInputSettings>()->bUseMouseForTouch)
+	{
+		InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &ANZPlayerController::BeginTouch);
+		InputComponent->BindTouch(EInputEvent::IE_Released, this, &ANZPlayerController::EndTouch);
+		InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZPlayerController::TouchUpdate);
+	}
 
 
  /*   InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
@@ -233,6 +291,11 @@ void ANZPlayerController::SetupInputComponent()
     InputComponent->BindAction("ShowBuyMenu", IE_Pressed, this, &ANZPlayerController::ShowBuyMenu);
     
     UpdateWeaponGroupKeys();*/
+}
+
+void ANZPlayerController::CreateTouchInterface()
+{
+	//Super::CreateTouchInterface();
 }
 
 void ANZPlayerController::ProcessPlayerInput(const float DeltaTime, const bool bGamePaused)
@@ -1047,6 +1110,11 @@ void ANZPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
+	if (NZPlayerInput)
+	{
+		NZPlayerInput->UpdatePlayerInput(DeltaTime);
+	}
+
 	if (StateName == FName(TEXT("GameOver")))
 	{
 		UpdateRotation(DeltaTime);
@@ -1639,67 +1707,29 @@ void ANZPlayerController::LookUpAtRate(float Rate)
     AddPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
 }
 
-/*
 void ANZPlayerController::BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
-	if (TouchItem.bIsPressed == true)
+	if (NZPlayerInput)
 	{
-		return;
+		NZPlayerInput->BeginTouch(FingerIndex, Location);
 	}
-	TouchItem.bIsPressed = true;
-	TouchItem.FingerIndex = FingerIndex;
-	TouchItem.Location = Location;
-	TouchItem.bMoved = false;
 }
 
 void ANZPlayerController::EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
-	if (TouchItem.bIsPressed == false)
+	if (NZPlayerInput)
 	{
-		return;
+		NZPlayerInput->EndTouch(FingerIndex, Location);
 	}
-	if ((FingerIndex == TouchItem.FingerIndex) && (TouchItem.bMoved == false))
-	{
-		OnFire();
-	}
-	TouchItem.bIsPressed = false;
 }
 
 void ANZPlayerController::TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
-	if ((TouchItem.bIsPressed == true) && (TouchItem.FingerIndex == FingerIndex))
+	if (NZPlayerInput)
 	{
-		if (TouchItem.bIsPressed)
-		{
-			if (GetWorld() != NULL)
-			{
-				UGameViewportClient* ViewportClient = GetWorld()->GetGameViewport();
-				if (ViewportClient != NULL)
-				{
-					FVector MoveDelta = Location - TouchItem.Location;
-					FVector2D ScreenSize;
-					ViewportClient->GetViewportSize(ScreenSize);
-					FVector2D ScaledDelta = FVector2D(MoveDelta.X, MoveDelta.Y) / ScreenSize;
-					if (FMath::Abs(ScaledDelta.X) >= 4.0 / ScreenSize.X)
-					{
-						TouchItem.bMoved = true;
-						float Value = ScaledDelta.X * BaseTurnRate;
-						AddYawInput(Value);
-					}
-					if (FMath::Abs(ScaledDelta.Y) >= 4.0 / ScreenSize.Y)
-					{
-						TouchItem.bMoved = true;
-						float Value = ScaledDelta.Y * BaseTurnRate;
-						AddPitchInput(Value);
-					}
-					TouchItem.Location = Location;
-				}
-				TouchItem.Location = Location;
-			}
-		}
+		NZPlayerInput->TouchUpdate(FingerIndex, Location);
 	}
 }
-*/
 
 void ANZPlayerController::ApplyDeferredFireInputs()
 {

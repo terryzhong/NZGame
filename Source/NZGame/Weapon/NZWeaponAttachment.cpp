@@ -242,24 +242,36 @@ void ANZWeaponAttachment::StopFiringEffects(bool bIgnoreCurrentMode)
 
 void ANZWeaponAttachment::AttachToOwnerNative()
 {
-	//Mesh->AttachTo(NZOwner->GetMesh(), AttachSocket);
-	Mesh->AttachToComponent(NZOwner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, AttachSocket);
-    Mesh->SetRelativeLocation(AttachOffset);
-    Mesh->bRecentlyRendered = NZOwner->GetMesh()->bRecentlyRendered;
-    Mesh->LastRenderTime = NZOwner->GetMesh()->LastRenderTime;
-    UpdateOverlays();
-    SetSkin(NZOwner->GetSkin());
+	if (Mesh && NZOwner)
+	{
+		Mesh->AttachToComponent(NZOwner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, AttachSocket);
+		Mesh->SetRelativeLocation(AttachOffset);
+		Mesh->bRecentlyRendered = NZOwner->GetMesh()->bRecentlyRendered;
+		Mesh->LastRenderTime = NZOwner->GetMesh()->LastRenderTime;
+		UpdateOverlays();
+		SetSkin(NZOwner->GetSkin());
+	}
+	else
+	{
+		UE_LOG(NZ, Warning, TEXT("[terryzhong] -- AttachToOwnerNative failed! Mesh = %s, NZOwner = %s"), Mesh ? *Mesh->GetName() : TEXT("NULL"), NZOwner ? *NZOwner->GetName() : TEXT("NULL"));
+	}
 }
 
 void ANZWeaponAttachment::HolsterToOwnerNative()
 {
-    //Mesh->AttachTo(NZOwner->GetMesh(), HolsterSocket);
-	Mesh->AttachToComponent(NZOwner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, HolsterSocket);
-    Mesh->SetRelativeLocation(HolsterOffset);
-    Mesh->SetRelativeRotation(HolsterRotation);
-    Mesh->bRecentlyRendered = NZOwner->GetMesh()->bRecentlyRendered;
-    Mesh->LastRenderTime = NZOwner->GetMesh()->LastRenderTime;
-    SetSkin(NZOwner->GetSkin());
+	if (Mesh && NZOwner)
+	{
+		Mesh->AttachToComponent(NZOwner->GetMesh(), FAttachmentTransformRules::KeepRelativeTransform, HolsterSocket);
+		Mesh->SetRelativeLocation(HolsterOffset);
+		Mesh->SetRelativeRotation(HolsterRotation);
+		Mesh->bRecentlyRendered = NZOwner->GetMesh()->bRecentlyRendered;
+		Mesh->LastRenderTime = NZOwner->GetMesh()->LastRenderTime;
+		SetSkin(NZOwner->GetSkin());
+	}
+	else
+	{
+		UE_LOG(NZ, Warning, TEXT("[terryzhong] -- HolsterToOwnerNative failed! Mesh = %s, NZOwner = %s"), Mesh ? *Mesh->GetName() : TEXT("NULL"), NZOwner ? *NZOwner->GetName() : TEXT("NULL"));
+	}
 }
 
 void ANZWeaponAttachment::UpdateOverlays()

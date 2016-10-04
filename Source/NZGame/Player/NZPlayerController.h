@@ -47,6 +47,9 @@ private:
 	UPROPERTY()
 	class ANZCharacter* NZCharacter;
 	
+	UPROPERTY()
+	class UNZPlayerInput* NZPlayerInput;
+
 public:
     ANZPlayerController();
     
@@ -70,13 +73,22 @@ public:
     
     virtual void BeginPlay() override;
     virtual void Destroyed() override;
-    virtual void InitInputSystem() override;
     virtual void InitPlayerState();
     virtual void OnRep_PlayerState();
     virtual void SetPawn(APawn* InPawn);
+
+	// Input
+	virtual UClass* GetPlayerInputClass();
+	virtual UClass* GetInputComponentClass();
+    virtual void InitInputSystem() override;
 	virtual void SetupInputComponent() override;
+	virtual void CreateTouchInterface() override;
     virtual void ProcessPlayerInput(const float DeltaTime, const bool bGamePaused) override;
-	
+
+	/** PC simulated Mobile? */
+	UPROPERTY(EditAnywhere, GlobalConfig, Category = Input)
+	float bPCSimulateMobile;
+
     virtual void PawnPendingDestroy(APawn* InPawn) override;
 	    
     virtual void HearSound(USoundBase* InSoundCue, AActor* SoundPlayer, const FVector& SoundLocation, bool bStopWhenOwnerDestroyed, bool bAmplifyVolume);
@@ -309,18 +321,9 @@ public:
     
     virtual void LookUpAtRate(float Rate);
 
-/*	struct TouchData
-	{
-		TouchData() { bIsPressed = false; Location = FVector::ZeroVector; }
-		bool bIsPressed;
-		ETouchIndex::Type FingerIndex;
-		FVector Location;
-		bool bMoved;
-	};
-	void BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
-	void EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
-	void TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location);
-	TouchData TouchItem;*/
+	virtual void BeginTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
+	virtual void EndTouch(const ETouchIndex::Type FingerIndex, const FVector Location);
+	virtual void TouchUpdate(const ETouchIndex::Type FingerIndex, const FVector Location);
     
 	/** Called to set the jump flag from input */
 	virtual void Jump();

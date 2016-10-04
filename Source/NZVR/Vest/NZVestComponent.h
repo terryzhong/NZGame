@@ -44,7 +44,7 @@ public:
 };
 
 //UCLASS(Config=Vest, ClassGroup="Interaction", editinlinenew, meta = (DisplayName = "NZ Vest Component", BlueprintSpawnableComponent))
-UCLASS(Config = Vest, Blueprintable)
+UCLASS(Config = VR, Blueprintable)
 class NZVR_API UNZVestComponent : public UActorComponent
 {
 	GENERATED_BODY()
