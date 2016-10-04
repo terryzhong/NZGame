@@ -25,6 +25,7 @@
 #include "AudioDevice.h"
 #include "NZWeaponStateFiring.h"
 #include "NZDamageType_Fell.h"
+#include "Runtime/Engine/Classes/PhysicsEngine/ConstraintInstance.h"
 
 // Sets default values
 //ANZCharacter::ANZCharacter()

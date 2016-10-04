@@ -38,10 +38,10 @@ public:
     virtual void Tick( float DeltaSeconds ) override;
     
     void UpdateInputMode();
+#endif
     
     UPROPERTY()
     TEnumAsByte<EInputMode::Type> InputMode;
-#endif
     
     virtual uint8 GetTeamNum() const;
     

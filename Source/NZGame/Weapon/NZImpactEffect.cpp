@@ -53,8 +53,8 @@ void ANZImpactEffect::CreateEffectComponents(UWorld* World, const FTransform& Ba
         if (NativeCompList[i]->GetAttachParent() == CurrentAttachment && ShouldCreateComponent(NativeCompList[i], NativeCompList[i]->GetFName(), BaseTransform, HitComp, SpawnedBy, InstigatedBy))
         {
             USceneComponent* NewComp = NewObject<USceneComponent>(World, NativeCompList[i]->GetClass(), NAME_None, RF_NoFlags, NativeCompList[i]);
-            NewComp->SetupAttachment(NULL);
-			NewComp->AttachChildren.Empty();
+            //NewComp->SetupAttachment(NULL);
+			//NewComp->AttachChildren.Empty();
             UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(NewComp);
             if (Prim != NULL)
             {
@@ -89,8 +89,8 @@ void ANZImpactEffect::CreateEffectComponents(UWorld* World, const FTransform& Ba
 		if (ComponentTemplate != NULL && BPNodes[i]->ParentComponentOrVariableName == TemplateName && ShouldCreateComponent(ComponentTemplate, TemplateName, BaseTransform, HitComp, SpawnedBy, InstigatedBy))
 		{
 			USceneComponent* NewComp = NewObject<USceneComponent>(World, ComponentTemplate->GetClass(), NAME_None, RF_NoFlags, ComponentTemplate);
-			NewComp->SetupAttachment(NULL);
-			NewComp->AttachChildren.Empty();
+			//NewComp->SetupAttachment(NULL);
+			//NewComp->AttachChildren.Empty();
 			UPrimitiveComponent* Prim = Cast<UPrimitiveComponent>(NewComp);
 			if (Prim != NULL)
 			{
