@@ -1890,13 +1890,15 @@ void ANZWeapon::UpdateWeaponHand()
             {
                 if (MuzzleFlash[i] != NULL)
                 {
-                    MuzzleFlash[i]->SetupAttachment(NULL, MuzzleFlashSocketNames[i]);
+					//MuzzleFlash[i]->AttachSocketName = MuzzleFlashSocketNames[i];
+					MuzzleFlash[i]->AttachToComponent(MuzzleFlash[i]->GetAttachParent(), FAttachmentTransformRules::KeepRelativeTransform, MuzzleFlashSocketNames[i]);
                     MuzzleFlash[i]->SetRelativeTransform(MuzzleFlashDefaultTransforms[i]);
                 }
             }
         }
         
-        Mesh->SetupAttachment(NULL, HandsAttachSocket);
+		//Mesh->AttachSocketName = HandsAttachSocket;
+		Mesh->AttachToComponent(Mesh->GetAttachParent(), FAttachmentTransformRules::KeepRelativeTransform, HandsAttachSocket);
         if (HandsAttachSocket == NAME_None)
         {
             //NZOwner->FirstPersonMesh->SetRelativeTransform(FTransform::Identity);
@@ -1934,14 +1936,16 @@ void ANZWeapon::UpdateWeaponHand()
                 AdjustMesh->SetRelativeLocationAndRotation(FVector(-50.0f, 0.0f, -50.0f), FRotator::ZeroRotator);
                 if (AdjustMesh != Mesh)
                 {
-                    Mesh->SetupAttachment(NULL, NAME_None);
+                    //Mesh->SetupAttachment(NULL, NAME_None);
+					Mesh->DetachFromParent();
                     Mesh->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
                 }
                 for (int32 i = 0; i < MuzzleFlash.Num() && i < MuzzleFlashDefaultTransforms.Num(); i++)
                 {
                     if (MuzzleFlash[i] != NULL)
                     {
-                        MuzzleFlash[i]->SetupAttachment(NULL, NAME_None);
+                        //MuzzleFlash[i]->SetupAttachment(NULL, NAME_None);
+						MuzzleFlash[i]->DetachFromParent();
                         MuzzleFlash[i]->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
                     }
                 }

@@ -363,8 +363,8 @@ void ANZPlayerController::ClientHearSound_Implementation(USoundBase* TheSound, A
         {
             // No attenuation/spatialization, full volume
             FActiveSound NewActiveSound;
-            NewActiveSound.SetWorld(GetWorld());
-            NewActiveSound.SetSound(TheSound);
+            NewActiveSound.World = GetWorld();
+            NewActiveSound.Sound = TheSound;
             
             NewActiveSound.VolumeMultiplier = 1.0f;
             NewActiveSound.PitchMultiplier = 1.0f;
@@ -1315,19 +1315,9 @@ void ANZPlayerController::ClientSwitchToBestWeapon_Implementation()
 	SwitchToBestWeapon();
 }
 
-void ANZPlayerController::K2_PrevWeapon_Implementation()
-{
-    PrevWeapon();
-}
-
 void ANZPlayerController::PrevWeapon()
 {
     SwitchWeaponInSequence(true);
-}
-
-void ANZPlayerController::K2_NextWeapon_Implementation()
-{
-    NextWeapon();
 }
 
 void ANZPlayerController::NextWeapon()
