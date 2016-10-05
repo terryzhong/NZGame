@@ -34,4 +34,6 @@ protected:
 	UPROPERTY()
 	class UNZMobileCrouchButtonController* CrouchButtonController;
 	
+	UPROPERTY()
+	class UNZMobileWeaponButtonController* WeaponButtonController;
 };

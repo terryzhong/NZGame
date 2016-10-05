@@ -7,6 +7,7 @@
 #include "NZMobileFireButtonController.h"
 #include "NZMobileJumpButtonController.h"
 #include "NZMobileCrouchButtonController.h"
+#include "NZMobileWeaponButtonController.h"
 
 
 void UNZMobileJoystickPanelController::Initialize(UPlayerInput* InPlayerInput)
@@ -47,6 +48,13 @@ void UNZMobileJoystickPanelController::Initialize(UPlayerInput* InPlayerInput)
 	{
 		CrouchButtonController->Initialize(InPlayerInput);
 	}
+
+	check(WeaponButtonController == NULL);
+	WeaponButtonController = NewObject<UNZMobileWeaponButtonController>(this, UNZMobileWeaponButtonController::StaticClass(), TEXT("WeaponButtonController"));
+	if (WeaponButtonController)
+	{
+		WeaponButtonController->Initialize(InPlayerInput);
+	}
 }
 
 void UNZMobileJoystickPanelController::Update()
@@ -74,5 +82,10 @@ void UNZMobileJoystickPanelController::Update()
 	if (CrouchButtonController)
 	{
 		CrouchButtonController->Update();
+	}
+
+	if (WeaponButtonController)
+	{
+		WeaponButtonController->Update();
 	}
 }

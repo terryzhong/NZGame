@@ -10,7 +10,6 @@ UNZMobileFireButtonView::UNZMobileFireButtonView()
 	CachedWidgetClass = FireButtonClassRef.Object;
 }
 
-
 void UNZMobileFireButtonView::Initialize(class UNZMobileGameController* InController)
 {
 	Super::Initialize(InController);

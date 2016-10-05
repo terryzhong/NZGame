@@ -473,9 +473,9 @@ void UNZCharacterMovementComponent::ProcessOldServerMove(float OldTimeStamp, FVe
 		PC->SetControlRotation(ViewRot);
 	}
 
-	const float MaxResponseTime = ServerData->MaxResponseTime * CharacterOwner->GetWorldSettings()->GetEffectiveTimeDilation();
+	const float MaxMoveDeltaTime = ServerData->MaxMoveDeltaTime * CharacterOwner->GetWorldSettings()->GetEffectiveTimeDilation();
 
-	MoveAutonomous(OldTimeStamp, FMath::Min(OldTimeStamp - ServerData->CurrentClientTimeStamp, MaxResponseTime), OldMoveFlags, OldAccel);
+	MoveAutonomous(OldTimeStamp, FMath::Min(OldTimeStamp - ServerData->CurrentClientTimeStamp, MaxMoveDeltaTime), OldMoveFlags, OldAccel);
 	ServerData->CurrentClientTimeStamp = OldTimeStamp;
 }
 

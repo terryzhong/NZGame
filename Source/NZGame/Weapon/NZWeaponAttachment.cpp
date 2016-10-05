@@ -53,8 +53,9 @@ void ANZWeaponAttachment::BeginPlay()
             ImpactEffectManagerClass = WeaponType.GetDefaultObject()->ImpactEffectManagerClass;
             if (ImpactEffectManagerClass != NULL)
             {
-                ImpactEffectManager = Cast<UNZImpactEffectManager>(StaticConstructObject(ImpactEffectManagerClass));
-            }
+                //ImpactEffectManager = Cast<UNZImpactEffectManager>(StaticConstructObject(ImpactEffectManagerClass));
+				ImpactEffectManager = NewObject<UNZImpactEffectManager>(this, ImpactEffectManagerClass);
+			}
             
             ImpactEffectSkipDistance = WeaponType.GetDefaultObject()->ImpactEffectSkipDistance;
             MaxImpactEffectSkipTime = WeaponType.GetDefaultObject()->MaxImpactEffectSkipTime;

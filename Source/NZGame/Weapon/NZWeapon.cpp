@@ -411,7 +411,8 @@ void ANZWeapon::BeginPlay()
     
     if (ImpactEffectManager == NULL && ImpactEffectManagerClass != NULL)
     {
-        ImpactEffectManager = Cast<UNZImpactEffectManager>(StaticConstructObject(ImpactEffectManagerClass));
+		//ImpactEffectManager = Cast<UNZImpactEffectManager>(StaticConstructObject(ImpactEffectManagerClass));
+		ImpactEffectManager = NewObject<UNZImpactEffectManager>(this, ImpactEffectManagerClass);
     }
     
     InstanceMuzzleFlashArray(this, MuzzleFlash);

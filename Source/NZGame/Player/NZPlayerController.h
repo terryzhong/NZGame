@@ -87,7 +87,7 @@ public:
 
 	/** PC simulated Mobile? */
 	UPROPERTY(EditAnywhere, GlobalConfig, Category = Input)
-	float bPCSimulateMobile;
+	bool bPCSimulateMobile;
 
     virtual void PawnPendingDestroy(APawn* InPawn) override;
 	    
