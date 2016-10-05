@@ -35,18 +35,3 @@ void UNZMobileWeaponButtonView::Update()
 	}
 
 }
-
-void UNZMobileWeaponButtonView::PreviousWeaponButtonOnClick_Implementation()
-{
-
-}
-
-void UNZMobileWeaponButtonView::CurrentWeaponButtonOnClick_Implementation()
-{
-
-}
-
-void UNZMobileWeaponButtonView::NextWeaponButtonOnClick_Implementation()
-{
-
-}

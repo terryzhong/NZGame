@@ -68,7 +68,7 @@ protected:
 	void UpdateMovementAcceleration();
 
 protected:
-	class UNZMobileInputConfig* InputConfig;
+	//class UNZMobileInputConfig* InputConfig;
 
 	UPROPERTY()
 	class UNZMobileInputButton* MovementButton;

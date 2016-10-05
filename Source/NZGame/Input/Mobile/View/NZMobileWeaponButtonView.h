@@ -20,15 +20,6 @@ public:
 
 	virtual void Update();
 
-	UFUNCTION(BlueprintNativeEvent)
-	void PreviousWeaponButtonOnClick();
-
-	UFUNCTION(BlueprintNativeEvent)
-	void CurrentWeaponButtonOnClick();
-
-	UFUNCTION(BlueprintNativeEvent)
-	void NextWeaponButtonOnClick();
-
 protected:
 	UWidget* CachedPreviousWeapon;
 	UWidget* CachedCurrentWeapon;

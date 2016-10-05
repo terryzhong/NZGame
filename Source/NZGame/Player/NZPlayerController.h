@@ -266,7 +266,12 @@ public:
 	UFUNCTION(Client, Reliable)
 	virtual void ClientSwitchToBestWeapon();
     
+    UFUNCTION(BlueprintNativeEvent)
+    void K2_PrevWeapon();
     void PrevWeapon();
+    
+    UFUNCTION(BlueprintNativeEvent)
+    void K2_NextWeapon();
     void NextWeapon();
     
     void ThrowWeapon();
