@@ -261,7 +261,6 @@ void ANZPlayerController::SetupInputComponent()
 		InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ANZPlayerController::TouchUpdate);
 	}
 
-
  /*   InputComponent->BindAction("TapLeft", IE_Pressed, this, &ANZPlayerController::OnTapLeft);
     InputComponent->BindAction("TapRight", IE_Pressed, this, &ANZPlayerController::OnTapRight);
     InputComponent->BindAction("TapForward", IE_Pressed, this, &ANZPlayerController::OnTapForward);

@@ -1937,7 +1937,7 @@ void ANZWeapon::UpdateWeaponHand()
                 if (AdjustMesh != Mesh)
                 {
                     //Mesh->SetupAttachment(NULL, NAME_None);
-					Mesh->DetachFromParent();
+					Mesh->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
                     Mesh->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
                 }
                 for (int32 i = 0; i < MuzzleFlash.Num() && i < MuzzleFlashDefaultTransforms.Num(); i++)
@@ -1945,7 +1945,7 @@ void ANZWeapon::UpdateWeaponHand()
                     if (MuzzleFlash[i] != NULL)
                     {
                         //MuzzleFlash[i]->SetupAttachment(NULL, NAME_None);
-						MuzzleFlash[i]->DetachFromParent();
+						MuzzleFlash[i]->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
                         MuzzleFlash[i]->SetRelativeLocationAndRotation(FVector::ZeroVector, FRotator::ZeroRotator);
                     }
                 }

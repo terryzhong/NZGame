@@ -21,7 +21,7 @@ void ANZBasePlayerController::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     
-    //UpdateInputMode();
+    UpdateInputMode();
 }
 
 void ANZBasePlayerController::UpdateInputMode()
@@ -64,7 +64,7 @@ void ANZBasePlayerController::UpdateInputMode()
             switch (NewInputMode)
             {
                 case EInputMode::EIM_GameOnly:
-                    bShowMouseCursor = false;
+                    //bShowMouseCursor = false;
                     Super::SetInputMode(FInputModeGameOnly());
                     break;
                 case EInputMode::EIM_GameAndUI:
