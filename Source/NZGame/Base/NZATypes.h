@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include "Engine.h"
 #include "GameFramework/Actor.h"
 #include "NZATypes.generated.h"
-
 
 
 namespace InventoryEventName

@@ -4,6 +4,8 @@
 
 #include "Engine.h"
 #include "UMG.h"
+#include "Runtime/Engine/Classes/Animation/AnimInstance.h"
+#include "Runtime/Engine/Classes/Animation/AnimMontage.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(NZ, Log, All);
 

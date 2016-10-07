@@ -2,7 +2,8 @@
 
 #include "NZGame.h"
 #include "NZDualGunStateChangeClip.h"
-
+#include "NZWeaponStateFiring.h"
+#include "NZGameplayStatics.h"
 
 
 void UNZDualGunStateChangeClip::BeginState(const UNZWeaponState* PrevState)
