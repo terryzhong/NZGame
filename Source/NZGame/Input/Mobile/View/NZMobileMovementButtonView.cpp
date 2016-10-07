@@ -61,7 +61,7 @@ void UNZMobileMovementButtonView::UpdateJoystick(UNZMobilePlayerInput* PlayerInp
 	CachedJoystickLeftArrow->SetVisibility(ESlateVisibility::Hidden);
 	CachedJoystickRightArrow->SetVisibility(ESlateVisibility::Hidden);
 
-	// 箭头
+	// Arrow
 	if (Accel.X == 0 && Accel.Y != 0)
 	{
 		if (Accel.Y < 0)
@@ -85,16 +85,16 @@ void UNZMobileMovementButtonView::UpdateJoystick(UNZMobilePlayerInput* PlayerInp
 		}
 	}
 
-	// 摇杆按钮
+	// Direction button
 	FMobileInputData MovementInput = PlayerInput->GetMovementInputData();
 	FVector2D Movement = MovementInput.Location - MovementInput.BeginLocation;
 	float Size = Movement.Size();
-	float Radius = CachedJoystickBG->GetDesiredSize().Size();
+    float Radius = (CachedJoystickBG->GetDesiredSize().X + CachedJoystickBG->GetDesiredSize().Y) * 0.5 * 0.5;
 	Size = Size < Radius ? Size : Radius;
 	Movement = Movement.GetSafeNormal() * Size;
 	CachedJoystickTopDirectionButton->SetRenderTranslation(Movement);
 
-	// 方向
+	// Direction
 	if (Size <= Radius * 0.3)
 	{
 		CachedJoystickDirection->SetVisibility(ESlateVisibility::Hidden);

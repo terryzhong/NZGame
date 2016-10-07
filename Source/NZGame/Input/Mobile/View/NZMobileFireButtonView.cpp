@@ -55,7 +55,7 @@ void UNZMobileFireButtonView::UpdateFixedFire(UNZMobilePlayerInput* PlayerInput)
 	FMobileInputData RotationInput = PlayerInput->GetRotationInputData();
 	FVector2D Rotation = RotationInput.Location - RotationInput.BeginLocation;
 	float Size = Rotation.Size();
-	float Radius = CachedFireButtonBG->GetDesiredSize().Size();
+	float Radius = (CachedFireButtonBG->GetDesiredSize().X + CachedFireButtonBG->GetDesiredSize().Y) * 0.5 * 0.5;
 	Size = Size < Radius ? Size : Radius;
 	Rotation = Rotation.GetSafeNormal() * Size;
 	CachedFireButtonTopDirectionButton->SetRenderTranslation(Rotation);

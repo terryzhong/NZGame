@@ -362,8 +362,8 @@ void ANZPlayerController::ClientHearSound_Implementation(USoundBase* TheSound, A
         {
             // No attenuation/spatialization, full volume
             FActiveSound NewActiveSound;
-            NewActiveSound.World = GetWorld();
-            NewActiveSound.Sound = TheSound;
+            NewActiveSound.SetWorld(GetWorld());
+            NewActiveSound.SetSound(TheSound);
             
             NewActiveSound.VolumeMultiplier = 1.0f;
             NewActiveSound.PitchMultiplier = 1.0f;
