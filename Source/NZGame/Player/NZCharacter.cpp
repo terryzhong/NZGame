@@ -1413,7 +1413,7 @@ void ANZCharacter::StartRagdoll()
     GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GetMesh()->SetAllBodiesNotifyRigidBodyCollision(true);
-    GetMesh()->UpdateKinematicBonesToAnim(GetMesh()->GetSpaceBases(), ETeleportType::TeleportPhysics, true);
+    GetMesh()->UpdateKinematicBonesToAnim(GetMesh()->GetComponentSpaceTransforms(), ETeleportType::TeleportPhysics, true);
     GetMesh()->SetSimulatePhysics(true);
     GetMesh()->RefreshBoneTransforms();
     GetMesh()->SetAllBodiesPhysicsBlendWeight(1.f);
