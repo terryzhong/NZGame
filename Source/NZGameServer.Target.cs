@@ -31,6 +31,7 @@ public class NZGameServerTarget : TargetRules
         //}
     }
 
+	/*
     public override bool GetSupportedPlatforms(ref List<UnrealTargetPlatform> OutPlatforms)
     {
         // It is valid for only server platforms
@@ -50,4 +51,5 @@ public class NZGameServerTarget : TargetRules
     {
         return new List<UnrealTargetConfiguration> { UnrealTargetConfiguration.Development };
     }
+	*/
 }
