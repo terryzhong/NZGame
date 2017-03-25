@@ -6,7 +6,7 @@
 
 class UFactory;
 
-#include "PropertyEditorModule.h"
+#include "IDetailCustomization.h"
 
 /**
  * 

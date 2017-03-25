@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{644A2E41-4B12-CF21-48A0-0EA98D6D93B3}",
+	"EngineAssociation": "{B9FFFE01-4B89-F017-E5E1-9E9DD3C1CBC1}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -18,8 +18,7 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
-				"AIModule",
-				"CoreUObject"
+				"AIModule"
 			]
 		},
 		{

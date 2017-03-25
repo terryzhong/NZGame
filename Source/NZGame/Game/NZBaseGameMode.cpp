@@ -11,7 +11,7 @@ ANZBaseGameMode::ANZBaseGameMode()
     ReplaySpectatorPlayerControllerClass = NULL;
 }
 
-void ANZBaseGameMode::PreLogin(const FString& Options, const FString& Address, const TSharedPtr<const FUniqueNetId>& UniqueId, FString& ErrorMessage)
+void ANZBaseGameMode::PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
     Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
     
@@ -24,9 +24,9 @@ void ANZBaseGameMode::PreLogin(const FString& Options, const FString& Address, c
     
 }
 
-APlayerController* ANZBaseGameMode::Login(class UPlayer* NewPlayer, ENetRole RemoteRole, const FString& Portal, const FString& Options, const TSharedPtr<const FUniqueNetId>& UniqueId, FString& ErrorMessage)
+APlayerController* ANZBaseGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal, const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
-    return Super::Login(NewPlayer, RemoteRole, Portal, Options, UniqueId, ErrorMessage);
+    return Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
     
 }
 

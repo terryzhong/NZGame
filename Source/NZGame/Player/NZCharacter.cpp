@@ -57,9 +57,8 @@ ANZCharacter::ANZCharacter(const FObjectInitializer& ObjectInitializer)
     FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
     FirstPersonMesh->SetOnlyOwnerSee(true);
     FirstPersonMesh->SetupAttachment(CharacterCameraComponent);
-    FirstPersonMesh->bCastInsetShadow = true;
-    //FirstPersonMesh->bCastDynamicShadow = false;
-    //FirstPersonMesh->CastShadow = false;
+    FirstPersonMesh->bCastDynamicShadow = false;
+    FirstPersonMesh->CastShadow = false;
     FirstPersonMesh->bReceivesDecals = false;
     FirstPersonMesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
     FirstPersonMesh->PrimaryComponentTick.AddPrerequisite(this, PrimaryActorTick);
@@ -279,9 +278,9 @@ void ANZCharacter::Tick( float DeltaTime )
 }
 
 // Called to bind functionality to input
-void ANZCharacter::SetupPlayerInputComponent(class UInputComponent* InputComponent)
+void ANZCharacter::SetupPlayerInputComponent(class UInputComponent* InInputComponent)
 {
-	Super::SetupPlayerInputComponent(InputComponent);
+	Super::SetupPlayerInputComponent(InInputComponent);
 
 }
 
@@ -872,7 +871,8 @@ float ANZCharacter::TakeDamage(float Damage, struct FDamageEvent const& DamageEv
                         // K2 notification for this actor
                         if (ActualDamage != 0.f)
                         {
-                            ReceivePointDamage(ActualDamage, DamageTypeCDO, PointDamageEvent->HitInfo.ImpactPoint, PointDamageEvent->HitInfo.ImpactNormal, PointDamageEvent->HitInfo.Component.Get(), PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection, EventInstigator, DamageCauser);
+							FHitResult HitResult;
+                            ReceivePointDamage(ActualDamage, DamageTypeCDO, PointDamageEvent->HitInfo.ImpactPoint, PointDamageEvent->HitInfo.ImpactNormal, PointDamageEvent->HitInfo.Component.Get(), PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection, EventInstigator, DamageCauser, HitResult);
                             OnTakePointDamage.Broadcast(this, ActualDamage, EventInstigator, PointDamageEvent->HitInfo.ImpactPoint, PointDamageEvent->HitInfo.Component.Get(), PointDamageEvent->HitInfo.BoneName, PointDamageEvent->ShotDirection, DamageTypeCDO, DamageCauser);
                         }
                     }
@@ -1413,7 +1413,7 @@ void ANZCharacter::StartRagdoll()
     GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     GetMesh()->SetAllBodiesNotifyRigidBodyCollision(true);
-    GetMesh()->UpdateKinematicBonesToAnim(GetMesh()->GetSpaceBases(), ETeleportType::TeleportPhysics, true);
+    GetMesh()->UpdateKinematicBonesToAnim(GetMesh()->GetComponentSpaceTransforms(), ETeleportType::TeleportPhysics, true);
     GetMesh()->SetSimulatePhysics(true);
     GetMesh()->RefreshBoneTransforms();
     GetMesh()->SetAllBodiesPhysicsBlendWeight(1.f);

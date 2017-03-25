@@ -116,7 +116,7 @@ void ANZImpactEffect::CreateEffectComponents(UWorld* World, const FTransform& Ba
 				WS->AddImpactEffect(NewComp, DecalLifeScaling);
 			}
 			// Recurse
-			CreateEffectComponents(World, BaseTransform, HitComp, SpawnedBy, InstigatedBy, EffectParams, NewComp, BPNodes[i]->VariableName, NativeCompList, BPNodes);
+			CreateEffectComponents(World, BaseTransform, HitComp, SpawnedBy, InstigatedBy, EffectParams, NewComp, BPNodes[i]->GetVariableName(), NativeCompList, BPNodes);
 		}
 	}
 }

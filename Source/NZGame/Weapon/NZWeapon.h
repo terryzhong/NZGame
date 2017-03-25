@@ -514,7 +514,7 @@ public:
     virtual void RegisterAllComponents() override
     {
         // Don't register in game by default for perf, we'll manually call Super from AttachToOwner()
-        if (GetWorld()->WorldType == EWorldType::Editor || GetWorld()->WorldType == EWorldType::Preview)
+        if (GetWorld()->WorldType == EWorldType::Editor || GetWorld()->WorldType == EWorldType::EditorPreview)
         {
             Super::RegisterAllComponents();
         }

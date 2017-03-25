@@ -106,7 +106,7 @@ void ANZPlayerController::InitPlayerState()
         UWorld* const World = GetWorld();
         if (World != NULL)
         {
-            AGameMode* const GameMode = World->GetAuthGameMode();
+            AGameModeBase* const GameMode = World->GetAuthGameMode();
             if (GameMode != NULL)
             {
                 // Don't call SetPlayerName() as that will broadcast entry message but the GameMode hasn't had a chance
@@ -389,7 +389,7 @@ void ANZPlayerController::ClientHearSound_Implementation(USoundBase* TheSound, A
                 static USoundAttenuation* OverrideObj = [](){ USoundAttenuation* Result = NewObject<USoundAttenuation>(); Result->AddToRoot(); return Result; }();
                 
                 AttenuationOverride = OverrideObj;
-                const FAttenuationSettings* DefaultAttenuation = TheSound->GetAttenuationSettingsToApply();
+                const FSoundAttenuationSettings* DefaultAttenuation = TheSound->GetAttenuationSettingsToApply();
                 if (DefaultAttenuation != NULL)
                 {
                     AttenuationOverride->Attenuation = *DefaultAttenuation;
@@ -1156,20 +1156,20 @@ void ANZPlayerController::PlayerTick(float DeltaTime)
 		{
 			for (FConstPawnIterator Iterator = GetWorld()->GetPawnIterator(); Iterator; ++Iterator)
 			{
-				APawn* Pawn = *Iterator;
-				if (Pawn != NULL)
+				APawn* TestPawn = Iterator->Get();
+				if (TestPawn != NULL)
 				{
-					ANZPlayerState* PS = Cast<ANZPlayerState>(Pawn->PlayerState);
+					ANZPlayerState* PS = Cast<ANZPlayerState>(TestPawn->PlayerState);
 					if (PS && PS->SpectatingID == LastSpectatedPlayerId)
 					{
-						ANZCharacter* TargetCharacter = Cast<ANZCharacter>(Pawn);
+						ANZCharacter* TargetCharacter = Cast<ANZCharacter>(TestPawn);
 						if (TargetCharacter && TargetCharacter->DrivenVehicle && !TargetCharacter->DrivenVehicle->IsPendingKillPending())
 						{
 							ViewPawn(TargetCharacter->DrivenVehicle);
 						}
 						else
 						{
-							ViewPawn(*Iterator);
+							ViewPawn(TestPawn);
 						}
 						break;
 					}

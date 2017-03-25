@@ -101,9 +101,9 @@ void ANZInventory::PreInitializeComponents()
         USceneComponent* SceneComp = Cast<USceneComponent>(SerializedComponents[i]);
         if (SceneComp != NULL && SceneComp->GetAttachParent() != NULL && SceneComp->GetAttachParent() == PickupMesh && !SceneComp->GetAttachParent()->IsRegistered())
         {
-            TArray<USceneComponent*> Children;
-            SceneComp->GetChildrenComponents(true, Children);
-            for (USceneComponent* Child : Children)
+            TArray<USceneComponent*> ChildrenComponents;
+            SceneComp->GetChildrenComponents(true, ChildrenComponents);
+            for (USceneComponent* Child : ChildrenComponents)
             {
                 Child->DestroyComponent();
             }

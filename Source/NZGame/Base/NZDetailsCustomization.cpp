@@ -7,6 +7,7 @@
 
 #if WITH_EDITOR
 #include "SlateBasics.h"
+#include "IDetailChildrenBuilder.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "PropertyHandle.h"
@@ -219,7 +220,7 @@ void FNZDetailsCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailLayou
                     {
                         if (ConstructionNodes[j]->ComponentTemplate == PSC)
                         {
-                            DisplayName = ConstructionNodes[j]->VariableName;
+                            DisplayName = ConstructionNodes[j]->GetVariableName();
                             break;
                         }
                     }

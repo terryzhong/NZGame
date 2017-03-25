@@ -158,7 +158,7 @@ void ANZDroppedPickup::ProcessTouch_Implementation(APawn* TouchedBy)
             if (PickupSound)
             {
                 Radius = PickupSound->GetMaxAudibleDistance();
-                const FAttenuationSettings* Settings = PickupSound->GetAttenuationSettingsToApply();
+                const FSoundAttenuationSettings* Settings = PickupSound->GetAttenuationSettingsToApply();
                 if (Settings != NULL)
                 {
                     Radius = FMath::Max<float>(Radius, Settings->GetMaxDimension());

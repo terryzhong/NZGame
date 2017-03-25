@@ -107,14 +107,12 @@ bool ANZGameState::HasMatchStarted() const
 
 bool ANZGameState::IsMatchInProgress() const
 {
-	FName MatchState = GetMatchState();
-	return (MatchState == MatchState::InProgress || MatchState == MatchState::MatchIsInOvertime);
+	return (GetMatchState() == MatchState::InProgress || GetMatchState() == MatchState::MatchIsInOvertime);
 }
 
 bool ANZGameState::IsMatchInOvertime() const
 {
-	FName MatchState = GetMatchState();
-	return (MatchState == MatchState::MatchEnteringOvertime || MatchState == MatchState::MatchIsInOvertime);
+	return (GetMatchState() == MatchState::MatchEnteringOvertime || GetMatchState() == MatchState::MatchIsInOvertime);
 }
 
 bool ANZGameState::IsMatchInCountdown() const

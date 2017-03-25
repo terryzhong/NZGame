@@ -51,10 +51,10 @@ void UNZHUDWidget_WeaponCrosshair::Draw_Implementation(float DeltaTime)
 		const float SkullDisplayTime = 0.8f;
 		if (TimeSinceKill < SkullDisplayTime)
 		{
-			float Size = 32.f * (1.f + FMath::Min(1.5f * (TimeSinceKill - 0.2f) / SkullDisplayTime, 1.f));
+			float DrawSize = 32.f * (1.f + FMath::Min(1.5f * (TimeSinceKill - 0.2f) / SkullDisplayTime, 1.f));
 			FLinearColor SkullColor = FLinearColor::White;
-			float Opacity = 0.7f - 0.6f * TimeSinceKill / SkullDisplayTime;
-			DrawTexture(NZHUDOwner->HUDAtlas, 0, -2.f * Size, Size, Size, 725, 0, 28, 36, Opacity, SkullColor, FVector2D(0.5f, 0.5f));
+			float DrawOpacity = 0.7f - 0.6f * TimeSinceKill / SkullDisplayTime;
+			DrawTexture(NZHUDOwner->HUDAtlas, 0, -2.f * DrawSize, DrawSize, DrawSize, 725, 0, 28, 36, DrawOpacity, SkullColor, FVector2D(0.5f, 0.5f));
 		}
 
 		// todo:

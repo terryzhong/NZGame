@@ -114,7 +114,7 @@ void UNZGameplayStatics::NZPlaySound(UWorld* TheWorld, USoundBase* TheSound, AAc
                 {
                     // NOTE: All sound attenuation treated as a sphere
                     float Radius = TheSound->GetMaxAudibleDistance();
-                    const FAttenuationSettings* Settings = TheSound->GetAttenuationSettingsToApply();
+                    const FSoundAttenuationSettings* Settings = TheSound->GetAttenuationSettingsToApply();
                     if (Settings != NULL)
                     {
                         Radius = FMath::Max<float>(Radius, Settings->GetMaxDimension());

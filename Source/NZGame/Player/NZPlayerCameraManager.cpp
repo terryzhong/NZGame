@@ -70,17 +70,17 @@ FName ANZPlayerCameraManager::GetCameraStyleWithOverrides() const
     static const FName NAME_FirstPerson = FName(TEXT("FirstPerson"));
     static const FName NAME_Default = FName(TEXT("Default"));
     
-    AActor* ViewTarget = GetViewTarget();
-    ACameraActor* CameraActor = Cast<ACameraActor>(ViewTarget);
+    AActor* CurViewTarget = GetViewTarget();
+    ACameraActor* CameraActor = Cast<ACameraActor>(CurViewTarget);
     if (CameraActor)
     {
         return NAME_Default;
     }
     
-    ANZCharacter* NZCharacter = Cast<ANZCharacter>(ViewTarget);
+    ANZCharacter* NZCharacter = Cast<ANZCharacter>(CurViewTarget);
     if (NZCharacter == NULL)
     {
-        return ((ViewTarget == PCOwner->GetPawn()) || (ViewTarget == PCOwner->GetSpectatorPawn())) ? NAME_FirstPerson : NAME_FreeCam;
+        return ((CurViewTarget == PCOwner->GetPawn()) || (CurViewTarget == PCOwner->GetSpectatorPawn())) ? NAME_FirstPerson : NAME_FreeCam;
     }
     else if (NZCharacter->IsDead() || NZCharacter->IsRagdoll() || NZCharacter->EmoteCount > 0)
     {
@@ -256,6 +256,7 @@ static TAutoConsoleVariable<int32> CVarBloomDirt(TEXT("r.BloomDirt"), 0, TEXT("E
 void ANZPlayerCameraManager::ApplyCameraModifiers(float DeltaTime, FMinimalViewInfo& InOutPOV)
 {
     Super::ApplyCameraModifiers(DeltaTime, InOutPOV);
+	return;
     
     // If no PP volumes, force our default PP in at the beginning
     if (GetWorld()->PostProcessVolumes.Num() == 0)

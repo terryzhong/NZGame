@@ -70,8 +70,8 @@ ANZWeapon::ANZWeapon(const FObjectInitializer& ObjectInitializer)
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
 	Mesh->SetOnlyOwnerSee(true);
 	Mesh->SetupAttachment(RootComponent);
-    Mesh->bCastInsetShadow = true;
-	//Mesh->bSelfShadowOnly = true;
+    //Mesh->bCastInsetShadow = true;
+	Mesh->bSelfShadowOnly = true;
 	Mesh->bReceivesDecals = false;
 	Mesh->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::OnlyTickPoseWhenRendered;
 	FirstPMeshOffset = FVector(0.f);
@@ -1629,7 +1629,7 @@ void ANZWeapon::InstanceMuzzleFlashArray(AActor* Weap, TArray<UParticleSystemCom
                 {
                     if (Cast<UParticleSystemComponent>(ConstructionNodes[j]->ComponentTemplate) == MFArray[k])
                     {
-                        MFArray[k] = Cast<UParticleSystemComponent>((UObject*)FindObjectWithOuter(Weap, ConstructionNodes[j]->ComponentTemplate->GetClass(), ConstructionNodes[j]->VariableName));
+                        MFArray[k] = Cast<UParticleSystemComponent>((UObject*)FindObjectWithOuter(Weap, ConstructionNodes[j]->ComponentTemplate->GetClass(), ConstructionNodes[j]->GetVariableName()));
                     }
                 }
             }
